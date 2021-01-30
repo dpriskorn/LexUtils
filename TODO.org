@@ -1,0 +1,5 @@
+#+TITLE: Todo
+
+* Versioning from the start
+* REPL
+* Write unit tests
