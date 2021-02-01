@@ -74,8 +74,8 @@ def process_async_responses(word):
         if "dokument" in key_list:
             for item in data["dokumentlista"]["dokument"]:
                 records.append(item)
-    print("Download done")
-    logger.info(f"Got {len(records)} records from the Riksdagen API")
+    length = len(records)
+    logger.info(f"Got {length} records")
     if config.debug_json:
         logger.debug(f"records:{records}")
     return records
@@ -160,7 +160,7 @@ def find_usage_examples_from_summary(
             # Exclude by breaking out of the iteration early
             break
         else:
-            # Exclude based on weird words
+            # Exclude based on weird words that are not suitable sentences
             excluded_words = [
                 "SAMMANFATTNING",
                 "BETÄNKANDE",
@@ -231,7 +231,7 @@ def extract_summaries_from_records(records, data):
         # quality it seems.
         date = record["datum"]
         if config.debug_summaries:
-            print(
+            logger.info(
                 f"Found in https://data.riksdagen.se/dokument/{document_id}"
             )
         record_data = {}
@@ -260,9 +260,7 @@ def extract_summaries_from_records(records, data):
         count_summary += 1
     # if config.debug_summaries:
     #     logging.debug(f"summaries:{summaries}")
-    print(f"Processed {count_summary} records and found " +
-          f"{count_exact_hits} exact hits for the form '{word}'")
-    logging.info(f"among {count_inexact_hits} where the lexeme was present.")
+    logger.info(f"Found {len(summaries)} suitable summaries")
     return summaries
 
 
@@ -296,4 +294,5 @@ def get_records(data):
                 for sentence in suitable_sentences:
                     # Make sure the riksdagen_document_id follows
                     unsorted_sentences[sentence] = result_data
+        print(f"Found {len(unsorted_sentences)} suitable sentences")
         return unsorted_sentences

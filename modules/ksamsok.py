@@ -8,7 +8,7 @@ from typing import Dict, List
 
 import config
 from modules import loglevel
-# from modules import util
+from modules import util
 
 logger = logging.getLogger(__name__)
 if config.loglevel is None:
@@ -34,7 +34,13 @@ async def async_fetch(word: str) -> List:
     # This function is called for every task.
     async def get(url: str, session):
         """Accepts a url and a httpx session"""
-        response = await session.get(url, headers=headers)
+        # catch read timeouts gracefully
+        # https://github.com/encode/httpx/blob/
+        # e3a7b6d7318f943b2289437f74028cb36b5b02e4/docs/exceptions.md
+        try:
+            response = await session.get(url, headers=headers)
+        except httpx.RequestError as exc:
+            logger.info(f"An error occurred while requesting {exc.request.url!r}.")
         return response
     
     urlbase = ("http://kulturarvsdata.se/ksamsok/api?"+
@@ -48,7 +54,7 @@ async def async_fetch(word: str) -> List:
     for i in range(1, results, 50):
         url = urlbase + str(i)
         urls.append(url)
-    logging.debug(f"urls:{urls}")
+    logger.debug(f"urls:{urls}")
     # get urls asynchroniously
     # inspired by https://trio.readthedocs.io/en/stable/tutorial.html
     async with httpx.AsyncClient() as session:
@@ -67,7 +73,7 @@ def get_result_count(word: str) -> int:
     r = httpx.get(url, headers=headers)
     #pprint(r.json())
     results = r.json()["result"]["totalHits"]
-    logging.info(f"results:{results}")
+    logger.info(f"results:{results}")
     return int(results)
 
 
@@ -81,8 +87,8 @@ def process_async_responses(word: str) -> List:
         if len(data["result"]["records"]) > 0:
             for item in data["result"]["records"]:
                 records.append(item)
-    print("Download done")
-    logger.info(f"Got {len(records)} records from the {api_name}")
+    length = len(records)
+    logger.info(f"Found {length} records")
     if config.debug_json:
         logger.debug(f"records:{records}")
     return records    
@@ -92,24 +98,30 @@ def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
     # First find out the number of results
     # print(r)
     word = data["word"]
-    sentences = {}
+    descriptions = {}
     # Create a pattern to match string 'sample'
     pattern = re.compile("http")
     if len(records) > 0:
         for r in records:
             #pprint(r["record"])
             record = r["record"]
-            graph= record["@graph"]
-            ksamsok_id = None
-            # First find the id
-            for item in graph:
+            ksamsok_uri = None
+            if "@graph" in record:
+                graph= record["@graph"]
+                # First find the id
+                for item in graph:
+                    # pprint(item)
+                    if item["@type"] == "Entity":
+                        ksamsok_uri = item["@id"].replace(
+                            "http://kulturarvsdata.se/", "",
+                        )
+                        # Break out early
+                        break
+            else:
+                logger.debug("@graph not found for {ksamsok_uri}")
                 # pprint(item)
-                if item["@type"] == "Entity":
-                    ksamsok_id = item["@id"]
-                    # Break out early
-                    break
             # Then find the description
-            if ksamsok_id is not None:
+            if ksamsok_uri is not None:
                 for item in graph:
                     if item["@type"] == "ItemDescription":
                         if "desc" in item:
@@ -123,23 +135,23 @@ def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
                             #logger.debug(converted_list)
                             # Skip OCR garbage
                             if "[OCR]" in converted_list:
-                                logger.debug("ocr description {desc} skipped")
+                                logger.debug(f"ocr description {desc} skipped")
                                 break
                             # Append only if it contains what we want
                             if word.upper() in converted_list:
                                 record_data = {}
-                                record_data["document_id"] = ksamsok_id
+                                record_data["document_id"] = ksamsok_uri
                                 # ksamsok does not have dates on the creation of
                                 # objects and neither of say when a photo was
                                 # taken. This means we cannot reliably import a
                                 # date in Wikidata on the reference.
                                 # See e.g. http://kulturarvsdata.se/MM/foto/703356
                                 record_data["date"] = None
-                                sentences[desc] = record_data
+                                descriptions[desc] = record_data
                                 #print(item["desc"])
-    logger.info(f"Number of sentences:{len(sentences)}")
-    # pprint(sentences)
-    return(sentences)
+    logger.info(f"Number of descriptions:{len(descriptions)}")
+    # pprint(descriptions)
+    return(descriptions)
     
 
 def get_records(data: dict) -> Dict:
@@ -153,6 +165,14 @@ def get_records(data: dict) -> Dict:
         unsorted_sentences = {}
         # Iterate through the dictionary
         for sentence in sentences:
+            # Exclude based on lenght of the sentence
+            word_count = util.count_words(sentence)
+            if (
+                    word_count > config.max_word_count or word_count <
+                    config.min_word_count
+            ):
+                # Exclude by breaking out of the iteration early
+                break
             # Get result_data
             result_data = sentences[sentence]
             logger.debug(result_data)
@@ -167,6 +187,7 @@ def get_records(data: dict) -> Dict:
             #     print(f"Got back summary {summary} with the " +
             #           f"correct document_id: {document_id}?")
             unsorted_sentences[sentence] = result_data
+        print(f"Found {len(unsorted_sentences)} suitable sentences")
         return unsorted_sentences
 
     

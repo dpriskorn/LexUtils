@@ -6,7 +6,7 @@ username = os.environ['LEXUTILS_USERNAME']
 password = os.environ['LEXUTILS_PASSWORD']
 
 # Settings for LexUse
-sparql_results_size = 1000
+sparql_results_size = 10
 sparql_offset = 1000
 riksdagen_max_results_size = 500  # keep to multiples of 20
 ksamsok_max_results_size = 500  # keep to multiples of 50
@@ -21,13 +21,13 @@ exclude_list = "exclude_list.json"
 # Debug settings
 debug = False
 debug_duplicates = False
-debug_excludes = True
+debug_excludes = False
 debug_exclude_list = False
 debug_json = False
 debug_riksdagen = False
 debug_senses = False
-debug_sentences = True
-debug_summaries = True
+debug_sentences = False
+debug_summaries = False
 
 # Global variables
 login_instance = None

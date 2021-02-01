@@ -8,6 +8,7 @@ import sys
 import time
 # import asyncio
 import httpx
+from typing import Dict
 from wikibaseintegrator import wbi_core, wbi_login
 
 import config
@@ -19,7 +20,19 @@ from modules import ksamsok
 
 # Terminology used
 # record = sentence + data
-# sentence = string of text
+# sentence = string of text usable as a usage example on a lexeme in WD
+
+# Data flow
+# entrypoint: process_lexeme_data()
+# this fetches lexemes to work on and loop through them randomly
+# for each one it calls process_result()
+# this calls get_sentences_from_apis()
+# this goes through the implemented api's and fetch data from them and return
+# sentences and their metadata
+# then we loop through each sentence and ask the user if it is suitable by
+# calling present_sentence()
+# if the user approves it we call add_usage_example() and add it to WD and the
+# lexeme to the users watchlist.
 
 # Check version
 try:
@@ -366,6 +379,45 @@ def add_usage_example(
             ),
             type_of_reference_qualifier,
         ]
+    if source == "ksamsok":
+        # No date is provided unfortunately, so we set it to unknown value
+        stated_in = wbi_core.ItemID(
+            prop_nr="P248",
+            value="Q7654799",
+            is_reference=True
+        )
+        document_id = wbi_core.ExternalID(
+            # K-Samsök URI
+            prop_nr="P1260",  
+            value=document_id,
+            is_reference=True
+        )
+        reference = [
+            stated_in,
+            document_id,
+            wbi_core.Time(
+                prop_nr="P813",  # Fetched today
+                time=datetime.utcnow().replace(
+                    tzinfo=timezone.utc
+                ).replace(
+                    hour=0,
+                    minute=0,
+                    second=0,
+                ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
+                is_reference=True,
+            ),
+            wbi_core.Time(
+                # We don't know the value of the publication dates unfortunately
+                prop_nr="P577",  # Publication date
+                time="",
+                snak_type="somevalue",
+                is_reference=True,
+            ),
+            type_of_reference_qualifier,
+        ]
+    if reference is None:
+        logger.error("No reference defined, cannot add usage example")
+        exit(1)
     # This is the usage example statement
     claim = wbi_core.MonolingualText(
         sentence,
@@ -552,7 +604,7 @@ def prompt_sense_approval(sentence=None, data=None):
             return False
 
 
-def get_sentences_from_apis(result):
+def get_sentences_from_apis(result: str) -> Dict:
     """Returns a dict with sentences as key and id as value"""
     data = extract_data(result)
     form_id = data["form_id"]
@@ -567,19 +619,20 @@ def get_sentences_from_apis(result):
         europarl_records = europarl.get_records(data)
         for record in europarl_records:
             records[record] = europarl_records[record]
+        logger.debug(f"records in total:{len(records)}")
         # ksamsok
         ksamsok_records = ksamsok.get_records(data)
         for record in ksamsok_records:
             records[record] = ksamsok_records[record]
+        logger.debug(f"records in total:{len(records)}")
         # Riksdagen API is slow, only use it if we don't have a lot of sentences already
         if (len(europarl_records) + len(ksamsok_records)) < 50:
             riksdagen_records = riksdagen.get_records(data)
             for record in riksdagen_records:
                 records[record] = riksdagen_records[record]
-        logger.debug(f"returning from apis:{records}")
+        if config.debug_sentences:
+            logger.debug(f"returning from apis:{records}")
         return records
-        # TODO K-samsök
-        # TODO Europarl corpus
 
 
 def present_sentence(

@@ -9,8 +9,7 @@ from fuzzyfinder import fuzzyfinder
 
 import config
 from modules import loglevel
-# import riksdagen
-# import util
+from modules import util
 
 # This is the script that keeps the REPL up
 
@@ -45,7 +44,6 @@ def main():
                             completer=SQLCompleter(),
                             )
         if user_input == "lexuse":
-            from modules import util
             begin = util.introduction()
             if begin:
                 print("Fetching lexeme forms to work on")
