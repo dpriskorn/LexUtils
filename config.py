@@ -6,7 +6,7 @@ username = os.environ['LEXUTILS_USERNAME']
 password = os.environ['LEXUTILS_PASSWORD']
 
 # Settings for LexUse
-sparql_results_size = 1000
+sparql_results_size = 10
 sparql_offset = 1000
 riksdagen_max_results_size = 500  # keep to multiples of 20
 ksamsok_max_results_size = 500  # keep to multiples of 50
