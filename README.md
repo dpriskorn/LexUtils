@@ -38,3 +38,9 @@ password= "password"
 
 And delete the 2 lines related to environment labels.
 
+## Debugging
+
+You can enable debugging parametersin config.py (by changing False -> True) and adding "--log=loglevel" to the command line where loglevel is one of
+* info
+* debug
+Debug will give you most information.

@@ -21,13 +21,13 @@ exclude_list = "exclude_list.json"
 # Debug settings
 debug = False
 debug_duplicates = False
-debug_excludes = True
+debug_excludes = False
 debug_exclude_list = False
 debug_json = False
 debug_riksdagen = False
 debug_senses = False
-debug_sentences = True
-debug_summaries = True
+debug_sentences = False
+debug_summaries = False
 
 # Global variables
 login_instance = None
