@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import gettext
 import os.path
 import sys
 import lzma
@@ -7,6 +8,7 @@ import requests
 
 import config
 
+_ = gettext.gettext
 
 def fetch():
     # for now we only support europarl data from

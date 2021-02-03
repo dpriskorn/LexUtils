@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime, timezone
+import gettext
 import json
 import logging
 import os.path
@@ -17,6 +18,8 @@ from modules import europarl
 from modules import loglevel
 from modules import riksdagen
 from modules import ksamsok
+
+_ = gettext.gettext
 
 # Terminology used
 # record = sentence + data
@@ -38,18 +41,18 @@ from modules import ksamsok
 try:
     assert sys.version_info >= (3, 7)
 except AssertionError:
-    print("Error! This script requires Python 3.7 minimum. " +
-          f"Your version of python: {sys.version[0:5]} " +
+    print(_("Error! This script requires Python 3.7 minimum. " +
+          "Your version of python: {} ".format(sys.version[0:5]) +
           "is very old and not " +
           "supported by this script. Please upgrade python. " +
-          "If you are on Ubuntu 18.04 we encourage you to upgrade Ubuntu.")
+          "If you are on Ubuntu 18.04 we encourage you to upgrade Ubuntu."))
     exit(0)
 
 # Logging
 logger = logging.getLogger(__name__)
 if config.loglevel is None:
     # Set loglevel
-    print("Setting loglevel in config")
+    logger.debug(_( "Setting loglevel in config" ))
     loglevel.set_loglevel()
 logger.setLevel(config.loglevel)
 logger.level = logger.getEffectiveLevel()
@@ -86,7 +89,7 @@ def yes_no_skip_question(message: str):
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
     while True:
-        answer = input(message + ' [(Y)es/(n)o/(s)kip this form]: ')
+        answer = input(message + _(' [(Y)es/(n)o/(s)kip this form]: '))
         if len(answer) == 0 or answer[0].lower() in ('y', 'n', 's'):
             if len(answer) == 0:
                 return True
@@ -102,7 +105,7 @@ def yes_no_question(message: str):
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
     while True:
-        answer = input(message + ' [Y/n]: ')
+        answer = input(message + _(' [Y/n]: '))
         if len(answer) == 0 or answer[0].lower() in ('y', 'n'):
             if len(answer) == 0:
                 return True
@@ -121,10 +124,11 @@ def sparql_query(query):
     results = data["results"]["bindings"]
     # pprint(results)
     if len(results) == 0:
-        print(f"No {config.language} lexemes containing " +
-              "both a sense, forms with " +
-              "grammatical features and missing a usage example was found")
-        exit(0)
+        print(_( "No lexemes was returned from Wikidata for the choosen language"+
+              " . This script only works on lexemes that has at least one sense"+
+              " with P5137 and at least one form with " +
+              "grammatical features."+
+              "Try running the script again." ))
     else:
         return results
 
@@ -269,9 +273,10 @@ def add_usage_example(
         if language_style == "informal":
             style = "Q901711"
         else:
-            print(f"Error. Language style {language_style} " +
-                  "not one of (formal,informal)")
-            exit(1)
+            print(_( "Error. Language style {} ".format(language_style) +
+                     "not one of (formal,informal). Please report a bug at "+
+                     "https://github.com/egils-consulting/LexUtils/issues" ))
+            return
     logging.debug("Generating qualifier language_style " +
                   f"with {style}")
     language_style_qualifier = wbi_core.ItemID(
@@ -286,11 +291,12 @@ def add_usage_example(
         if type_of_reference == "oral":
             medium = "Q52946"
         else:
-            print(f"Error. Type of reference {type_of_reference} " +
-                  "not one of (written,oral)")
-            exit(1)
-    logging.debug("Generating qualifier type of reference " +
-                  f"with {medium}")
+            print(_( "Error. Type of reference {} ".format(type_of_reference) +
+                     "not one of (written,oral). Please report a bug at "+
+                     "https://github.com/egils-consulting/LexUtils/issues" ))
+            return
+    logging.debug(_( "Generating qualifier type of reference " +
+                  "with {}".format(medium) ))
     type_of_reference_qualifier = wbi_core.ItemID(
         prop_nr="P3865",
         value=medium,
@@ -300,9 +306,9 @@ def add_usage_example(
         if publication_date is not None:
             publication_date = datetime.fromisoformat(publication_date)
         else:
-            print("Publication date of document {document_id} " +
+            print(_( "Publication date of document {} " +
                   "is missing. We have no fallback for that at the moment. " +
-                  "Abort adding usage example.")
+                  "Abort adding usage example.".format(document_id) ))
             return False
         stated_in = wbi_core.ItemID(
             prop_nr="P248",
@@ -416,7 +422,7 @@ def add_usage_example(
             type_of_reference_qualifier,
         ]
     if reference is None:
-        logger.error("No reference defined, cannot add usage example")
+        logger.error(_( "No reference defined, cannot add usage example" ))
         exit(1)
     # This is the usage example statement
     claim = wbi_core.MonolingualText(
@@ -447,7 +453,10 @@ def add_usage_example(
         )
     result = item.write(
         config.login_instance,
-        edit_summary="Added usage example with [[Wikidata:LexUse]]"
+        edit_summary=(
+            _( "Added usage example "+
+               "with [[Wikidata:LexUtils]] v{}".format(version) )
+        )
     )
     if config.debug_json:
         logging.debug(f"result from WBI:{result}")
@@ -466,19 +475,23 @@ def prompt_choose_sense(senses):
     # asking-the-user-for-input-until-they-give-a-valid-response
     while True:
         try:
-            options = ("Please choose the correct sense corresponding " +
-                       "to the meaning in the usage example")
+            options = _("Please choose the correct sense corresponding " +
+                        "to the meaning in the usage example")
             number = 1
             # Put each key -> value into a new nested dictionary
             for sense in senses:
-                options += f"\n{number}) {senses[number]['gloss']}"
+                options += _(
+                    "\n{}) {}".format(number, senses[number]['gloss'])
+                )
                 if config.show_sense_urls:
-                    options += f" ({wd_prefix + senses[number]['sense_id']} )"
+                    options += " ({} )".format(
+                        wd_prefix + senses[number]['sense_id']
+                    )
                 number += 1
-            options += "\nPlease input a number or 0 to cancel: "
+            options += _("\nPlease input a number or 0 to cancel: ")
             choice = int(input(options))
         except ValueError:
-            print("Sorry, I didn't understand that.")
+            print(_("Sorry, I didn't understand that."))
             # better try again... Return to the start of the loop
             continue
         else:
@@ -489,7 +502,7 @@ def prompt_choose_sense(senses):
                     "gloss": senses[choice]["gloss"]
                 }
             else:
-                print("Cancelled adding this sentence.")
+                print(_("Cancelled adding this sentence."))
                 return False
 
 
@@ -525,7 +538,7 @@ def add_to_watchlist(lid):
     )
     if config.debug_json:
         print(result.text)
-    print(f"Added {lid} to your watchlist")
+    print(_("Added {} to your watchlist".format(lid)))
 
 
 def prompt_sense_approval(sentence=None, data=None):
@@ -545,13 +558,14 @@ def prompt_sense_approval(sentence=None, data=None):
             gloss = senses[1]["gloss"]
             sense_id = senses[1]["sense_id"]
             if config.show_sense_urls:
-                question = ("Found only one sense. " +
-                            "Does this example fit the following " +
-                            f"gloss? {wd_prefix + sense_id}\n'{gloss}'")
+                question = _("Found only one sense. " +
+                             "Does this example fit the following " +
+                             "gloss? {}\n'{}'".format(wd_prefix + sense_id,
+                                                      gloss))
             else:
-                question = ("Found only one sense. " +
+                question = _("Found only one sense. " +
                             "Does this example fit the following " +
-                            f"gloss?\n'{gloss}'")
+                             "gloss?\n'{}'".format(gloss))
             if yes_no_question(question):
                 return {
                     "sense_id": senses[1]["sense_id"],
@@ -559,7 +573,7 @@ def prompt_sense_approval(sentence=None, data=None):
                 }
             else:
                 word = data['word']
-                print("Cancelled adding sentence as it does not match the " +
+                print(_("Cancelled adding sentence as it does not match the " +
                       "only sense currently present. \nLexemes are " +
                       "entirely dependent on good quality QIDs. \n" +
                       "Please add labels " +
@@ -568,7 +582,7 @@ def prompt_sense_approval(sentence=None, data=None):
                       "more senses to lexemes by matching on QID concepts " +
                       "with similar labels and descriptions in the lexeme " +
                       "language." +
-                      f"\nSearch for {word} in Wikidata: " +
+                      f"\nSearch for {word} in Wikidata: ") +
                       "https://www.wikidata.org/w/index.php?" +
                       f"search={word}&title=Special%3ASearch&" +
                       "profile=advanced&fulltext=0&" +
@@ -576,7 +590,7 @@ def prompt_sense_approval(sentence=None, data=None):
                 time.sleep(5)
                 return False
         else:
-            print(f"Found {number_of_senses} senses.")
+            print(_("Found {} senses.".format(number_of_senses)))
             sense = False
             # TODO check that all senses has a gloss matching the language of
             # the example
@@ -590,18 +604,18 @@ def prompt_sense_approval(sentence=None, data=None):
             else:
                 return False
     else:
-        # Check if any suitable senses exist
-        count = (count_number_of_senses_with_P5137("L35455"))
-        if count > 0:
-            print("{language.title()} gloss is missing for {count} sense(s)" +
-                  ". Please fix it manually here: " +
-                  f"{wd_prefix + lid}")
-            time.sleep(5)
-            return False
-        else:
-            logging.debug("no senses this should never be reached " +
-                          "if the sparql result was sane")
-            return False
+        logging.error("Error. No senses. this should never be reached " +
+                      "if the sparql result was sane")
+        # # Check if any suitable senses exist
+        # count = (count_number_of_senses_with_P5137("L35455"))
+        # if count > 0:
+        #     print("{language.title()} gloss is missing for {count} sense(s)" +
+        #           ". Please fix it manually here: " +
+        #           f"{wd_prefix + lid}")
+        #     time.sleep(5)
+        #     return False
+        # else:
+        #     return False
 
 
 def get_sentences_from_apis(result: str) -> Dict:
@@ -609,8 +623,7 @@ def get_sentences_from_apis(result: str) -> Dict:
     data = extract_data(result)
     form_id = data["form_id"]
     word = data["word"]
-    print(f"Trying to find examples for the {data['category']} lexeme " +
-          f"form: {word} with id: {form_id}")
+    print(_("Working on {}".format(word)))
     if config.language_code == "sv":
         records = {}
         # Europarl corpus
@@ -633,6 +646,9 @@ def get_sentences_from_apis(result: str) -> Dict:
         if config.debug_sentences:
             logger.debug(f"returning from apis:{records}")
         return records
+    else:
+        return None
+    # TODO add wikisource
 
 
 def present_sentence(
@@ -873,18 +889,3 @@ def process_lexeme_data(results):
                     process_result(result, data)
 
 
-def introduction():
-    if yes_no_question("This script enables you to " +
-                       "semi-automatically add usage examples to " +
-                       "lexemes with both good senses and forms " +
-                       "(with P5137 and grammatical features respectively). " +
-                       "\nPlease pay attention to the lexical " +
-                       "category of the lexeme. \nAlso try " +
-                       "adding only short and concise " +
-                       "examples to avoid bloat and maximise " +
-                       "usefullness. \nThis script adds edited " +
-                       "lexemes (indefinitely) to your watchlist. " +
-                       "\nContinue?"):
-        return True
-    else:
-        return False

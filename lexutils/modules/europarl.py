@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+import gettext
 import logging
 
 import config
 from modules import loglevel
 
+_ = gettext.gettext
 
 # TODO move common code to common swedish module
 logger = logging.getLogger(__name__)
 if config.loglevel is None:
     # Set loglevel
-    print("Setting loglevel in config")
+    # print("Setting loglevel in config")
     loglevel.set_loglevel()
 logger.setLevel(config.loglevel)
 logger.level = logger.getEffectiveLevel()

@@ -1,0 +1,143 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-03 23:23+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: lexutils/main.py:47
+msgid "This is the REPL. Type one of the names of the tools to begin: LexUse"
+msgstr ""
+
+#: lexutils/modules/lexuse.py:6
+msgid ""
+"This script enables you to semi-automatically add usage examples to lexemes "
+"with both good senses and forms (with P5137 and grammatical features "
+"respectively). \n"
+"Please pay attention to the lexical category of the lexeme. \n"
+"Also try adding only short and concise examples to avoid bloat and maximise "
+"usefullness. \n"
+"This script adds edited lexemes (indefinitely) to your watchlist. \n"
+"Continue?"
+msgstr ""
+
+#: lexutils/modules/lexuse.py:24
+msgid "Fetching lexeme forms to work on"
+msgstr ""
+
+#: lexutils/modules/util.py:52
+msgid "Setting loglevel in config"
+msgstr ""
+
+#: lexutils/modules/util.py:89
+msgid " [(Y)es/(n)o/(s)kip this form]: "
+msgstr ""
+
+#: lexutils/modules/util.py:105
+msgid " [Y/n]: "
+msgstr ""
+
+#: lexutils/modules/util.py:124
+msgid ""
+"No lexemes was returned from Wikidata for the choosen language . This script "
+"only works on lexemes that has at least one sense with P5137 and at least "
+"one form with grammatical features.Try running the script again."
+msgstr ""
+
+#: lexutils/modules/util.py:273
+msgid "Error. Language style {} "
+msgstr ""
+
+#: lexutils/modules/util.py:291
+msgid "Error. Type of reference {} "
+msgstr ""
+
+#: lexutils/modules/util.py:295
+msgid "Generating qualifier type of reference with {}"
+msgstr ""
+
+#: lexutils/modules/util.py:306
+msgid ""
+"Publication date of document {} is missing. We have no fallback for that at "
+"the moment. Abort adding usage example."
+msgstr ""
+
+#: lexutils/modules/util.py:422
+msgid "No reference defined, cannot add usage example"
+msgstr ""
+
+#: lexutils/modules/util.py:454
+msgid "Added usage example with [[Wikidata:LexUtils]] v{}"
+msgstr ""
+
+#: lexutils/modules/util.py:475
+msgid ""
+"Please choose the correct sense corresponding to the meaning in the usage "
+"example"
+msgstr ""
+
+#: lexutils/modules/util.py:481
+msgid ""
+"\n"
+"{}) {}"
+msgstr ""
+
+#: lexutils/modules/util.py:488
+msgid ""
+"\n"
+"Please input a number or 0 to cancel: "
+msgstr ""
+
+#: lexutils/modules/util.py:491
+msgid "Sorry, I didn't understand that."
+msgstr ""
+
+#: lexutils/modules/util.py:502
+msgid "Cancelled adding this sentence."
+msgstr ""
+
+#: lexutils/modules/util.py:538
+msgid "Added {} to your watchlist"
+msgstr ""
+
+#: lexutils/modules/util.py:558
+msgid ""
+"Found only one sense. Does this example fit the following gloss? {}\n"
+"'{}'"
+msgstr ""
+
+#: lexutils/modules/util.py:563
+msgid ""
+"Found only one sense. Does this example fit the following gloss?\n"
+"'{}'"
+msgstr ""
+
+#: lexutils/modules/util.py:573
+msgid ""
+"Cancelled adding sentence as it does not match the only sense currently "
+"present. \n"
+"Lexemes are entirely dependent on good quality QIDs. \n"
+"Please add labels and descriptions to relevant QIDs and then use MachtSinn "
+"to add more senses to lexemes by matching on QID concepts with similar "
+"labels and descriptions in the lexeme language."
+msgstr ""
+
+#: lexutils/modules/util.py:590
+msgid "Found {} senses."
+msgstr ""
+
+#: lexutils/modules/util.py:623
+msgid "Working on {}"
+msgstr ""

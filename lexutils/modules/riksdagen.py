@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import gettext
 import logging
 import re
 import httpx
@@ -7,6 +8,8 @@ import httpx
 import config
 from modules import loglevel
 from modules import util
+
+_ = gettext.gettext
 
 logger = logging.getLogger(__name__)
 if config.loglevel is None:

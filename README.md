@@ -1,11 +1,13 @@
 # LexUtils
 This is a collection of tools that can be run from a REPL to improve Wikidata.
 
-LexUtils can be used as a library if you want. It contains the following modules:
-* config: setting up variables that affect all scripts
-* riksdagen: code related to the Riksdagen API
-* util: code reused among the other modules
-* tui.py User Interface specific code
+The following tools are currently available:
+* LexUse (it previously had it's own repository)
+* TODO LexCombine
+* ...your tool idea here...
+
+When LexUtils start you can choose a tool. 
+TODO enable setting of working language
 
 ## Requirements
 * Python >= 3.7 (datetime fromisoformat needed)
@@ -27,8 +29,8 @@ Please create a bot password for running the script for
 safety reasons here: https://www.wikidata.org/wiki/Special:BotPasswords
 
 Add the following variables to your ~/.bashrc (recommended): 
-export LEXUTIL_USERNAME="username"
-export LEXUTIL_PASSWORD="password"
+export LEXUTILS_USERNAME="username"
+export LEXUTILS_PASSWORD="password"
 
 Alternatively edit the file named config.py yourself and adjust the following
 content:
@@ -36,11 +38,10 @@ content:
 username = "username"
 password= "password"
 
-And delete the 2 lines related to environment labels.
-
 ## Debugging
 
-You can enable debugging parametersin config.py (by changing False -> True) and adding "--log=loglevel" to the command line where loglevel is one of
+You can enable debugging parameters in config.py (by changing False -> True) and adding "--log=loglevel" to the command line where loglevel is one of
+* error
 * info
 * debug
-Debug will give you most information.
+Debug will give you most information, error will give you the least.

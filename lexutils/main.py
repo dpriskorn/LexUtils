@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import gettext
 import logging
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
@@ -8,8 +9,13 @@ import click
 from fuzzyfinder import fuzzyfinder
 
 import config
-from modules import loglevel
+# Import util first
 from modules import util
+from modules import lexuse
+from modules import loglevel
+
+# Settings
+_ = gettext.gettext
 
 # This is the script that keeps the REPL up
 
@@ -17,7 +23,7 @@ from modules import util
 # Functions
 #
 
-Commands = ['lexuse', 'lexcombine']
+Commands = ['lexuse']
 
 class SQLCompleter(Completer):
     def get_completions(self, document, complete_event):
@@ -37,19 +43,22 @@ def main():
     # file_handler = logging.FileHandler("europarl.log")
     # logger.addHandler(file_handler)
 
+    # TODO enable choosing work language
+    print(_('This is the REPL. ' +
+            'Type one of the names of the tools to begin: ' +
+            'LexUse'))
+
     while 1:
-        user_input = prompt(u'SQL>',
+        user_input = prompt(u'LexUtils>',
                             history=FileHistory('history.txt'),
                             auto_suggest=AutoSuggestFromHistory(),
                             completer=SQLCompleter(),
                             )
-        if user_input == "lexuse":
-            begin = util.introduction()
-            if begin:
-                print("Fetching lexeme forms to work on")
-                results = util.fetch_lexeme_forms()
-                util.process_lexeme_data(results)
-
+        if user_input.lower() == "lexuse":
+            lexuse.start()
+        # if user_input.lower() == "lexcombine":
+        #     print(_('LexCombine has not been implemented yet.'+
+        #           ' Feel free to help out by sending pull requests'))
 
 if __name__ == "__main__":
     main()
