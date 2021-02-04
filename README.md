@@ -1,13 +1,9 @@
 # LexUtils
 This is a collection of tools that can be run from a REPL to improve Wikidata.
 
-The following tools are currently available:
+When LexUtils start you can choose on of the following tools currently available:
 * LexUse (it previously had it's own repository)
-* TODO LexCombine
-* ...your tool idea here...
-
-When LexUtils start you can choose a tool. 
-TODO enable setting of working language
+* ...your tool idea here... [see So9qs ideas](https://www.wikidata.org/wiki/User:So9q/Tool_ideas) 
 
 ## Requirements
 * Python >= 3.7 (datetime fromisoformat needed)
