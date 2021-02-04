@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 import gettext
+import logging
+import lzma
 import os.path
 import sys
-import lzma
 
 import requests
 
 import config
+from modules import loglevel
 
 _ = gettext.gettext
+
+logger = logging.getLogger(__name__)
+if config.loglevel is None:
+    # Set loglevel
+    loglevel.set_loglevel()
+logger.setLevel(config.loglevel)
+logger.level = logger.getEffectiveLevel()
+file_handler = logging.FileHandler("download_data.log")
+logger.addHandler(file_handler)
 
 def fetch():
     # for now we only support europarl data from
@@ -21,9 +32,12 @@ def fetch():
     filename = "data_" + url.split('/')[-1]
     txt_filename = filename.replace("xz", "txt")
     if os.path.isfile(txt_filename):
-        print(f"Data for {config.language} has already been downloaded.")
+        logging.info(_("Data for {} has ".format(config.language) +
+                       "already been downloaded."))
     else:
-        print(f"Downloading Europarl sentence file for {config.language}")
+        print(_("Downloading Europarl sentence file for {}".format(
+            config.language,
+        )))
         with open(filename, 'wb') as output_file:
             response = requests.get(url, stream=True)
             total_length = response.headers.get('content-length')

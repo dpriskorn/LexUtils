@@ -126,7 +126,7 @@ def sparql_query(query):
     if len(results) == 0:
         print(_( "No lexemes was returned from Wikidata for the choosen language"+
               " . This script only works on lexemes that has at least one sense"+
-              " with P5137 and at least one form with " +
+              " with item for this sense (P5137) and at least one form with " +
               "grammatical features."+
               "Try running the script again." ))
     else:
@@ -169,14 +169,15 @@ def fetch_senses(lid):
     }}'''))
     senses = {}
     number = 1
-    for row in result:
-        senses[number] = {
-            "sense_id": row["sense"]["value"].replace(wd_prefix, ""),
-            "gloss": row["gloss"]["value"]
-        }
-        number += 1
-    logging.debug(f"senses:{senses}")
-    return senses
+    if result is not None:
+        for row in result:
+            senses[number] = {
+                "sense_id": row["sense"]["value"].replace(wd_prefix, ""),
+                "gloss": row["gloss"]["value"]
+            }
+            number += 1
+        logging.debug(f"senses:{senses}")
+        return senses
 
 
 def fetch_lexeme_forms():
@@ -455,7 +456,7 @@ def add_usage_example(
         config.login_instance,
         edit_summary=(
             _( "Added usage example "+
-               "with [[Wikidata:LexUtils]] v{}".format(version) )
+               "with [[Wikidata:LexUtils]] v{}".format(config.version) )
         )
     )
     if config.debug_json:
@@ -623,7 +624,7 @@ def get_sentences_from_apis(result: str) -> Dict:
     data = extract_data(result)
     form_id = data["form_id"]
     word = data["word"]
-    print(_("Working on {}".format(word)))
+    # print(_("Working on {}".format(word)))
     if config.language_code == "sv":
         records = {}
         # Europarl corpus
@@ -646,8 +647,6 @@ def get_sentences_from_apis(result: str) -> Dict:
         if config.debug_sentences:
             logger.debug(f"returning from apis:{records}")
         return records
-    else:
-        return None
     # TODO add wikisource
 
 
@@ -711,46 +710,47 @@ def present_sentence(
 
 
 def save_to_exclude_list(data: dict):
+    """Only has side-effects."""
     # date, lid and lang
     if data is None:
-        print("Error. Data was None")
-        exit(1)
-    form_id = data["form_id"]
-    word = data["word"]
-    print(f"Adding {word} to local exclude list '{config.exclude_list}'")
-    if config.debug_exclude_list:
-        logging.debug(f"data to exclude:{data}")
-    form_data = dict(
-        word=word,
-        date=datetime.now().isoformat(),
-        lang=config.language_code,
-    )
-    if config.debug_exclude_list:
-        logging.debug(f"adding:{form_id}:{form_data}")
-    if os.path.isfile('exclude_list.json'):
-        # Read the file
-        with open(config.exclude_list, 'r', encoding='utf-8') as myfile:
-            json_data = myfile.read()
-        if len(json_data) > 0:
-            with open(config.exclude_list, 'w', encoding='utf-8') as myfile:
-                # parse file
-                exclude_list = json.loads(json_data)
+        logger.error("Error. Data was None")
+    else:
+        form_id = data["form_id"]
+        word = data["word"]
+        print(f"Adding {word} to local exclude list '{config.exclude_list}'")
+        if config.debug_exclude_list:
+            logging.debug(f"data to exclude:{data}")
+        form_data = dict(
+            word=word,
+            date=datetime.now().isoformat(),
+            lang=config.language_code,
+        )
+        if config.debug_exclude_list:
+            logging.debug(f"adding:{form_id}:{form_data}")
+        if os.path.isfile('exclude_list.json'):
+            # Read the file
+            with open(config.exclude_list, 'r', encoding='utf-8') as myfile:
+                json_data = myfile.read()
+            if len(json_data) > 0:
+                with open(config.exclude_list, 'w', encoding='utf-8') as myfile:
+                    # parse file
+                    exclude_list = json.loads(json_data)
+                    exclude_list[form_id] = form_data
+                    if config.debug_exclude_list:
+                        logging.debug(f"dumping altered list:{exclude_list}")
+                    json.dump(exclude_list, myfile, ensure_ascii=False)
+            else:
+                logger.error(_("Error. JSON data had no entries. Remove the"+
+                               " exclude_list.json and try again."))
+        else:
+            # Create the file
+            with open(config.exclude_list, "w", encoding='utf-8') as outfile:
+                # Create new file with dict and item
+                exclude_list = {}
                 exclude_list[form_id] = form_data
                 if config.debug_exclude_list:
-                    logging.debug(f"dumping altered list:{exclude_list}")
-                json.dump(exclude_list, myfile, ensure_ascii=False)
-        else:
-            print("Error. json data is null.")
-            exit(1)
-    else:
-        # Create the file
-        with open(config.exclude_list, "w", encoding='utf-8') as outfile:
-            # Create new file with dict and item
-            exclude_list = {}
-            exclude_list[form_id] = form_data
-            if config.debug_exclude_list:
-                logging.debug(f"dumping:{exclude_list}")
-            json.dump(exclude_list, outfile, ensure_ascii=False)
+                    logging.debug(f"dumping:{exclude_list}")
+                json.dump(exclude_list, outfile, ensure_ascii=False)
 
 
 def process_result(result, data):
@@ -777,20 +777,23 @@ def process_result(result, data):
             source = result_data["source"]
             line = result_data["line"]
             if source == "riksdagen":
-                print("Presenting sentence " +
-                      f"{count}/{len(sorted_sentences)} from {date} from " +
-                      f"{riksdagen.baseurl + document_id}")
+                print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(sorted_sentences)) +
+                        "from {} from {}".format(
+                            date, riksdagen.baseurl + document_id,
+                        )))
             elif source == "europarl":
-                print("Presenting sentence " +
-                      f"{count}/{len(sorted_sentences)} " +
-                      "from europarl")
+                print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(sorted_sentences)) +
+                        "from europarl"))
             elif source == "ksamsok":
-                print("Presenting sentence " +
-                      f"{count}/{len(sorted_sentences)} " +
-                      "from ksamsok")
+                # ksamsok.api_name
+                print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(sorted_sentences)) +
+                        "from {}".format(ksamsok.baseurl + document_id)))
             else:
-                print("Presenting sentence " +
-                      f"{count}/{len(sorted_sentences)} from {date}")
+                logger.error(_("Internal error. Source is missing. Please report"+
+                               " this bug."))
             logging.info(f"with style: {style} " +
                          f"and medium: {medium}")
             result = present_sentence(

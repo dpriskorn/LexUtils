@@ -23,13 +23,13 @@ def find_lines(word):
     """Returns a dictionary with line as
     key and linenumber as value"""
     records = {}
-    print(f"Looking for {word} in the Europarl corpus...")
+    print(_("Looking for '{}' in the Europarl corpus...".format(word)))
     with open(f'data_{config.language_code}.txt', 'r') as searchfile:
         number = 1
         for line in searchfile:
-            if number % 50000 == 0:
-                logger.info(number)
-            if f" {word} " in line:
+            # if number % 50000 == 0:
+            #     logger.info(number)
+            if line.find(" {word} ") is not -1:
                 logger.debug(f"matching line:{line}")
                 records[line] = dict(
                     line=number,
@@ -48,7 +48,7 @@ def find_lines(word):
             number += 1
     if config.debug_sentences:
         logger.debug(f"records:{records}")
-    logger.info(f"Found {len(records)} lines.")
+    logger.info(f"Found {len(records)} lines containing '{word}'.")
     return records
 
 

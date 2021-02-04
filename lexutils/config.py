@@ -5,6 +5,9 @@ import os
 username = os.environ['LEXUTILS_USERNAME']
 password = os.environ['LEXUTILS_PASSWORD']
 
+# Global settings
+version = "0.1"  # Don't touch this.
+
 # Settings for LexUse
 sparql_results_size = 10
 sparql_offset = 1000

@@ -24,8 +24,8 @@ logger.addHandler(file_handler)
 
 # Constants
 headers = {'Accept': 'application/json'}
-api_name = ("Swedish National Heritage "+
-            "Board K-Samsök API")
+api_name = ("K-Samsök API")
+baseurl = "http://kulturarvsdata.se/"
 language_style = "formal"
 type_of_reference = "written"
 source = "ksamsok"
@@ -81,7 +81,7 @@ def get_result_count(word: str) -> int:
 
 
 def process_async_responses(word: str) -> List:
-    print(f"Downloading from the {api_name}...")
+    print(_("Looking for '{}' in the {}...".format(word, api_name)))
     results = asyncio.run(async_fetch(word))
     records = []
     for response in results:
@@ -116,7 +116,7 @@ def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
                     # pprint(item)
                     if item["@type"] == "Entity":
                         ksamsok_uri = item["@id"].replace(
-                            "http://kulturarvsdata.se/", "",
+                            baseurl, "",
                         )
                         # Break out early
                         break
@@ -190,14 +190,7 @@ def get_records(data: dict) -> Dict:
             #     print(f"Got back summary {summary} with the " +
             #           f"correct document_id: {document_id}?")
             unsorted_sentences[sentence] = result_data
-        print(f"Found {len(unsorted_sentences)} suitable sentences")
+        print(_("Found {} suitable sentences from {}".format(
+            len(unsorted_sentences), api_name
+        )))
         return unsorted_sentences
-
-    
-# word = "grillspett"
-# count = get_result_count(word)
-# print(count)
-# records = process_async_responses(word)
-# print(len(records))
-# sentences = get_records(dict(word="grillspett"))
-# print(sentences)
