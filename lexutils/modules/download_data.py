@@ -35,9 +35,7 @@ def fetch():
         logging.info(_("Data for {} has ".format(config.language) +
                        "already been downloaded."))
     else:
-        print(_("Downloading Europarl sentence file for {}".format(
-            config.language,
-        )))
+        tui.sentence_download()
         with open(filename, 'wb') as output_file:
             response = requests.get(url, stream=True)
             total_length = response.headers.get('content-length')

@@ -15,9 +15,10 @@ from wikibaseintegrator import wbi_core, wbi_login
 import config
 from modules import download_data
 from modules import europarl
+from modules import ksamsok
 from modules import loglevel
 from modules import riksdagen
-from modules import ksamsok
+from modules import tui
 
 _ = gettext.gettext
 
@@ -461,6 +462,7 @@ def add_usage_example(
     )
     if config.debug_json:
         logging.debug(f"result from WBI:{result}")
+    # TODO add handling of result from WBI and return True == Success or False 
     return result
 
 
@@ -551,6 +553,8 @@ def prompt_sense_approval(sentence=None, data=None):
     # + prompt_multiple_senses()
     lid = data["lid"]
     # This returns a tuple if one sense or a dictionary if multiple senses
+    print(_("Fetching senses..."))
+    logging.info(f"...from {lid}")
     senses = fetch_senses(lid)
     number_of_senses = len(senses)
     logging.debug(f"number_of_senses:{number_of_senses}")
@@ -607,25 +611,18 @@ def prompt_sense_approval(sentence=None, data=None):
     else:
         logging.error("Error. No senses. this should never be reached " +
                       "if the sparql result was sane")
-        # # Check if any suitable senses exist
-        # count = (count_number_of_senses_with_P5137("L35455"))
-        # if count > 0:
-        #     print("{language.title()} gloss is missing for {count} sense(s)" +
-        #           ". Please fix it manually here: " +
-        #           f"{wd_prefix + lid}")
-        #     time.sleep(5)
-        #     return False
-        # else:
-        #     return False
 
 
-def get_sentences_from_apis(result: str) -> Dict:
+def get_sentences_from_apis(data: Dict) -> Dict:
     """Returns a dict with sentences as key and id as value"""
-    data = extract_data(result)
     form_id = data["form_id"]
     word = data["word"]
-    # print(_("Working on {}".format(word)))
+    category = data["category"]
+    # TODO add grammatical features
+    #features = data["grammatical_features"]
+    tui.working_on(category, word)
     if config.language_code == "sv":
+        # TODO move to own module for each language modules/lang/sv.py
         records = {}
         # Europarl corpus
         # Download first if not on disk
@@ -647,6 +644,12 @@ def get_sentences_from_apis(result: str) -> Dict:
         if config.debug_sentences:
             logger.debug(f"returning from apis:{records}")
         return records
+    else:
+        logging.error(_("Error. Language code: {} not supported. Feel free to"+
+                        "open an issue in the repo if you know any sources "+
+                        "that have CC0 metadata and useful sentences.".format(
+            config.language_code,
+        )))
     # TODO add wikisource
 
 
@@ -661,13 +664,16 @@ def present_sentence(
         line: str = None
 ):
     """Return True, False or None (skip)"""
+    # TODO improve return from this function
     word_count = count_words(sentence)
     result = yes_no_skip_question(
             f"Found the following sentence with {word_count} " +
             "words. Is it suitable as a usage example " +
+            # FIXME add grammatical features here
             f"for the {data['category']} form '{data['word']}'? \n" +
             f"'{sentence}'"
     )
+    skipped = False
     if result:
         selected_sense = prompt_sense_approval(
             sentence=sentence,
@@ -699,6 +705,7 @@ def present_sentence(
                     save_to_exclude_list(data)
                     return True
                 else:
+                    # No result from WBI, what does that mean?
                     return False
             else:
                 return False
@@ -753,12 +760,17 @@ def save_to_exclude_list(data: dict):
                 json.dump(exclude_list, outfile, ensure_ascii=False)
 
 
-def process_result(result, data):
+def process_result(result: str, data: Dict):
+    """This has only side-effects"""
     # ask to continue
     # if yes_no_question(f"\nWork on {data['word']}?"):
     # This dict holds the sentence as key and
     # riksdagen_document_id or other id as value
-    sentences_and_result_data = get_sentences_from_apis(result)
+    separator = "----------------------------------------------------------"
+    # Fetch sentence data from all APIs
+    sentences_and_result_data = get_sentences_from_apis(data)
+    dict_length = len(sentences_and_result_data)
+    tui.number_of_found_sentences(dict_length)
     if sentences_and_result_data is not None:
         # Sort so that the shortest sentence is first
         sorted_sentences = sorted(
@@ -778,13 +790,13 @@ def process_result(result, data):
             line = result_data["line"]
             if source == "riksdagen":
                 print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(sorted_sentences)) +
+                        "{}/{} ".format(count, dict_length) +
                         "from {} from {}".format(
                             date, riksdagen.baseurl + document_id,
                         )))
             elif source == "europarl":
                 print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(sorted_sentences)) +
+                        "{}/{} ".format(count, dict_length) +
                         "from europarl"))
             elif source == "ksamsok":
                 # ksamsok.api_name
@@ -794,6 +806,8 @@ def process_result(result, data):
             else:
                 logger.error(_("Internal error. Source is missing. Please report"+
                                " this bug."))
+                exit = True
+                return exit
             logging.info(f"with style: {style} " +
                          f"and medium: {medium}")
             result = present_sentence(
@@ -813,16 +827,17 @@ def process_result(result, data):
             # was skipped. False means that we could not find a sentence, it
             # could be related to low number of records being fetched so we
             # don't excude it.
+            print(separator)
             if result is not False:
                 # Add to temporary exclude_list
-                logging.debug("adding to exclude list after presentation")
-                save_to_exclude_list(data)
+                # logging.debug("adding to exclude list after presentation")
+                # save_to_exclude_list(data)
                 # break
                 return
-    # else:
-    #     print("Added to excludelist because of no " +
-    #           "suitable sentences were found")
-    #     save_to_exclude_list(data)
+    elif dict_length == 0:
+        print(separator)
+    else:
+        print(separator)
 
 
 def in_exclude_list(data: dict):
@@ -866,7 +881,8 @@ def process_lexeme_data(results):
     print("Going through the list of forms at random.")
     # from http://stackoverflow.com/questions/306400/ddg#306417
     earlier_choices = []
-    while (True):
+    run = True
+    while (run):
         if len(earlier_choices) == config.sparql_results_size:
             # We have gone checked all results now
             # TODO offer to fetch more
@@ -889,6 +905,7 @@ def process_lexeme_data(results):
                 else:
                     # not in exclude_list
                     logging.debug(f"processing:{word}")
-                    process_result(result, data)
-
+                    exit = process_result(result, data)
+                    if exit:
+                        run = False
 

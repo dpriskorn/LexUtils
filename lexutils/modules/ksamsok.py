@@ -10,6 +10,7 @@ from typing import Dict, List
 import config
 from modules import loglevel
 from modules import util
+from modules import tui
 
 _ = gettext.gettext
 
@@ -24,7 +25,7 @@ logger.addHandler(file_handler)
 
 # Constants
 headers = {'Accept': 'application/json'}
-api_name = ("K-Samsök API")
+api_name = _("K-Samsök API")
 baseurl = "http://kulturarvsdata.se/"
 language_style = "formal"
 type_of_reference = "written"
@@ -81,7 +82,7 @@ def get_result_count(word: str) -> int:
 
 
 def process_async_responses(word: str) -> List:
-    print(_("Looking for '{}' in the {}...".format(word, api_name)))
+    tui.downloading_from(api_name)
     results = asyncio.run(async_fetch(word))
     records = []
     for response in results:
@@ -190,7 +191,7 @@ def get_records(data: dict) -> Dict:
             #     print(f"Got back summary {summary} with the " +
             #           f"correct document_id: {document_id}?")
             unsorted_sentences[sentence] = result_data
-        print(_("Found {} suitable sentences from {}".format(
+        logging.info(_("Found {} suitable sentences from {}".format(
             len(unsorted_sentences), api_name
         )))
         return unsorted_sentences

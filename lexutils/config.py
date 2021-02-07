@@ -9,7 +9,7 @@ password = os.environ['LEXUTILS_PASSWORD']
 version = "0.1"  # Don't touch this.
 
 # Settings for LexUse
-sparql_results_size = 10
+sparql_results_size = 100
 sparql_offset = 1000
 riksdagen_max_results_size = 500  # keep to multiples of 20
 ksamsok_max_results_size = 500  # keep to multiples of 50
@@ -18,7 +18,8 @@ language_code = "sv"
 language_qid = "Q9027"
 min_word_count = 5
 max_word_count = 15
-show_sense_urls = True
+show_sense_urls = True  # Useful for improving the gloss in WD
+show_lexeme_urls = True  # Useful for improving the lexeme in WD
 exclude_list = "exclude_list.json"
 
 # Debug settings

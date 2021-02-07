@@ -8,6 +8,7 @@ import httpx
 import config
 from modules import loglevel
 from modules import util
+from modules import tui
 
 _ = gettext.gettext
 
@@ -21,6 +22,7 @@ file_handler = logging.FileHandler("riksdagen.log")
 logger.addHandler(file_handler)
 
 # Constants
+api_name = _("Riksdagen API")
 baseurl = "https://data.riksdagen.se/dokument/"
 
 # Entry is in the bottom get_records(data)
@@ -67,7 +69,7 @@ async def async_fetch(word):
 
 
 def process_async_responses(word):
-    print("Downloading from the Riksdagen API...")
+    tui.downloading_from(api_name)
     results = asyncio.run(async_fetch(word))
     records = []
     for response in results:
@@ -84,61 +86,37 @@ def process_async_responses(word):
     return records
 
 
-# def fetch(word):
-#     # Look up records from the Riksdagen API
-#     records = []
-#     print("Downloading from the Riksdagen API...")
-#     for i in range(1, int(config.riksdagen_max_results_size / 20) + 1):
-#         if i > 1:
-#             # break if i is more than 1 and the results are less than 20
-#             # because that means that there are no more results in page 2-5
-#             if len(records) < 20:
-#                 break
-#         url = (f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
-#                "&sort=rel" +
-#                "&sortorder=desc&utformat=json&a=s" +
-#                f"&p={i}")
-#         if config.debug_riksdagen:
-#             print(url)
-#         r = httpx.get(url)
-#         data = r.json()
-#         # check if dokument is in the list
-#         key_list = list(data["dokumentlista"].keys())
-#         if "dokument" in key_list:
-#             for item in data["dokumentlista"]["dokument"]:
-#                 records.append(item)
-#         else:
-#             # We break if the API does not return any more results
-#             if config.debug_riksdagen:
-#                 print("API did not return any (more) results")
-#             break
-#     if config.debug:
-#         logging.info(f"Got {len(records)} records from the Riksdagen API")
-#     if config.debug_json:
-#         print(records)
-#     return records
-
-
 def find_usage_examples_from_summary(
         word_spaces=None,
         summary=None
 ):
     """This tries to find and clean sentences and return the shortest one"""
+    # TODO flesh out regex sentence detecting to own module
+    # TODO adher to functions only doing one thing
     # TODO check for duplicates or near duplicates and remove
     cleaned_summary = summary.replace(
         '<span class="traff-markering">', ""
     )
     cleaned_summary = cleaned_summary.replace('</span>', "")
     ellipsis = "…"
-    # replace "t.ex." temporarily to avoid regex problems
-    cleaned_summary = cleaned_summary.replace("t.ex.", "xxx")
-    # Leave the last dot of m.m. to retain the full stop it probably
-    # means
-    cleaned_summary = cleaned_summary.replace("m.m", "yyy")
-    cleaned_summary = cleaned_summary.replace("dvs.", "qqq")
-    # bl.a.
-    cleaned_summary = cleaned_summary.replace("bl.", "zzz")
-    # TODO add "ang." "kl." "s.k." "resp." "prop." "skr."
+    # replace abbreviations "t.ex." temporarily to help detect sentence boundaries
+    # TODO redo this with a dictionary and a loop
+    substitutions = dict(
+        xxx="t.ex.",
+        yyy="m.m.",
+        zzz="dvs.",
+        qqq="bl.a.",
+        wwww="ang.",
+        eeee="kl.",
+        aaaa="s.k.",
+        bbbb="resp.",
+        cccc="prop.",
+        dddd="skr.",
+    )
+    for key in substitutions:
+        cleaned_summary = cleaned_summary.replace(
+            substitutions[key], key,
+        )
 
     # from https://stackoverflow.com/questions/3549075/
     # regex-to-find-all-sentences-of-text
@@ -165,22 +143,21 @@ def find_usage_examples_from_summary(
         else:
             # Exclude based on weird words that are not suitable sentences
             excluded_words = [
-                "SAMMANFATTNING",
-                "BETÄNKANDE",
-                "UTSKOTT",
-                "MOTION",
-                " EG ",
-                " EU ",
-                "RIKSDAGEN",
+                # "SAMMANFATTNING",
+                # "BETÄNKANDE",
+                # "UTSKOTT",
+                # "MOTION",
+                # " EG ",
+                # " EU ",
+                # "RIKSDAGEN",
             ]
             for excluded_word in excluded_words:
                 result = sentence.upper().find(excluded_word)
                 if result != -1:
                     if config.debug_excludes:
-                        sentence = (sentence
-                                    .replace("\n", "")
-                                    .replace("-", "")
-                                    .replace(ellipsis, ""))
+                        sentence = sentence.replace("\n", "")
+                                    #.replace("-", "")
+                                    #.replace(ellipsis, ""))
                         logging.debug(
                             f"Found excluded word {excluded_word} " +
                             f"in {sentence}. Skipping",
@@ -189,11 +166,9 @@ def find_usage_examples_from_summary(
                     break
         # Add space to match better
         if word_spaces in sentence and exclude_this_sentence is False:
-            # restore the t.ex.
-            sentence = sentence.replace("xxx", "t.ex.")
-            sentence = sentence.replace("yyy", "m.m")
-            sentence = sentence.replace("qqq", "dvs.")
-            sentence = sentence.replace("zzz", "bl.")
+            # restore the abbreviations
+            for key in substitutions:
+                cleaned_summary = cleaned_summary.replace(key, substitutions[key])
             # Last cleaning
             sentence = (sentence
                         .replace("\n", "")
@@ -297,5 +272,5 @@ def get_records(data):
                 for sentence in suitable_sentences:
                     # Make sure the riksdagen_document_id follows
                     unsorted_sentences[sentence] = result_data
-        print(f"Found {len(unsorted_sentences)} suitable sentences")
+        logger.info(f"Found {len(unsorted_sentences)} suitable sentences")
         return unsorted_sentences

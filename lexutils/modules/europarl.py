@@ -4,6 +4,7 @@ import logging
 
 import config
 from modules import loglevel
+from modules import tui
 
 _ = gettext.gettext
 
@@ -18,18 +19,20 @@ logger.level = logger.getEffectiveLevel()
 file_handler = logging.FileHandler("europarl.log")
 logger.addHandler(file_handler)
 
+# Constants
+api_name = _("Europarl corpus")
 
 def find_lines(word):
     """Returns a dictionary with line as
     key and linenumber as value"""
     records = {}
-    print(_("Looking for '{}' in the Europarl corpus...".format(word)))
+    tui.downloading_from(api_name)
     with open(f'data_{config.language_code}.txt', 'r') as searchfile:
         number = 1
         for line in searchfile:
             # if number % 50000 == 0:
             #     logger.info(number)
-            if line.find(" {word} ") is not -1:
+            if line.find(" {word} ") != -1:
                 logger.debug(f"matching line:{line}")
                 records[line] = dict(
                     line=number,
