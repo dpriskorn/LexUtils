@@ -1,5 +1,5 @@
 # LexUtils
-This is a collection of tools that can be run from a REPL to improve Wikidata.
+This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
 
 When LexUtils start you can choose on of the following tools currently available:
 * LexUse (it previously had it's own repository)
