@@ -4,5 +4,6 @@ httpx
 click
 prompt-toolkit
 asyncio
+sparqldataframe
 #pprint
 #gettext
