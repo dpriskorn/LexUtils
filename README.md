@@ -10,7 +10,7 @@ When LexUtils start you can choose on of the following tools currently available
 * see requirements.txt file for libraries needed
 
 Install using pip:
-`$ sudo pip install -r requirements.txt
+`$ sudo pip install -r requirements.txt`
 
 If pip fails with errors related to python 2.7 you need to upgrade your OS. E.g. if you are using an old version of Ubuntu like 18.04.
 
@@ -20,10 +20,10 @@ safety reasons here: https://www.wikidata.org/wiki/Special:BotPasswords
 
 Copy or rename the file config.example.py to config.py and adjust the following
 variables:
-
+```
 username = "username"
-password= "password"
-
+password = "password"
+```
 ## Use
 When you get a prompt like "[Y/n]" the capitalized selection can be selected by
 pressing Enter. To select "n" type "n" followed by Enter.
