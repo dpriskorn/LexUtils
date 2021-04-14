@@ -24,12 +24,8 @@ python PIP:
 Please create a bot password for running the script for
 safety reasons here: https://www.wikidata.org/wiki/Special:BotPasswords
 
-Add the following variables to your ~/.bashrc (recommended): 
-export LEXUTILS_USERNAME="username"
-export LEXUTILS_PASSWORD="password"
-
-Alternatively edit the file named config.py yourself and adjust the following
-content:
+Copy or rename the file config.example.py to config.py and adjust the following
+variables:
 
 username = "username"
 password= "password"

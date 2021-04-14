@@ -1,9 +1,8 @@
 import os
 
-# Add your credentials from the botpasswords page to your ~/.bashrc or below as
-# strings:
-username = os.environ['LEXUTILS_USERNAME']
-password = os.environ['LEXUTILS_PASSWORD']
+# Add your botpassword and login here:
+username = ""
+password = ""
 
 # Global settings
 version = "0.1"  # Don't touch this.
