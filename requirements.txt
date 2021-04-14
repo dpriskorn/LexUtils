@@ -1,0 +1,8 @@
+fuzzyfinder
+wikibaseintegrator
+httpx
+click
+prompt-toolkit
+asyncio
+#pprint
+#gettext
