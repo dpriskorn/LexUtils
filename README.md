@@ -24,6 +24,10 @@ variables:
 username = "username"
 password= "password"
 
+## Use
+When you get a prompt like "[Y/n]" the capitalized selection can be selected by
+pressing Enter. To select "n" type "n" followed by Enter.
+
 ## Debugging
 
 You can enable debugging parameters in config.py (by changing False -> True) and adding "--log=loglevel" to the command line where loglevel is one of:

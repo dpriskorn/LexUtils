@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import gettext
 import logging
 from prompt_toolkit import prompt
@@ -22,6 +24,42 @@ _ = gettext.gettext
 #
 # Functions
 #
+
+# debug
+from modules import wikidata
+df = wikidata.fetch_lexeme_forms()
+# https://note.nkmk.me/en/python-pandas-dataframe-rename/
+df.rename(
+    columns={
+        'grammatical_featureLabel': 'feature',
+        'categoryLabel': 'category'
+    },
+    inplace=True
+)
+df["lid"] = df["entity_lid"].str.replace(util.wd_prefix,'')
+df["formid"] = df["form"].str.replace(util.wd_prefix,'')
+df["senseid"] = df["sense"].str.replace(util.wd_prefix,'')
+#import pandas as pd
+#pd.set_option("display.max_columns", 10)
+# print(df.sample(n=1))
+# print(df.describe())
+# print(list(df))
+#grouped= df.groupby("lid", "senseid", "formid")
+#senses = df.groupby("lid", "senseid")
+#
+#https://stackoverflow.com/a/36394939
+forms = df.groupby("formid")["feature"].apply(' '.join).reset_index()
+print(forms)
+print(list(forms))
+# Loop through the rows
+for index, row in forms.iterrows():
+    formid = row["formid"]
+    # find index where formid appears in the original df
+    dfindex = df.index[df["formid"] == formid].tolist()[0]
+    #print(f"dfindex: {dfindex}")
+    print(formid, row["feature"], df.loc[dfindex]["word"])
+
+exit(0)
 
 Commands = ['lexuse']
 

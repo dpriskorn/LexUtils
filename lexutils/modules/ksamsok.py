@@ -122,7 +122,7 @@ def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
                         # Break out early
                         break
             else:
-                logger.debug("@graph not found for {ksamsok_uri}")
+                logger.debug(f"@graph not found for {ksamsok_uri}")
                 # pprint(item)
             # Then find the description
             if ksamsok_uri is not None:
