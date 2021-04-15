@@ -118,3 +118,30 @@ def add_to_watchlist(lid: str):
     if config.debug_json:
         print(result.text)
     print(_("Added {} to your watchlist".format(lid)))
+def in_exclude_list(data: dict):
+    # Check if in exclude_list
+    if os.path.isfile('exclude_list.json'):
+        if config.debug_exclude_list:
+            logging.debug("Looking up in exclude list")
+        # Read the file
+        with open('exclude_list.json', 'r', encoding='utf-8') as myfile:
+            json_data = myfile.read()
+            # parse file
+            exclude_list = json.loads(json_data)
+            lid = data["lid"]
+            for form_id in exclude_list:
+                form_data = exclude_list[form_id]
+                if config.debug_exclude_list:
+                    logging.debug(f"found:{form_data}")
+                if (
+                        # TODO check the date also
+                        lid == form_id
+                        and config.language_code == form_data["lang"]
+                ):
+                    logging.debug("Match found")
+                    return True
+        # Not found in exclude_list
+        return False
+    else:
+        # No exclude_list
+        return False

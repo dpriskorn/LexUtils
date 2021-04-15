@@ -186,9 +186,9 @@ def find_usage_examples_from_summary(
 def extract_summaries_from_records(records, data):
     # TODO look for more examples from riksdagen if none in the first set of
     # results fit our purpose
-    word_spaces = data["word_spaces"]
-    word_angle_parens = data["word_angle_parens"]
     word = data["word"]
+    word_spaces = " " + word + " "
+    word_angle_parens = "<" + word + ">"
     count_inexact_hits = 1
     count_exact_hits = 1
     count_summary = 1
@@ -265,7 +265,7 @@ def get_records(data):
             #     print(f"Got back summary {summary} with the " +
             #           f"correct document_id: {document_id}?")
             suitable_sentences = find_usage_examples_from_summary(
-                word_spaces=data["word_spaces"],
+                word_spaces=" " + word + " ",
                 summary=summary
             )
             if len(suitable_sentences) > 0:

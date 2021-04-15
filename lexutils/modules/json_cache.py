@@ -21,12 +21,16 @@ logger.addHandler(file_handler)
 
 
 def save_to_exclude_list(data: dict):
-    """Only has side-effects."""
+    """Only has side-effects.
+    dict has the following keys:
+    formid
+    word
+    """
     # date, lid and lang
     if data is None:
         logger.error("Error. Data was None")
     else:
-        form_id = data["form_id"]
+        formid = data["form_id"]
         word = data["word"]
         print(f"Adding {word} to local exclude list '{config.exclude_list}'")
         if config.debug_exclude_list:

@@ -9,6 +9,7 @@ version = "0.1"  # Don't touch this.
 sleep_time = 5
 
 # Settings for LexUse
+use_dataframes = False
 sparql_results_size = 40
 sparql_offset = 1000
 riksdagen_max_results_size = 500  # keep to multiples of 20

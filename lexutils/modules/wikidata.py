@@ -10,6 +10,7 @@ from wikibaseintegrator import wbi_core
 import config
 from modules import loglevel
 from modules import tui
+from modules import util
 
 # Constants
 wd_prefix = "http://www.wikidata.org/entity/"
@@ -42,47 +43,47 @@ logger.addHandler(file_handler)
 #     return count
 
 
-def fetch_senses(lid: str) -> Dict:
-    """Returns dictionary with numbers as keys and a dictionary as value with
-    sense id and gloss"""
-    # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
-    # helping with this query.
-    tui.fetching_senses()
-    logging.info(f"...from {lid}")
-    result = (sparql_query(f'''
-    SELECT
-    ?sense ?gloss
-    WHERE {{
-      VALUES ?l {{wd:{lid}}}.
-      ?l ontolex:sense ?sense.
-      ?sense skos:definition ?gloss.
-      # Get only the swedish gloss, exclude otherwise
-      FILTER(LANG(?gloss) = "{config.language_code}")
-      # Exclude lexemes without a linked QID from at least one sense
-      ?sense wdt:P5137 [].
-    }}'''))
-    senses = {}
-    number = 1
-    if result is not None:
-        for row in result:
-            senses[number] = {
-                "sense_id": row["sense"]["value"].replace(wd_prefix, ""),
-                "gloss": row["gloss"]["value"]
-            }
-            number += 1
-        logging.debug(f"senses:{senses}")
-        # This returns a tuple if one sense or a dictionary if multiple senses
-        return senses
-    else:
-        logging.error(_("Error. Got None trying to fetch senses. "+
-                        "Please report this as an issue."))
-        exit(1)
+# def fetch_senses(lid: str) -> Dict:
+#     """Returns dictionary with numbers as keys and a dictionary as value with
+#     sense id and gloss"""
+#     # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
+#     # helping with this query.
+#     tui.fetching_senses()
+#     logging.info(f"...from {lid}")
+#     result = (sparql_query(f'''
+#     SELECT
+#     ?sense ?gloss
+#     WHERE {{
+#       VALUES ?l {{wd:{lid}}}.
+#       ?l ontolex:sense ?sense.
+#       ?sense skos:definition ?gloss.
+#       # Get only the swedish gloss, exclude otherwise
+#       FILTER(LANG(?gloss) = "{config.language_code}")
+#       # Exclude lexemes without a linked QID from at least one sense
+#       ?sense wdt:P5137 [].
+#     }}'''))
+#     senses = {}
+#     number = 1
+#     if result is not None:
+#         for row in result:
+#             senses[number] = {
+#                 "sense_id": row["sense"]["value"].replace(wd_prefix, ""),
+#                 "gloss": row["gloss"]["value"]
+#             }
+#             number += 1
+#         logging.debug(f"senses:{senses}")
+#         # This returns a tuple if one sense or a dictionary if multiple senses
+#         return senses
+#     else:
+#         logging.error(_("Error. Got None trying to fetch senses. "+
+#                         "Please report this as an issue."))
+#         exit(1)
 
 
-def fetch_lexeme_forms():
-    return wikidata_query(f'''
+def fetch_lexeme_data():
+    df = wikidata_query(f'''
     SELECT DISTINCT
-    ?entity_lid ?form ?word ?catLabel ?grammatical_featureLabel ?sense ?gloss
+    ?entity_lid ?form ?word ?categoryLabel ?grammatical_featureLabel ?sense ?gloss
     WHERE {{
       ?entity_lid a ontolex:LexicalEntry; dct:language wd:{config.language_qid}.
       VALUES ?excluded {{
@@ -93,7 +94,7 @@ def fetch_lexeme_forms():
         wd:Q1153504 # interfix
       }}
       MINUS {{?entity_lid wdt:P31 ?excluded.}}
-      ?entity_lid wikibase:lexicalCategory ?cat.
+      ?entity_lid wikibase:lexicalCategory ?category.
 
       # We want only lexemes with both forms and at least one sense
       ?entity_lid ontolex:lexicalForm ?form.
@@ -112,11 +113,23 @@ def fetch_lexeme_forms():
       # We extract the word of the form
       ?form ontolex:representation ?word.
       SERVICE wikibase:label
-      {{ bd:serviceParam wikibase:language "en". }}
+      {{ bd:serviceParam wikibase:language "{config.language_code},en". }}
     }}
     limit {config.sparql_results_size}
     offset {config.sparql_offset}
     ''')
+    # https://note.nkmk.me/en/python-pandas-dataframe-rename/
+    df.rename(
+        columns={
+            'grammatical_featureLabel': 'feature',
+            'categoryLabel': 'category'
+        },
+        inplace=True
+    )
+    df["lid"] = df["entity_lid"].str.replace(util.wd_prefix,'')
+    df["formid"] = df["form"].str.replace(util.wd_prefix,'')
+    df["senseid"] = df["sense"].str.replace(util.wd_prefix,'')
+    return df
 
 # def sparql_query(query):
 #     # from https://stackoverflow.com/questions/55961615/
@@ -136,36 +149,36 @@ def fetch_lexeme_forms():
 #     else:
 #         return results
 
-def extract_wikibase_entity(result: Dict, field: str) -> str:
-    return result[field]["value"].replace(
-        wd_prefix, ""
-    )
+# def extract_wikibase_entity(result: Dict, field: str) -> str:
+#     return result[field]["value"].replace(
+#         wd_prefix, ""
+#     )
 
-def extract_wikibase_value(result: Dict, field: str) -> str:
-    return result[field]["value"].replace(
-        wd_prefix, ""
-    )
+# def extract_wikibase_value(result: Dict, field: str) -> str:
+#     return result[field]["value"].replace(
+#         wd_prefix, ""
+#     )
 
-def extract_lexeme_forms_data(result):
-    """Extract SPARQL result"""
-    # For now only used by lexuse
-    lid = extract_wikibase_entity(result, "lid")
-    form_id = extract_wikibase_entity(result, "form")
-    word = extract_wikibase_value(result, "word")
-    word_spaces = " " + word + " "
-    word_angle_parens = ">" + word + "<"
-    category = extract_wikibase_value(result, "catLabel")
-    grammatical_feature = extract_wikibase_value(
-        result, "grammatical_featureLabel",
-    )
-    return dict(
-        lid=lid,
-        form_id=form_id,
-        word=word,
-        word_spaces=word_spaces,
-        word_angle_parens=word_angle_parens,
-        category=category
-    )
+# def extract_lexeme_forms_data(result):
+#     """Extract SPARQL result"""
+#     # For now only used by lexuse
+#     lid = extract_wikibase_entity(result, "lid")
+#     form_id = extract_wikibase_entity(result, "form")
+#     word = extract_wikibase_value(result, "word")
+#     word_spaces = " " + word + " "
+#     word_angle_parens = ">" + word + "<"
+#     category = extract_wikibase_value(result, "catLabel")
+#     grammatical_feature = extract_wikibase_value(
+#         result, "grammatical_featureLabel",
+#     )
+#     return dict(
+#         lid=lid,
+#         form_id=form_id,
+#         word=word,
+#         word_spaces=word_spaces,
+#         word_angle_parens=word_angle_parens,
+#         category=category
+#     )
 
 def add_usage_example(
         document_id=None,

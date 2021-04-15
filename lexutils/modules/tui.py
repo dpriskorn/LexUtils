@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import gettext
-from modules import europarl
+
 from typing import Dict
+from rich import print
+
+from modules import europarl
 
 _ = gettext.gettext
 
@@ -17,8 +20,11 @@ def europarl_download():
     )))
 
 
-def working_on(category: str, word: str):
-    print(_("Working on the {} {}".format(category, word)))
+def working_on(category: str = None,
+               word: str = None,
+               features: str = None):
+    print(_("Working on {} ({}) with the features: {}"
+            .format(word, category, features)))
 
 
 def number_of_found_sentences(dict_length):

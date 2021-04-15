@@ -5,10 +5,12 @@ import random
 from time import sleep
 
 from typing import Dict, Union
+from rich import print
 
 import config
 from modules import download_data
 from modules import europarl
+from modules import json_cache
 from modules import ksamsok
 from modules import loglevel
 from modules import riksdagen
@@ -17,6 +19,10 @@ from modules import util
 from modules import tui
 
 _ = gettext.gettext
+
+# Program flow
+#
+# Entry through start() 
 
 # Constants
 wd_prefix = "http://www.wikidata.org/entity/"
@@ -34,7 +40,8 @@ logger.addHandler(file_handler)
 #
 # Program flow
 #
-# Entry through process_lexeme_data()
+# Entry through start()
+# Fetch data using sparqldataframes
 # Call in while loop
 #   if not excluded:
 #     process_result()
@@ -54,8 +61,8 @@ logger.addHandler(file_handler)
 #
 # Data flow
 # 
-# entrypoint: process_lexeme_data()
-# this fetches lexemes to work on and loop through them randomly
+# entrypoint: start()
+# this fetches lexemes to work on and loop through them in order
 # for each one it calls process_result()
 # this calls get_sentences_from_apis()
 # this goes through the implemented api's and fetch data from them and return
@@ -85,8 +92,19 @@ def start():
     if begin:
         # TODO store lexuse_introduction_read=1 to settings.json
         print(_("Fetching lexeme forms to work on"))
-        results = sparql.fetch_lexeme_forms()
-        process_lexeme_data(results)
+        if config.use_dataframes == True:
+            fetch_and_process_dataframes()
+            print(_("You have processed all the fetched lexemes. " +
+                    "Run LexUse again to continue working"))
+            # fetch more lexeme data?
+            # answer = util.yes_no_question("Fetch more lexemes to work on?")
+            # if answer != "":
+            #    pass 
+            
+        else:
+            print("we are here")
+            results = wikidata.fetch_lexeme_forms()
+            process_lexeme_data(results)
 
 
 def prompt_sense_approval(
@@ -120,7 +138,7 @@ def prompt_sense_approval(
             question = _("Found only one sense. " +
                         "Does this example fit the following " +
                          "gloss?\n'{}'".format(gloss))
-        if yes_no_question(question):
+        if util.yes_no_question(question):
             return {
                 "sense_id": senses[1]["sense_id"],
                 "sense_gloss": gloss
@@ -148,13 +166,15 @@ def prompt_sense_approval(
         
 def get_sentences_from_apis(data: Dict[str, str]) -> Dict:
     """Returns a dict with sentences as key and id as value"""
-    form_id = data["form_id"]
+    formid = data["formid"]
     word = data["word"]
     category = data["category"]
     lid = data["lid"]
+    features = data["features"]
     # TODO add grammatical features
-    #features = data["grammatical_features"]
-    tui.working_on(category, word)
+    tui.working_on(word=word,
+                   category=category,
+                   features=features)
     logging.info(f"lid:{lid}")
     if config.language_code == "sv":
         # TODO move to own module for each language modules/lang/sv.py
@@ -241,10 +261,11 @@ def choose_sense(sentence: str, data: Dict, senses: Dict) -> str:
             logger.debug("sense_gloss:{sense_gloss}")
             result = None
             result = wikidata.add_usage_example(
+                # FIXME where is the document_id?
                 document_id=document_id,
                 sentence=sentence,
                 lid=lid,
-                form_id=data["form_id"],
+                formid=data["formid"],
                 sense_id=sense_id,
                 word=data["word"],
                 publication_date=date,
@@ -257,8 +278,8 @@ def choose_sense(sentence: str, data: Dict, senses: Dict) -> str:
                 logger.debug(f"wbi:{result}")
                 print("Successfully added usage example " +
                       f"to {wd_prefix + lid}")
-                add_to_watchlist(lid)
-                save_to_exclude_list(data)
+                wikidata.add_to_watchlist(lid)
+                json_cache.save_to_exclude_list(data)
                 return "added" 
             else:
                 # No result from WBI, what does that mean?
@@ -288,8 +309,8 @@ def present_sentence(
     that fits if any"""
     # TODO improve return from this function
     lid = data["lid"]
-    word_count = count_words(sentence)
-    result = yes_no_skip_question(
+    word_count = util.count_words(sentence)
+    result = util.yes_no_skip_question(
            tui.found_sentence(word_count, data, sentence) 
     )
     skipped = False
@@ -305,7 +326,7 @@ def present_sentence(
 
 
 def process_result(
-        result: str,
+#        result: str,
         data: Dict,
 ):
     """This has only side-effects"""
@@ -386,7 +407,7 @@ def process_lexeme_data(results):
     """Go through the SPARQL results randomly"""
     words = []
     for result in results:
-        words.append(util.extract_wikibase_value(result, "word"))
+        words.append(wikidata.extract_wikibase_value(result, "word"))
     print(f"Got {len(words)} suitable forms from Wikidata")
     logging.debug(f"words:{words}")
     # Go through the results at random
@@ -409,7 +430,7 @@ def process_lexeme_data(results):
                 data = util.extract_lexeme_forms_data(result)
                 word = data['word']
                 logging.debug(f"random choice:{word}")
-                if in_exclude_list(data):
+                if util.in_exclude_list(data):
                     # Skip if found in the exclude_list
                     logging.debug(
                         f"Skipping result {word} found in exclude_list",
@@ -425,20 +446,80 @@ def process_lexeme_data(results):
                     if exit:
                         run = False
 
-def handle_dataframes():
+def fetch_and_process_dataframes():
+    # fetch lexeme data
+    df = wikidata.fetch_lexeme_data()
+    if len(df) == 0:
+        print(_("No suitable lexemes found. Please add senses and P5137 to"+
+                " lexemes and run the program again."))
+        exit(0)
+    # group forms by formid
+    forms = df.groupby("formid")["feature"].apply(', '.join).reset_index()
+    # They are ordered from F1-~
+    # Loop through the rows
+    # https://stackoverflow.com/a/36394939
+    for index, row in forms.iterrows():
+        formid = row["formid"]
+        # find index where formid appears in the original df
+        dfindex = df.index[df["formid"] == formid].tolist()[0]
+        #print(f"dfindex: {dfindex}")
+        word = df.loc[dfindex]["word"]
+        lid = df.loc[dfindex]["lid"]
+        features = row["feature"]
+        category = df.loc[dfindex]["category"]
+        print(lid, formid, features, category, word)
+        # print(list(df))
+        #  Check if word is in exlude list and find example sentence if not
+        if util.in_exclude_list(dict(
+                formid=formid,
+                word=word,
+                lid=lid)):
+            # Skip if found in the exclude_list
+            logging.debug(
+                f"Skipping result {word} found in exclude_list",
+            )
+            continue
+        else:
+            # not in exclude_list
+            logging.debug(f"processing:{word}")
+            senses = df.loc[df.lid == lid].groupby("senseid")
+            exit = process_result(
+                #result=result,
+                data=dict(
+                    formid=formid,
+                    word=word,
+                    features=features,
+                    category=category,
+                    lid=lid,
+                    senses=senses,  # dataframe
+                ),
+            )
+        #  present example
+        # print(type(senses))
+        # print(senses)
+        # print(list(senses))
+        # We don't need to worry about length because the SPARQL query only
+        # returns lexemes with at least one sense. :)
+        # print("Senses:")
+        # for sense in senses:
+        #     # print("printing sense")
+        #     # print(sense)
+        #     # Extract first part of tuple which has the senseid
+        #     senseid = sense[0]
+        #     # Pick from group df the first (outputs a series) and take the
+        #     # second part. Reset the index and get the gloss from the first frame 
+        #     gloss = sense[1].reset_index().at[0,"gloss"]
+        #     # print(type(gloss))
+        #     print(f"{senseid}: {gloss}")
+        #  upload
+        #  save to exclude list
+        # json_cache.save_to_exclude_list(dict(formid=formid,
+        #                                      word=word)
+        
+    exit(0)
+    
     # get dataframes from Wikidata
-    df = wikidata.fetch_lexeme_forms()
-    # https://note.nkmk.me/en/python-pandas-dataframe-rename/
-    df.rename(
-        columns={
-            'grammatical_featureLabel': 'feature',
-            'categoryLabel': 'category'
-        },
-        inplace=True
-    )
-    df["lid"] = df["entity_lid"].str.replace(util.wd_prefix,'')
-    df["formid"] = df["form"].str.replace(util.wd_prefix,'')
-    df["senseid"] = df["sense"].str.replace(util.wd_prefix,'')
+    # df = wikidata.fetch_lexeme_forms()
     #import pandas as pd
     #pd.set_option("display.max_columns", 10)
     # print(df.sample(n=1))
@@ -446,15 +527,5 @@ def handle_dataframes():
     # print(list(df))
     #grouped= df.groupby("lid", "senseid", "formid")
     #senses = df.groupby("lid", "senseid")
-    #
-    #https://stackoverflow.com/a/36394939
-    forms = df.groupby("formid")["feature"].apply(' '.join).reset_index()
-    print(forms)
-    print(list(forms))
-    # Loop through the rows
-    for index, row in forms.iterrows():
-        formid = row["formid"]
-        # find index where formid appears in the original df
-        dfindex = df.index[df["formid"] == formid].tolist()[0]
-        #print(f"dfindex: {dfindex}")
-        print(formid, row["feature"], df.loc[dfindex]["word"])
+    # print(forms)
+    # print(list(forms))
