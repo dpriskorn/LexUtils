@@ -6,14 +6,13 @@ from time import sleep
 from typing import Dict, Union
 
 import config
-from modules import download_data
-from modules import europarl
-from modules import json_cache
-from modules import ksamsok
-from modules import riksdagen
-from modules import tui
-from modules import util
-from modules import wikidata
+from lexutils.modules import download_data
+from lexutils.modules import europarl
+from lexutils.modules import json_cache
+from lexutils.modules import ksamsok
+from lexutils.modules import riksdagen
+from lexutils.modules import tui
+from lexutils.modules import util
 from rich import print
 
 _ = gettext.gettext
@@ -74,7 +73,7 @@ def introduction():
     else:
         return False
 
-
+# rewrite to OOP
 def start():
     logger = logging.getLogger(__name__)
     begin = introduction()
