@@ -3,40 +3,25 @@ import gettext
 import logging
 import random
 from time import sleep
-
 from typing import Dict, Union
-from rich import print
 
 import config
 from modules import download_data
 from modules import europarl
 from modules import json_cache
 from modules import ksamsok
-from modules import loglevel
 from modules import riksdagen
-from modules import wikidata
-from modules import util
 from modules import tui
+from modules import util
+from modules import wikidata
+from rich import print
 
 _ = gettext.gettext
 
 # Program flow
 #
-# Entry through start() 
+# Entry through start()
 
-# Constants
-wd_prefix = "http://www.wikidata.org/entity/"
-
-# Logging
-logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    logger.debug("Setting loglevel in config")
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("lexuse.log")
-logger.addHandler(file_handler)
 #
 # Program flow
 #
@@ -71,6 +56,8 @@ logger.addHandler(file_handler)
 # calling present_sentence()
 # if the user approves it we call add_usage_example() and add it to WD and the
 # lexeme to the users watchlist.
+
+
 def introduction():
     if util.yes_no_question(_("This script enables you to " +
             "semi-automatically add usage examples to " +
@@ -87,7 +74,9 @@ def introduction():
     else:
         return False
 
+
 def start():
+    logger = logging.getLogger(__name__)
     begin = introduction()
     if begin:
         # TODO store lexuse_introduction_read=1 to settings.json
@@ -102,8 +91,8 @@ def start():
             #    pass 
             
         else:
-            print("we are here")
-            results = wikidata.fetch_lexeme_forms()
+            logger.debug("Fetching lexeme data")
+            results = wikidata.fetch_lexeme_data()
             process_lexeme_data(results)
 
 
@@ -114,6 +103,7 @@ def prompt_sense_approval(
 ) -> Union[Dict,str]:
     """Prompts for validating that we have a sense matching the use example
     return dictionary with sense_id and sense_gloss if approved else False"""
+    logger = logging.getLogger(__name__)
     # TODO split this up in multiple functions
     # ->prepare_sense_selection()
     # + prompt_single_sense()
@@ -166,6 +156,7 @@ def prompt_sense_approval(
         
 def get_sentences_from_apis(data: Dict[str, str]) -> Dict:
     """Returns a dict with sentences as key and id as value"""
+    logger = logging.getLogger(__name__)
     formid = data["formid"]
     word = data["word"]
     category = data["category"]
@@ -247,6 +238,7 @@ def prompt_choose_sense(senses):
                 return False
 
 def choose_sense(sentence: str, data: Dict, senses: Dict) -> str:
+    logger = logging.getLogger(__name__)
     result = prompt_sense_approval(
         sentence=sentence,
         data=data,
@@ -320,6 +312,7 @@ def present_sentence(
         return "skip_form"
     if result is True:
         # The sentence was accepted
+        raise ValueError("Not finished")
         senses = sparql.fetch_senses(lid)
         sense_result = choose_sense(sentence, data, senses)
         return sense_result
@@ -330,6 +323,7 @@ def process_result(
         data: Dict,
 ):
     """This has only side-effects"""
+    logger = logging.getLogger(__name__)
     # ask to continue
     # if yes_no_question(f"\nWork on {data['word']}?"):
     # This dict holds the sentence as key and
