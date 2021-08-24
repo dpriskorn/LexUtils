@@ -1,8 +1,12 @@
 # LexUtils
+
+*NOTE: rewrite in progress. This is in alpha state right now.*
+
 This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
 
 When LexUtils start you can choose on of the following tools currently available:
-* LexUse (it previously had it's own repository)
+* UsageExamples (successor to LexUse)
+* Lexeme Statistics
 * ...your tool idea here... [see So9qs ideas](https://www.wikidata.org/wiki/User:So9q/Tool_ideas) 
 
 ## Requirements
@@ -27,12 +31,3 @@ password = "password"
 ## Use
 When you get a prompt like "[Y/n]" the capitalized selection can be selected by
 pressing Enter. To select "n" type "n" followed by Enter.
-
-## Debugging
-
-You can enable debugging parameters in config.py (by changing False -> True) and adding "--log=loglevel" to the command line where loglevel is one of:
-* error
-* info
-* debug
-
-Debug will give you most information, error will give you the least.
