@@ -2,13 +2,21 @@ import logging
 from enum import Enum
 from typing import List, Dict
 
-from wikibaseintegrator import wbi_core, wbi_datatype
-
-# We get the URL for the Wikibase from here
-import config
+from wikibaseintegrator import wbi_core, wbi_datatype, wbi_login
 from wikibaseintegrator.wbi_functions import execute_sparql_query
 
-from modules import wdqs
+# We get the URL for the Wikibase from here
+from lexutils import config
+from lexutils.modules import wdqs
+
+
+class WikidataLexicalCategory(Enum):
+    NOUN = "Q1084"
+    VERB = "Q24905"
+    ADVERB = "Q380057"
+    ADJECTIVE = "Q34698"
+    AFFIX = "Q62155"
+    PROPER_NOUN = "Q147276"
 
 
 class WikimediaLanguageCode(Enum):
@@ -49,30 +57,37 @@ class WikidataNamespaceLetters(Enum):
     PROPERTY = "P"
     ITEM = "Q"
     LEXEME = "L"
+    FORM = "F"
+    SENSE = "S"
 
 
 class EntityID:
     letter: WikidataNamespaceLetters
-    number: int
+    rest: int
 
     def __init__(self,
                  entity_id: str):
+        logger = logging.getLogger(__name__)
         if entity_id is not None:
+            # Remove prefix if found
+            if config.wd_prefix in entity_id:
+                logger.debug("Removing prefix")
+                entity_id = entity_id.replace(config.wd_prefix, "")
             if len(entity_id) > 1:
                 self.letter = WikidataNamespaceLetters[entity_id[0]]
-                self.number = int(entity_id[1:])
+                self.rest = int(entity_id[1:])
             else:
                 raise Exception("Entity ID was too short.")
         else:
             raise Exception("Entity ID was None")
 
     def to_string(self):
-        return f"{self.letter}{self.number}"
+        return f"{self.letter}{self.rest}"
 
-    def extract_wdqs_json_entity_id(self, json: Dict, sparql_variable: str):
-        self.__init__(json[sparql_variable]["value"].replace(
-            config.wd_prefix, ""
-        ))
+    # def extract_wdqs_json_entity_id(self, json: Dict, sparql_variable: str):
+    #     self.__init__(json[sparql_variable]["value"].replace(
+    #         config.wd_prefix, ""
+    #     ))
 
 
 class ForeignID:
@@ -90,7 +105,47 @@ class ForeignID:
 
 
 class Form:
-    pass
+    """
+    Model for a Wikibase form
+    """
+    id: str
+    representation: str
+    grammatical_features: List[EntityID]
+    # We store these on the form because they are needed
+    # to determine if an example fits or not
+    lexeme_id: str
+    lexeme_category: str
+
+    def __init__(self, json):
+        """Parse the form json"""
+        logger = logging.getLogger(__name__)
+        try:
+            logger.info(json["lexeme"])
+            self.id = EntityID(json["lexeme"]["value"]).value
+        except KeyError:
+            pass
+        try:
+            logger.info(json["form"])
+            self.id = EntityID(json["form"]["value"]).value
+        except KeyError:
+            pass
+        try:
+            self.representation: str = json["form_representation"]["value"]
+        except KeyError:
+            pass
+        try:
+            self.lexeme_category: WikidataLexicalCategory = WikidataLexicalCategory(json["category"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.grammatical_features = []
+            logger.info(json["grammatical_features"])
+            exit(0)
+            for feature in json["grammatical_features"].value.split(","):
+                feature_id = EntityID(feature).value
+                self.grammatical_features.append(feature_id)
+        except KeyError:
+            pass
 
 
 class Sense:
@@ -415,7 +470,7 @@ class LexemeLanguage:
     senses_with_P5137: int
     forms: int
     forms_with_an_example: int
-    forms_without_an_example: int
+    forms_without_an_example: List[Form]
     lexemes_count: int
 
     def __init__(self, language_code: str):
@@ -423,27 +478,41 @@ class LexemeLanguage:
         self.language_qid = WikimediaLanguageQID[self.language_code.name]
 
     def fetch_forms_missing_an_example(self):
+        logger = logging.getLogger(__name__)
         results = execute_sparql_query(f'''
             #title:Forms that have no example demonstrating them
-            select ?form ?lemma
+            select ?lexeme ?form ?form_representation ?category 
+            (group_concat(distinct ?feature; separator = ",") as ?grammatical_features)
             WHERE {{
-              ?lexemeId dct:language wd:{self.language_qid.value};
+                ?lexeme dct:language wd:{self.language_qid.value};
                         wikibase:lemma ?lemma;
+                        wikibase:lexicalCategory ?category;
                         ontolex:lexicalForm ?form.
-              MINUS {{
-              ?lexemeId p:P5831 ?statement.
-              ?statement ps:P5831 ?example;
+                ?form ontolex:representation ?form_representation;
+                wikibase:grammaticalFeature ?feature.
+                MINUS {{
+                ?lexeme p:P5831 ?statement.
+                ?statement ps:P5831 ?example;
                          pq:P6072 [];
                          pq:P5830 ?form_with_example.
-              }}
-            }}''')
-        self.lexemes = []
-        for lexeme_json in results:
-            logging.debug(f"lexeme_json:{lexeme_json}")
-            l = Lexeme.parse_from_wdqs_json(lexeme_json)
-            self.lexemes.append(l)
-        logging.info(f"Got {len(self.lexemes)} lexemes from WDQS for language {self.language_code.name}")
-
+                }}
+            }}
+            group by ?lexeme ?form ?form_representation ?category
+            limit 50''')
+        self.forms_without_an_example = []
+        logger.info("Got the data")
+        logger.info(f"data:{results.keys()}")
+        try:
+            #logger.info(f"data:{results['results']['bindings']}")
+            for entry in results["results"]['bindings']:
+                logger.info(f"data:{entry.keys()}")
+                logging.info(f"lexeme_json:{entry}")
+                f = Form(entry)
+                self.forms_without_an_example.append(f)
+        except KeyError:
+            logger.error("Got no results")
+        logger.info(f"Got {len(self.forms_without_an_example)} "
+                     f"forms from WDQS for language {self.language_code.name}")
 
     def fetch_lexemes(self):
         # TODO port to use the Lexeme class instead of heavy dataframes which we don't need
