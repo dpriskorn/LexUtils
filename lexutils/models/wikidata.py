@@ -10,7 +10,7 @@ from lexutils import config
 from lexutils.modules import wdqs
 
 
-class WikidataGrammaticalFeatures(Enum):
+class WikidataGrammaticalFeature(Enum):
     # Swedish
     ACTIVE_VOICE = "Q1317831"
     PRETERITE = "Q442485"
@@ -19,6 +19,7 @@ class WikidataGrammaticalFeatures(Enum):
     SUPINE = "Q548470"
     IMPERATIVE = "Q22716"
     PASSIVE_VOICE = "Q1194697"
+    SINGULAR = "Q110786"
     # English
     SIMPLE_PRESENT = "Q3910936"
     THIRD_PERSON_SINGULAR = "Q51929447"
@@ -161,7 +162,7 @@ class Form:
             logger.info(json["grammatical_features"])
             for feature in json["grammatical_features"]["value"].split(","):
                 # TODO parse features with Enum
-                feature_id = WikidataGrammaticalFeatures(str(EntityID(feature)))
+                feature_id = WikidataGrammaticalFeature(str(EntityID(feature)))
                 self.grammatical_features.append(feature_id)
         except KeyError:
             pass
