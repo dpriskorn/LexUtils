@@ -2,22 +2,12 @@
 import gettext
 import json
 import logging
+import os
+from datetime import datetime
 
-import config # type: ignore
-from modules import loglevel # type: ignore
+from lexutils import config # type: ignore
 
 _ = gettext.gettext
-
-# Logging
-logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    logger.debug(_( "Setting loglevel in config" ))
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("json_cache.log")
-logger.addHandler(file_handler)
 
 
 def save_to_exclude_list(data: dict):
@@ -26,6 +16,7 @@ def save_to_exclude_list(data: dict):
     formid
     word
     """
+    logger = logging.getLogger(__name__)
     # date, lid and lang
     if data is None:
         logger.error("Error. Data was None")

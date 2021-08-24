@@ -7,21 +7,14 @@ import sys
 
 import requests
 
-import config
-from modules import loglevel
+from lexutils import config
+from lexutils.modules import tui
 
 _ = gettext.gettext
 
-logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("download_data.log")
-logger.addHandler(file_handler)
 
 def fetch():
+    logger = logging.getLogger(__name__)
     # for now we only support europarl data from
     # https://github.com/egils-consulting/LexUse-data
     # download choosen language file
@@ -35,7 +28,7 @@ def fetch():
         logging.info(_("Data for {} has ".format(config.language) +
                        "already been downloaded."))
     else:
-        tui.sentence_download()
+        tui.europarl_download()
         with open(filename, 'wb') as output_file:
             response = requests.get(url, stream=True)
             total_length = response.headers.get('content-length')

@@ -7,21 +7,11 @@ import httpx
 from pprint import pprint
 from typing import Dict, List
 
-import config
-from modules import loglevel
-from modules import util
-from modules import tui
+from lexutils import config
+from lexutils.modules import util
+from lexutils.modules import tui
 
 _ = gettext.gettext
-
-logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("ksamsok.log")
-logger.addHandler(file_handler)
 
 # Constants
 headers = {'Accept': 'application/json'}
@@ -35,6 +25,7 @@ source = "ksamsok"
 # This file is forked from riksdagen.py and improved with typing 
 
 async def async_fetch(word: str) -> List:
+    logger = logging.getLogger(__name__)
     # This function is called for every task.
     async def get(url: str, session):
         """Accepts a url and a httpx session"""
@@ -72,6 +63,7 @@ async def async_fetch(word: str) -> List:
         return results
 
 def get_result_count(word: str) -> int:
+    logger = logging.getLogger(__name__)
     url = ("http://kulturarvsdata.se/ksamsok/api?"+
                f"x-api=test&method=search&hitsPerPage=1&query={word}")
     r = httpx.get(url, headers=headers)
@@ -82,6 +74,7 @@ def get_result_count(word: str) -> int:
 
 
 def process_async_responses(word: str) -> List:
+    logger = logging.getLogger(__name__)
     tui.downloading_from(api_name)
     results = asyncio.run(async_fetch(word))
     records = []
@@ -99,6 +92,7 @@ def process_async_responses(word: str) -> List:
 
 
 def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
+    logger = logging.getLogger(__name__)
     # First find out the number of results
     # print(r)
     word = data["word"]
@@ -161,6 +155,7 @@ def extract_descriptions_from_records(records: List, data: Dict) -> Dict:
 def get_records(data: dict) -> Dict:
     """Return dictionary similar to riksdagen.py with the sentence as key and a
     dictionary as value that contains details about the sentence."""
+    logger = logging.getLogger(__name__)
     word = data["word"]
     records = process_async_responses(word)
     if records is not None:

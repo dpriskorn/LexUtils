@@ -2,22 +2,12 @@
 import gettext
 import logging
 
-import config
-from modules import loglevel
-from modules import tui
+from lexutils import config
+from lexutils.modules import tui
 
 _ = gettext.gettext
 
 # TODO move common code to common swedish module
-logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    # print("Setting loglevel in config")
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("europarl.log")
-logger.addHandler(file_handler)
 
 # Constants
 api_name = _("Europarl corpus")
@@ -25,6 +15,7 @@ api_name = _("Europarl corpus")
 def find_lines(word):
     """Returns a dictionary with line as
     key and linenumber as value"""
+    logger = logging.getLogger(__name__)
     records = {}
     tui.downloading_from(api_name)
     with open(f'data_{config.language_code}.txt', 'r') as searchfile:
@@ -55,10 +46,10 @@ def find_lines(word):
     return records
 
 
-def get_records(data):
-    word = data["word"]
+def get_records(form):
+    logger = logging.getLogger(__name__)
     # The lines are already split in sentences in the corpus. so we just return
     # them as is
-    return find_lines(word)
+    return find_lines(form.representation)
 
     # TODO check len of records
