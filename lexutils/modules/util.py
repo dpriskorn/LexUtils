@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
-from datetime import datetime, timezone
 import gettext
 import json
 import logging
 import os.path
 import sys
-#from time import sleep
-# import asyncio
 
 import httpx
-from typing import Dict, Union
-from wikibaseintegrator import wbi_core, wbi_login
 
-import config
-from modules import loglevel
+from lexutils import config
+
+# from time import sleep
+# import asyncio
 
 _ = gettext.gettext
 
@@ -34,14 +31,7 @@ except AssertionError:
 
 # Logging
 logger = logging.getLogger(__name__)
-if config.loglevel is None:
-    # Set loglevel
-    logger.debug(_( "Setting loglevel in config" ))
-    loglevel.set_loglevel()
-logger.setLevel(config.loglevel)
-logger.level = logger.getEffectiveLevel()
-file_handler = logging.FileHandler("util.log")
-logger.addHandler(file_handler)
+
 
 # Constants
 wd_prefix = "http://www.wikidata.org/entity/"

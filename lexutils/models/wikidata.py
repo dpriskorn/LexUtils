@@ -20,6 +20,11 @@ class WikidataGrammaticalFeature(Enum):
     IMPERATIVE = "Q22716"
     PASSIVE_VOICE = "Q1194697"
     SINGULAR = "Q110786"
+    NOMINATIVE_CASE = "Q131105"
+    INDEFINITE = "Q53997857"
+    DEFINITE = "Q53997851"
+    PLURAL = "Q146786"
+    GENITIVE_CASE = "Q146233"
     # English
     SIMPLE_PRESENT = "Q3910936"
     THIRD_PERSON_SINGULAR = "Q51929447"
@@ -127,7 +132,7 @@ class Form:
     """
     id: str
     representation: str
-    grammatical_features: List[EntityID]
+    grammatical_features: List[WikidataGrammaticalFeature]
     # We store these on the form because they are needed
     # to determine if an example fits or not
     lexeme_id: str

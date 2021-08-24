@@ -18,7 +18,7 @@ def find_lines(word):
     logger = logging.getLogger(__name__)
     records = {}
     tui.downloading_from(api_name)
-    with open(f'data_{config.language_code}.txt', 'r') as searchfile:
+    with open(f'data_{config.language_code}.txt', 'r', encoding="UTF-8") as searchfile:
         number = 1
         for line in searchfile:
             # if number % 50000 == 0:

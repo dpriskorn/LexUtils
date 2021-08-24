@@ -4,11 +4,14 @@ import gettext
 from typing import Dict
 from rich import print
 
-from modules import europarl
+from lexutils import config
+from lexutils.models.wikidata import Form
+from lexutils.modules import europarl
 
 _ = gettext.gettext
 
-# Functions in here only have side-effects
+# Functions in here only have side-effects and use .format
+# because gettext does not work with f-strings
 
 def downloading_from(api_name):
     print(_("Downloading from {}...".format(api_name)))
@@ -20,11 +23,14 @@ def europarl_download():
     )))
 
 
-def working_on(category: str = None,
-               word: str = None,
-               features: str = None):
-    print(_("Working on {} ({}) with the features: {}"
-            .format(word, category, features)))
+def working_on(form: Form):
+    features = []
+    for feature in form.grammatical_features:
+        features.append(feature.name.title())
+    print(_("Working on {} ({}) with the features: {}".format(
+        form.representation, form.lexeme_category,
+        ", ".join(features)
+    )))
 
 
 def number_of_found_sentences(dict_length):
