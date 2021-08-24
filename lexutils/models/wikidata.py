@@ -10,6 +10,20 @@ from lexutils import config
 from lexutils.modules import wdqs
 
 
+class WikidataGrammaticalFeatures(Enum):
+    # Swedish
+    ACTIVE_VOICE = "Q1317831"
+    PRETERITE = "Q442485"
+    INFINITIVE = "Q179230"
+    PRESENT_TENSE = "Q192613"
+    SUPINE = "Q548470"
+    IMPERATIVE = "Q22716"
+    PASSIVE_VOICE = "Q1194697"
+    # English
+    SIMPLE_PRESENT = "Q3910936"
+    THIRD_PERSON_SINGULAR = "Q51929447"
+
+
 class WikidataLexicalCategory(Enum):
     NOUN = "Q1084"
     VERB = "Q24905"
@@ -63,7 +77,8 @@ class WikidataNamespaceLetters(Enum):
 
 class EntityID:
     letter: WikidataNamespaceLetters
-    rest: int
+    # This can be e.g. "32698-F1" in the case of a lexeme
+    rest: str
 
     def __init__(self,
                  entity_id: str):
@@ -74,15 +89,16 @@ class EntityID:
                 logger.debug("Removing prefix")
                 entity_id = entity_id.replace(config.wd_prefix, "")
             if len(entity_id) > 1:
-                self.letter = WikidataNamespaceLetters[entity_id[0]]
-                self.rest = int(entity_id[1:])
+                logger.info(f"entity_id:{entity_id}")
+                self.letter = WikidataNamespaceLetters(entity_id[0])
+                self.rest = entity_id[1:]
             else:
-                raise Exception("Entity ID was too short.")
+                raise ValueError("Entity ID was too short.")
         else:
-            raise Exception("Entity ID was None")
+            raise ValueError("Entity ID was None")
 
-    def to_string(self):
-        return f"{self.letter}{self.rest}"
+    def __str__(self):
+        return f"{self.letter.value}{self.rest}"
 
     # def extract_wdqs_json_entity_id(self, json: Dict, sparql_variable: str):
     #     self.__init__(json[sparql_variable]["value"].replace(
@@ -121,12 +137,12 @@ class Form:
         logger = logging.getLogger(__name__)
         try:
             logger.info(json["lexeme"])
-            self.id = EntityID(json["lexeme"]["value"]).value
+            self.id = str(EntityID(json["lexeme"]["value"]))
         except KeyError:
             pass
         try:
             logger.info(json["form"])
-            self.id = EntityID(json["form"]["value"]).value
+            self.id = str(EntityID(json["form"]["value"]))
         except KeyError:
             pass
         try:
@@ -134,15 +150,18 @@ class Form:
         except KeyError:
             pass
         try:
-            self.lexeme_category: WikidataLexicalCategory = WikidataLexicalCategory(json["category"]["value"])
-        except KeyError:
-            pass
+            self.lexeme_category: WikidataLexicalCategory = WikidataLexicalCategory(
+                str(EntityID(json["category"]["value"]))
+            )
+        except:
+            raise ValueError(f'Could not find lexical category from '
+                             f'{json["category"]["value"]}')
         try:
             self.grammatical_features = []
             logger.info(json["grammatical_features"])
-            exit(0)
-            for feature in json["grammatical_features"].value.split(","):
-                feature_id = EntityID(feature).value
+            for feature in json["grammatical_features"]["value"].split(","):
+                # TODO parse features with Enum
+                feature_id = WikidataGrammaticalFeatures(str(EntityID(feature)))
                 self.grammatical_features.append(feature_id)
         except KeyError:
             pass
@@ -180,7 +199,6 @@ class Lexeme:
                 self.senses.append(sense)
             if variable == "category":
                 self.lexical_category = EntityID(wdqs.extract_wikibase_value(variable))
-
 
     def url(self):
         return f"{config.wd_prefix}{self.id}"
@@ -519,7 +537,8 @@ class LexemeLanguage:
         raise Exception("This is deprecated.")
         results = execute_sparql_query(f'''
         SELECT DISTINCT
-        ?entity_lid ?form ?word (?categoryLabel as ?category) (?grammatical_featureLabel as ?feature) ?sense ?gloss
+        ?entity_lid ?form ?word (?categoryLabel as ?category) 
+        (?grammatical_featureLabel as ?feature) ?sense ?gloss
         WHERE {{
           ?entity_lid a ontolex:LexicalEntry; dct:language wd:{self.language_qid.value}.
           VALUES ?excluded {{
@@ -559,7 +578,8 @@ class LexemeLanguage:
             logging.debug(f"lexeme_json:{lexeme_json}")
             l = Lexeme.parse_wdqs_json(lexeme_json)
             self.lexemes.append(l)
-        logging.info(f"Got {len(self.lexemes)} lexemes from WDQS for language {self.language_code.name}")
+        logging.info(f"Got {len(self.lexemes)} lexemes from "
+                     f"WDQS for language {self.language_code.name}")
 
     def count_number_of_lexemes(self):
         """Returns an int"""
@@ -624,11 +644,14 @@ class LexemeLanguage:
         self.calculate_senses_with_p5137_per_lexeme()
 
     def calculate_senses_with_p5137_per_lexeme(self):
-        self.senses_with_P5137_per_lexeme = round(self.senses_with_P5137 / self.lexemes_count, 3)
+        self.senses_with_P5137_per_lexeme = round(
+            self.senses_with_P5137 / self.lexemes_count, 3
+        )
 
     def print(self):
         print(f"{self.language_code.name} has "
-              f"{self.senses_with_P5137} senses with linked QID in total on {self.lexemes_count} lexemes "
+              f"{self.senses_with_P5137} senses with linked QID in "
+              f"total on {self.lexemes_count} lexemes "
               f"which is {self.senses_with_P5137_per_lexeme} per lexeme.")
 
 
@@ -661,15 +684,21 @@ class LexemeStatistics:
             language = LexemeLanguage(language_code)
             language.calculate_statistics()
             language_objects.append(language)
-        sorted_by_senses_with_p5137_per_lexeme = sorted(language_objects,
-                                                        key=lambda language: language.senses_with_P5137_per_lexeme,
-                                                        reverse=True)
+        sorted_by_senses_with_p5137_per_lexeme = sorted(
+            language_objects,
+            key=lambda language: language.senses_with_P5137_per_lexeme,
+            reverse=True
+        )
         print("Languages ranked by most senses linked to items:")
         for language in sorted_by_senses_with_p5137_per_lexeme:
             language.print()
         # Generator expression
-        total_lexemes_among_supported_languages: int = sum(language.lexemes_count for language in language_objects)
+        total_lexemes_among_supported_languages: int = sum(
+            language.lexemes_count for language in language_objects
+        )
         # logger.debug(f"total:{total_lexemes_among_supported_languages}")
-        percent = round(total_lexemes_among_supported_languages * 100 / self.total_lexemes)
+        percent = round(
+            total_lexemes_among_supported_languages * 100 / self.total_lexemes
+        )
         print(f"These languages have {total_lexemes_among_supported_languages} "
               f"lexemes out of {self.total_lexemes} in total ({percent}%)")
