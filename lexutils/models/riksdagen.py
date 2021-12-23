@@ -25,7 +25,8 @@ class RiksdagenRecord(Record):
         except KeyError:
             raise KeyError("Could not find id")
         try:
-            self.date = datetime.strptime(json["datum"], "%d%m%Y")
+            # self.date = datetime.strptime(json["datum"], "%d%m%Y")
+            self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")
         except KeyError:
             raise KeyError("Could not find id")
 
