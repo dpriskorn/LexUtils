@@ -37,6 +37,7 @@ class WikidataLexicalCategory(Enum):
     ADJECTIVE = "Q34698"
     AFFIX = "Q62155"
     PROPER_NOUN = "Q147276"
+    PRONOUN = "Q36224"
 
 
 class WikimediaLanguageCode(Enum):
