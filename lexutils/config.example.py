@@ -7,6 +7,7 @@ password = ""
 # Global settings
 version = "0.1"  # Don't touch this.
 sleep_time = 5
+wd_prefix = "http://www.wikidata.org/entity/"
 
 # Settings for LexUse
 use_dataframes = False
