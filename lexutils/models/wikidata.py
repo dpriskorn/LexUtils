@@ -28,6 +28,8 @@ class WikidataGrammaticalFeature(Enum):
     # English
     SIMPLE_PRESENT = "Q3910936"
     THIRD_PERSON_SINGULAR = "Q51929447"
+    POSSESSIVE_PRONOUN = "Q1502460"
+    NEUTER = "Q1775461"
 
 
 class WikidataLexicalCategory(Enum):
