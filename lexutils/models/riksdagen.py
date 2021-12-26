@@ -3,17 +3,23 @@ from datetime import datetime
 import re
 from typing import List
 
-from lexutils import config
+from wikibaseintegrator.wbi_helpers import execute_sparql_query
+
+from lexutils.config.config import debug_summaries, debug_excludes, max_word_count, min_word_count, debug_sentences, \
+    debug_duplicates
+from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record
 from lexutils.models.wikidata import Form
 from lexutils.modules import util
+from lexutils.modules.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
 
 
 class RiksdagenRecord(Record):
-    language_style = "formal"
-    type_of_reference = "written"
-    source = "riksdagen"
+    base_url = "https://data.riksdagen.se/dokument/"
+    language_style = LanguageStyle.FORMAL
+    type_of_reference = ReferenceType.WRITTEN
+    source = SupportedExampleSources.RIKSDAGEN
 
     def __init__(self, json):
         try:
@@ -36,12 +42,12 @@ class RiksdagenRecord(Record):
             inexact_hit = True
             if f" {word} " in self.summary or f">{word}<" in self.summary:
                 self.exact_hit = True
-                if config.debug_summaries:
+                if debug_summaries:
                     logging.debug(
                         f"found word_spaces or word_angle_parens in {self.summary}"
                     )
             else:
-                if config.debug_summaries:
+                if debug_summaries:
                     logging.info("No exact hit in summary. Skipping.")
         # else:
         #     if config.debug_summaries and added is False:
@@ -100,8 +106,8 @@ class RiksdagenRecord(Record):
                 # Exclude based on length of the sentence
                 word_count = util.count_words(sentence)
                 if (
-                        word_count > config.max_word_count or
-                        word_count < config.min_word_count
+                        word_count > max_word_count or
+                        word_count < min_word_count
                 ):
                     exclude_this_sentence = True
                     # Exclude by breaking out of the iteration early
@@ -120,7 +126,7 @@ class RiksdagenRecord(Record):
                     for excluded_word in excluded_words:
                         result = sentence.upper().find(excluded_word)
                         if result != -1:
-                            if config.debug_excludes:
+                            if debug_excludes:
                                 sentence = sentence.replace("\n", "")
                                 # .replace("-", "")
                                 # .replace(ellipsis, ""))
@@ -147,7 +153,7 @@ class RiksdagenRecord(Record):
                                 .replace("- ", "")
                                 .replace(ellipsis, "")
                                 .replace("  ", " "))
-                    if config.debug_sentences:
+                    if debug_sentences:
                         logging.debug(f"suitable_sentence:{sentence}")
                     # Append an Example object
                     usage_examples.append(UsageExample(sentence, self))
@@ -158,7 +164,22 @@ class RiksdagenRecord(Record):
         sentences_without_duplicates = remove_duplicates(
             substitute_common_abbreviations(cleaned_summary)
         )
-        if config.debug_duplicates:
+        if debug_duplicates:
             print("Sentences after duplicate removal " +
                   f"{sentences_without_duplicates}")
         return find_suitable_usage_examples(sentences_without_duplicates, cleaned_summary, form)
+
+    def lookup_qid(self):
+        # Given a docuemnt id lookup the QID if any
+        result = execute_sparql_query(
+            f"""
+            SELECT ?item
+            WHERE 
+            {{
+              ?item wdt:P8433 "{self.id}".
+            }}
+            """
+        )
+        logging.info(f"result:{result}")
+        self.document_qid = extract_the_first_wikibase_value_from_a_wdqs_result_set(result, "item")
+        logging.info(f"document_qid:{self.document_qid}")

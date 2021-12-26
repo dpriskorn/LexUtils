@@ -5,9 +5,10 @@ username = ""
 password = ""
 
 # Global settings
-version = "0.1"  # Don't touch this.
+version = "0.2-alpha"  # Don't touch this.
 sleep_time = 5
 wd_prefix = "http://www.wikidata.org/entity/"
+user_agent = f"LexUtils/{version}"
 
 # Settings for LexUse
 use_dataframes = False

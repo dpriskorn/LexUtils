@@ -6,6 +6,7 @@ class UsageExample:
     content: str
     record: Record
 
+
     def __init__(self, sentence: str, record: Record):
         try:
             self.content = sentence

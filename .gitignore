@@ -8,4 +8,4 @@ tmp/
 build
 htmlcov
 *__pycache__*
-lexutils/config.py
+lexutils/config/config.py

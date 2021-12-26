@@ -7,16 +7,13 @@ import sys
 
 import httpx
 
-from lexutils import config
+from lexutils.config import config
 
 # from time import sleep
 # import asyncio
+from lexutils.config.enums import Choices
 
 _ = gettext.gettext
-
-# Terminology used
-# record = sentence + data
-# sentence = string of text usable as a usage example on a lexeme in WD
 
 # Check version
 try:
@@ -33,10 +30,7 @@ except AssertionError:
 logger = logging.getLogger(__name__)
 
 
-# Constants
-wd_prefix = "http://www.wikidata.org/entity/"
-
-def yes_no_skip_question(message: str):
+def yes_no_skip_question(message: str) -> Choices:
     # https://www.quora.com/
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
@@ -44,12 +38,13 @@ def yes_no_skip_question(message: str):
         answer = input(_("{} [(Y)es/(n)o/(s)kip this form]: ".format(message)))
         if len(answer) == 0 or answer[0].lower() in ('y', 'n', 's'):
             if len(answer) == 0:
-                return True
+                return Choices.ACCEPT_USAGE_EXAMPLE
             elif answer[0].lower() == 's':
-                return None
+                return Choices.SKIP_FORM
             else:
                 # the == operator just returns a boolean,
-                return answer[0].lower() == 'y'
+                if answer[0].lower() == 'y':
+                    return Choices.ACCEPT_USAGE_EXAMPLE
 
 
 def yes_no_question(message: str):
@@ -64,6 +59,7 @@ def yes_no_question(message: str):
             else:
                 # the == operator just returns a boolean,
                 return answer[0].lower() == 'y'
+
 
 async def async_fetch_from_url(url):
     async with httpx.AsyncClient() as client:

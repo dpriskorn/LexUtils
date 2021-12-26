@@ -1,13 +1,22 @@
 import logging
+from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Dict
+# from time import sleep
+from typing import List
 
-from wikibaseintegrator import wbi_core, wbi_datatype, wbi_login
-from wikibaseintegrator.wbi_functions import execute_sparql_query
+from wikibaseintegrator import wbi_config, WikibaseIntegrator, wbi_login
+from wikibaseintegrator.datatypes import ExternalID, Form as WBIForm, Sense as WBISense, Time, MonolingualText, Item
+from wikibaseintegrator.wbi_enums import ActionIfExists
+from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 # We get the URL for the Wikibase from here
-from lexutils import config
+import lexutils.config.config as config
+from lexutils.config.enums import SupportedExampleSources
+from lexutils.helpers.console import console
+from lexutils.models.usage_example import UsageExample
 from lexutils.modules import wdqs
+
+wbi_config.config['USER_AGENT'] = config.user_agent
 
 
 class WikidataGrammaticalFeature(Enum):
@@ -30,6 +39,10 @@ class WikidataGrammaticalFeature(Enum):
     THIRD_PERSON_SINGULAR = "Q51929447"
     POSSESSIVE_PRONOUN = "Q1502460"
     NEUTER = "Q1775461"
+    COMMON_GENDER = "Q1305037"
+    OBLIQUE_CASE = "Q1233197"
+    VOCATIVE_CASE = "Q185077"
+    POSITIVE = "Q3482678"
 
 
 class WikidataLexicalCategory(Enum):
@@ -98,7 +111,7 @@ class EntityID:
                 logger.debug("Removing prefix")
                 entity_id = entity_id.replace(config.wd_prefix, "")
             if len(entity_id) > 1:
-                logger.info(f"entity_id:{entity_id}")
+                logger.debug(f"entity_id:{entity_id}")
                 self.letter = WikidataNamespaceLetters(entity_id[0])
                 self.rest = entity_id[1:]
             else:
@@ -117,16 +130,16 @@ class EntityID:
 
 class ForeignID:
     id: str
-    property: str  # This is the property with type ExternalId
+    prop_nr: str  # This is the prop_nr with type ExternalId
     source_item_id: str  # This is the Q-item for the source
 
     def __init__(self,
                  id: str = None,
-                 property: str = None,
+                 prop_nr: str = None,
                  source_item_id: str = None):
         self.id = id
-        self.property = EntityID(property).to_string()
-        self.source_item_id = EntityID(source_item_id).to_string()
+        self.prop_nr = str(EntityID(prop_nr))
+        self.source_item_id = str(EntityID(source_item_id))
 
 
 class Form:
@@ -146,7 +159,7 @@ class Form:
         logger = logging.getLogger(__name__)
         try:
             logger.info(json["lexeme"])
-            self.id = str(EntityID(json["lexeme"]["value"]))
+            self.lexeme_id = str(EntityID(json["lexeme"]["value"]))
         except KeyError:
             pass
         try:
@@ -175,9 +188,34 @@ class Form:
         except KeyError:
             pass
 
+    def __str__(self):
+        return f"{self.id}/{self.lexeme_id}/{self.representation}"
+
+    def url(self):
+        return f"{config.wd_prefix}{self.id}"
+
 
 class Sense:
-    pass
+    """
+    Model for a Wikibase sense
+    """
+    id: str
+    # For now we only support one gloss
+    gloss: str
+
+    # statements: List[statement]
+
+    def __init__(self,
+                 id: str = None,
+                 gloss: str = None):
+        self.id = str(EntityID(id))
+        self.gloss = gloss.strip()
+
+    def __str__(self):
+        return f"{self.id}: {self.gloss}"
+
+    def url(self):
+        return f"{config.wd_prefix}{self.id}"
 
 
 class Lexeme:
@@ -191,9 +229,10 @@ class Lexeme:
                  id: str = None,
                  lemma: str = None,
                  lexical_category: str = None):
-        self.id = EntityID(id).to_string()
+        self.id = str(EntityID(id))
         self.lemma = lemma
-        self.lexical_category = EntityID(lexical_category)
+        if lexical_category is not None:
+            self.lexical_category = EntityID(lexical_category)
 
     def parse_from_wdqs_json(self, json):
         self.forms = []
@@ -212,36 +251,36 @@ class Lexeme:
     def url(self):
         return f"{config.wd_prefix}{self.id}"
 
-    def upload_foreign_id_to_wikidata(self,
-                                      foreign_id: ForeignID = None):
-        """Upload to enrich the wonderful Wikidata <3"""
-        logger = logging.getLogger(__name__)
-        if foreign_id is None:
-            raise Exception("Foreign id was None")
-        print(f"Uploading {foreign_id.id} to {self.id}: {self.lemma}")
-        statement = wbi_datatype.ExternalID(
-            prop_nr=foreign_id.property,
-            value=foreign_id.id,
-        )
-        described_by_source = wbi_datatype.ItemID(
-            prop_nr="P1343",  # stated in
-            value=foreign_id.source_item_id
-        )
-        # TODO does this overwrite or append?
-        item = wbi_core.ItemEngine(
-            data=[statement,
-                  described_by_source],
-            item_id=self.id
-        )
-        # debug WBI error
-        # print(item.get_json_representation())
-        result = item.write(
-            config.login_instance,
-            edit_summary=f"Added foreign identifier with [[{config.tool_url}]]"
-        )
-        logger.debug(f"result from WBI:{result}")
-        print(self.url())
-        # exit(0)
+    # def upload_foreign_id_to_wikidata(self,
+    #                                   foreign_id: ForeignID = None):
+    #     """Upload to enrich the wonderful Wikidata <3"""
+    #     logger = logging.getLogger(__name__)
+    #     if foreign_id is None:
+    #         raise Exception("Foreign id was None")
+    #     print(f"Uploading {foreign_id.id} to {self.id}: {self.lemma}")
+    #     statement = ExternalID(
+    #         prop_nr=foreign_id.prop_nr,
+    #         value=foreign_id.id,
+    #     )
+    #     described_by_source = Item(
+    #         prop_nr="P1343",  # stated in
+    #         value=foreign_id.source_item_id
+    #     )
+    #     # TODO does this overwrite or append?
+    #     item = ItemEngine(
+    #         data=[statement,
+    #               described_by_source],
+    #         item_id=self.id
+    #     )
+    #     # debug WBI error
+    #     # print(item.get_json_representation())
+    #     result = item.write(
+    #         config.login_instance,
+    #         edit_summary=f"Added foreign identifier with [[{config.tool_url}]]"
+    #     )
+    #     logger.debug(f"result from WBI:{result}")
+    #     print(self.url())
+    #     # exit(0)
 
     def count_number_of_senses_with_P5137(self):
         """Returns an int"""
@@ -260,197 +299,192 @@ class Lexeme:
         return count
 
     def add_usage_example(
-            document_id=None,
-            sentence=None,
-            lid=None,
-            form_id=None,
-            sense_id=None,
-            word=None,
-            publication_date=None,
-            language_style=None,
-            type_of_reference=None,
-            source=None,
-            line=None,
+            self,
+            form: Form = None,
+            sense: Sense = None,
+            usage_example: UsageExample = None
     ):
+        """This only has side effects"""
         # TODO convert to use OOP
         logger = logging.getLogger(__name__)
+        if form is None:
+            raise ValueError("form was None")
+        if sense is None:
+            raise ValueError("sense was None")
+        if usage_example is None:
+            raise ValueError("usage_example was None")
+        logger.info("Adding usage example with WBI")
         # Use WikibaseIntegrator aka wbi to upload the changes in one edit
-        link_to_form = wbi_datatype.Form(
+        link_to_form = WBIForm(
             prop_nr="P5830",
-            value=form_id,
-            is_qualifier=True
+            # FIXME debug why this is the lexeme id
+            value=form.id
         )
-        link_to_sense = wbi_datatype.Sense(
+        link_to_sense = WBISense(
             prop_nr="P6072",
-            value=sense_id,
-            is_qualifier=True
+            value=sense.id
         )
-        if language_style == "formal":
-            style = "Q104597585"
-        else:
-            if language_style == "informal":
-                style = "Q901711"
-            else:
-                print(_("Error. Language style {} ".format(language_style) +
-                        "not one of (formal,informal). Please report a bug at " +
-                        "https://github.com/egils-consulting/LexUtils/issues"))
-                sleep(config.sleep_time)
-                return "error"
+        # if language_style == "formal":
+        #     style = "Q104597585"
+        # else:
+        #     if language_style == "informal":
+        #         style = "Q901711"
+        #     else:
+        #         print(_("Error. Language style {} ".format(language_style) +
+        #                 "not one of (formal,informal). Please report a bug at " +
+        #                 "https://github.com/egils-consulting/LexUtils/issues"))
+        #         sleep(config.sleep_time)
+        #         return "error"
         logging.debug("Generating qualifier language_style " +
-                      f"with {style}")
-        language_style_qualifier = wbi_datatype.ItemID(
+                      f"with {usage_example.record.language_style.name}")
+        language_style_qualifier = Item(
             prop_nr="P6191",
-            value=style,
-            is_qualifier=True
+            value=usage_example.record.language_style.value
         )
-        # oral or written
-        if type_of_reference == "written":
-            medium = "Q47461344"
-        else:
-            if type_of_reference == "oral":
-                medium = "Q52946"
-            else:
-                print(_("Error. Type of reference {} ".format(type_of_reference) +
-                        "not one of (written,oral). Please report a bug at " +
-                        "https://github.com/egils-consulting/LexUtils/issues"))
-                sleep(config.sleep_time)
-                return "error"
-        logging.debug(_("Generating qualifier type of reference " +
-                        "with {}".format(medium)))
-        type_of_reference_qualifier = wbi_datatype.ItemID(
+        logging.info("Generating qualifier type of reference " +
+                        "with {}".format(usage_example.record.type_of_reference))
+        type_of_reference_qualifier = Item(
             prop_nr="P3865",
-            value=medium,
-            is_qualifier=True
+            value=usage_example.record.type_of_reference.value
         )
-        if source == "riksdagen":
-            if publication_date is not None:
-                publication_date = datetime.fromisoformat(publication_date)
-            else:
-                print(_("Publication date of document {} ".format(document_id) +
-                        "is missing. We have no fallback for that at the moment. " +
-                        "Abort adding usage example."))
-                return "error"
-            stated_in = wbi_datatype.ItemID(
-                prop_nr="P248",
-                value="Q21592569",
-                is_reference=True
+        point_in_time = Time(
+            prop_nr="P813",  # Fetched today
+            time=datetime.utcnow().replace(
+                tzinfo=timezone.utc
+            ).replace(
+                hour=0,
+                minute=0,
+                second=0,
+            ).strftime("+%Y-%m-%dT%H:%M:%SZ")
+        )
+        if usage_example.record.date is not None:
+            publication_date = Time(
+                prop_nr="P577",  # Publication date
+                time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z")
             )
-            # TODO lookup if we have a QID for the source
-            document_id = wbi_datatype.ExternalID(
-                prop_nr="P8433",  # Riksdagen Document ID
-                value=document_id,
-                is_reference=True
-            )
-            reference = [
-                stated_in,
-                document_id,
-                wbi_datatype.Time(
-                    prop_nr="P813",  # Fetched today
-                    time=datetime.utcnow().replace(
-                        tzinfo=timezone.utc
-                    ).replace(
-                        hour=0,
-                        minute=0,
-                        second=0,
-                    ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
-                    is_reference=True,
-                ),
-                wbi_datatype.Time(
-                    prop_nr="P577",  # Publication date
-                    time=publication_date.strftime("+%Y-%m-%dT00:00:00Z"),
-                    is_reference=True,
-                ),
-                type_of_reference_qualifier,
-            ]
-        elif source == "europarl":
-            stated_in = wbi_datatype.ItemID(
-                prop_nr="P248",
-                value="Q5412081",
-                is_reference=True
-            )
-            reference = [
-                stated_in,
-                wbi_datatype.Time(
-                    prop_nr="P813",  # Fetched today
-                    time=datetime.utcnow().replace(
-                        tzinfo=timezone.utc
-                    ).replace(
-                        hour=0,
-                        minute=0,
-                        second=0,
-                    ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
-                    is_reference=True,
-                ),
-                wbi_datatype.Time(
-                    prop_nr="P577",  # Publication date
-                    time="+2012-05-12T00:00:00Z",
-                    is_reference=True,
-                ),
-                wbi_datatype.Url(
-                    prop_nr="P854",  # reference url
-                    value="http://www.statmt.org/europarl/v7/sv-en.tgz",
-                    is_reference=True,
-                ),
-                # filename in archive
-                wbi_datatype.String(
-                    (f"europarl-v7.{config.language_code}" +
-                     f"-en.{config.language_code}"),
-                    "P7793",
-                    is_reference=True,
-                ),
-                # line number
-                wbi_datatype.String(
-                    str(line),
-                    "P7421",
-                    is_reference=True,
-                ),
-                type_of_reference_qualifier,
-            ]
-        elif source == "ksamsok":
-            # No date is provided unfortunately, so we set it to unknown value
-            stated_in = wbi_datatype.ItemID(
-                prop_nr="P248",
-                value="Q7654799",
-                is_reference=True
-            )
-            document_id = wbi_datatype.ExternalID(
-                # K-Samsök URI
-                prop_nr="P1260",
-                value=document_id,
-                is_reference=True
-            )
-            reference = [
-                stated_in,
-                document_id,
-                wbi_datatype.Time(
-                    prop_nr="P813",  # Fetched today
-                    time=datetime.utcnow().replace(
-                        tzinfo=timezone.utc
-                    ).replace(
-                        hour=0,
-                        minute=0,
-                        second=0,
-                    ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
-                    is_reference=True,
-                ),
-                wbi_datatype.Time(
-                    # We don't know the value of the publication dates unfortunately
-                    prop_nr="P577",  # Publication date
-                    time="",
-                    snak_type="somevalue",
-                    is_reference=True,
-                ),
-                type_of_reference_qualifier,
-            ]
         else:
-            raise ValueError(f"Did not recognize the source {source}")
+            logger.error(_("Publication date of document {} ".format(usage_example.record.id) +
+                    "is missing. We have no fallback for that at the moment. " +
+                    "Aborting."))
+            return "error"
+        if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
+            if usage_example.record.document_qid is not None:
+                logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
+                stated_in = Item(
+                    prop_nr="P248",
+                    value=usage_example.record.document_qid
+                )
+                reference = [
+                    stated_in,
+                    point_in_time,
+                    publication_date,
+                    type_of_reference_qualifier,
+                ]
+            else:
+                stated_in = Item(
+                    prop_nr="P248",
+                    value="Q21592569"
+                )
+                document_id = ExternalID(
+                    prop_nr="P8433",  # Riksdagen Document ID
+                    value=usage_example.record.id
+                )
+                reference = [
+                    stated_in,
+                    document_id,
+                    point_in_time,
+                    publication_date,
+                    type_of_reference_qualifier,
+                ]
+        # elif source == "europarl":
+        #     stated_in = wbi_datatype.ItemID(
+        #         prop_nr="P248",
+        #         value="Q5412081",
+        #         is_reference=True
+        #     )
+        #     reference = [
+        #         stated_in,
+        #         wbi_datatype.Time(
+        #             prop_nr="P813",  # Fetched today
+        #             time=datetime.utcnow().replace(
+        #                 tzinfo=timezone.utc
+        #             ).replace(
+        #                 hour=0,
+        #                 minute=0,
+        #                 second=0,
+        #             ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
+        #             is_reference=True,
+        #         ),
+        #         wbi_datatype.Time(
+        #             prop_nr="P577",  # Publication date
+        #             time="+2012-05-12T00:00:00Z",
+        #             is_reference=True,
+        #         ),
+        #         wbi_datatype.Url(
+        #             prop_nr="P854",  # reference url
+        #             value="http://www.statmt.org/europarl/v7/sv-en.tgz",
+        #             is_reference=True,
+        #         ),
+        #         # filename in archive
+        #         wbi_datatype.String(
+        #             (f"europarl-v7.{config.language_code}" +
+        #              f"-en.{config.language_code}"),
+        #             "P7793",
+        #             is_reference=True,
+        #         ),
+        #         # line number
+        #         wbi_datatype.String(
+        #             str(line),
+        #             "P7421",
+        #             is_reference=True,
+        #         ),
+        #         type_of_reference_qualifier,
+        #     ]
+        # elif source == "ksamsok":
+        #     # No date is provided unfortunately, so we set it to unknown value
+        #     stated_in = wbi_datatype.ItemID(
+        #         prop_nr="P248",
+        #         value="Q7654799",
+        #         is_reference=True
+        #     )
+        #     document_id = wbi_datatype.ExternalID(
+        #         # K-Samsök URI
+        #         prop_nr="P1260",
+        #         value=document_id,
+        #         is_reference=True
+        #     )
+        #     reference = [
+        #         stated_in,
+        #         document_id,
+        #         wbi_datatype.Time(
+        #             prop_nr="P813",  # Fetched today
+        #             time=datetime.utcnow().replace(
+        #                 tzinfo=timezone.utc
+        #             ).replace(
+        #                 hour=0,
+        #                 minute=0,
+        #                 second=0,
+        #             ).strftime("+%Y-%m-%dT%H:%M:%SZ"),
+        #             is_reference=True,
+        #         ),
+        #         wbi_datatype.Time(
+        #             # We don't know the value of the publication dates unfortunately
+        #             prop_nr="P577",  # Publication date
+        #             time="",
+        #             snak_type="somevalue",
+        #             is_reference=True,
+        #         ),
+        #         type_of_reference_qualifier,
+        #     ]
+        else:
+            raise ValueError(f"Did not recognize the source {usage_example.record.source.name.title()}")
         if reference is None:
             raise ValueError(_("No reference defined, cannot add usage example"))
         else:
             # This is the usage example statement
-            claim = wbi_datatype.MonolingualText(
-                sentence,
-                "P5831",
+            claim = MonolingualText(
+                text=usage_example.content,
+                prop_nr="P5831",
                 language=config.language_code,
                 # Add qualifiers
                 qualifiers=[
@@ -461,28 +495,32 @@ class Lexeme:
                 # Add reference
                 references=[reference],
             )
-            if config.debug_json:
-                logging.debug(f"claim:{claim.get_json_representation()}")
-            item = wbi_core.ItemEngine(
-                item_id=lid,
-            )
-            # Updating appends by default in v0.11.0
-            item.update(data=[claim])
             # if config.debug_json:
-            #     print(item.get_json_representation())
+            #     logging.debug(f"claim:{claim.get_json_representation()}")
             if config.login_instance is None:
                 # Authenticate with WikibaseIntegrator
-                print("Logging in with Wikibase Integrator")
-                config.login_instance = wbi_login.Login(
-                    user=config.username, pwd=config.password
-                )
-            result = item.write(
-                config.login_instance,
-                edit_summary=(
-                    _("Added usage example " +
+                with console.status("Logging in with WikibaseIntegrator..."):
+                    config.login_instance = wbi_login.Login(
+                        auth_method='login',
+                        user=config.username,
+                        password=config.password,
+                        debug=False
+                    )
+                    # Set User-Agent
+                    wbi_config.config["USER_AGENT_DEFAULT"] = config.user_agent
+            wbi = WikibaseIntegrator(login=config.login_instance)
+            lexeme = wbi.lexeme.get(form.lexeme_id)
+            lexeme.add_claims(
+                [claim],
+                action_if_exists=ActionIfExists.APPEND
+            )
+            # if config.debug_json:
+            #     print(item.get_json_representation())
+
+            result = lexeme.write(
+                summary=("Added usage example " +
                       "with [[Wikidata:Tools/LexUtils]] v{}".format(config.version))
                 )
-            )
             if config.debug_json:
                 logging.debug(f"result from WBI:{result}")
             # TODO add handling of result from WBI and return True == Success or False
@@ -506,15 +544,18 @@ class LexemeLanguage:
 
     def fetch_forms_missing_an_example(self):
         logger = logging.getLogger(__name__)
+        # title:Forms that have no example demonstrating them and that have at least
+        # one sense with P5137 (item for this sense)
         results = execute_sparql_query(f'''
-            #title:Forms that have no example demonstrating them
-            select ?lexeme ?form ?form_representation ?category 
+            select ?lexeme ?form ?form_representation ?category  
             (group_concat(distinct ?feature; separator = ",") as ?grammatical_features)
             WHERE {{
                 ?lexeme dct:language wd:{self.language_qid.value};
                         wikibase:lemma ?lemma;
                         wikibase:lexicalCategory ?category;
-                        ontolex:lexicalForm ?form.
+                        ontolex:lexicalForm ?form;
+                        ontolex:sense ?sense.
+                ?sense wdt:P5137 [].
                 ?form ontolex:representation ?form_representation;
                 wikibase:grammaticalFeature ?feature.
                 MINUS {{
@@ -530,16 +571,19 @@ class LexemeLanguage:
         logger.info("Got the data")
         logger.info(f"data:{results.keys()}")
         try:
-            #logger.info(f"data:{results['results']['bindings']}")
+            # logger.info(f"data:{results['results']['bindings']}")
             for entry in results["results"]['bindings']:
-                logger.info(f"data:{entry.keys()}")
-                logging.info(f"lexeme_json:{entry}")
-                f = Form(entry)
-                self.forms_without_an_example.append(f)
+                #logger.info(f"data:{entry.keys()}")
+                #logging.info(f"lexeme_json:{entry}")
+                form = Form(entry)
+                print(f"appending {form}")
+                #logger.info("debug exit")
+                #exit(0)
+                self.forms_without_an_example.append(form)
         except KeyError:
             logger.error("Got no results")
         logger.info(f"Got {len(self.forms_without_an_example)} "
-                     f"forms from WDQS for language {self.language_code.name}")
+                    f"forms from WDQS for language {self.language_code.name}")
 
     def fetch_lexemes(self):
         # TODO port to use the Lexeme class instead of heavy dataframes which we don't need

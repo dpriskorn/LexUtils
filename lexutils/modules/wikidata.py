@@ -18,41 +18,61 @@
 #
 #
 #
-# # def fetch_senses(lid: str) -> Dict:
-# #     """Returns dictionary with numbers as keys and a dictionary as value with
-# #     sense id and gloss"""
-# #     # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
-# #     # helping with this query.
-# #     tui.fetching_senses()
-# #     logging.info(f"...from {lid}")
-# #     result = (sparql_query(f'''
-# #     SELECT
-# #     ?sense ?gloss
-# #     WHERE {{
-# #       VALUES ?l {{wd:{lid}}}.
-# #       ?l ontolex:sense ?sense.
-# #       ?sense skos:definition ?gloss.
-# #       # Get only the swedish gloss, exclude otherwise
-# #       FILTER(LANG(?gloss) = "{config.language_code}")
-# #       # Exclude lexemes without a linked QID from at least one sense
-# #       ?sense wdt:P5137 [].
-# #     }}'''))
-# #     senses = {}
-# #     number = 1
-# #     if result is not None:
-# #         for row in result:
-# #             senses[number] = {
-# #                 "sense_id": row["sense"]["value"].replace(wd_prefix, ""),
-# #                 "gloss": row["gloss"]["value"]
-# #             }
-# #             number += 1
-# #         logging.debug(f"senses:{senses}")
-# #         # This returns a tuple if one sense or a dictionary if multiple senses
-# #         return senses
-# #     else:
-# #         logging.error(_("Error. Got None trying to fetch senses. "+
-# #                         "Please report this as an issue."))
-# #         exit(1)
+import logging
+from typing import List
+from wikibaseintegrator.wbi_helpers import execute_sparql_query
+
+from lexutils import config
+from lexutils.config.config import language_code, wd_prefix
+from lexutils.models.wikidata import Sense, Form
+from lexutils.modules import tui
+
+
+def fetch_senses(form: Form = None) -> List[Sense]:
+    """Returns dictionary with numbers as keys and a dictionary as value with
+    sense id and gloss"""
+    logger = logging.getLogger(__name__)
+    if form is None:
+        raise ValueError("form was None")
+    # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
+    # helping with this query.
+    tui.fetching_senses()
+    logging.info(f"...from {form.lexeme_id}")
+    result = (execute_sparql_query(f'''
+    SELECT
+    ?sense ?gloss
+    WHERE {{
+      VALUES ?l {{wd:{form.lexeme_id}}}.
+      ?l ontolex:sense ?sense.
+      ?sense skos:definition ?gloss.
+      # Get only the swedish gloss, exclude otherwise
+      FILTER(LANG(?gloss) = "{language_code}")
+      # Exclude lexemes without a linked QID from at least one sense
+      ?sense wdt:P5137 [].
+    }}'''))
+    senses = []
+    number = 1
+    # TODO Move this into the model
+    if result is not None:
+        print(f"result:{result}")
+        rows = result["results"]["bindings"]
+        number_of_rows = len(rows)
+        if number_of_rows > 0:
+            for row in rows:
+                print(f"row:{row}")
+                senses.append(
+                    Sense(
+                        id=row["sense"]["value"],
+                        gloss=row["gloss"]["value"]
+                ))
+                number += 1
+            logging.debug(f"senses:{senses}")
+            return senses
+        else:
+            raise ValueError("number of senses was 0")
+    else:
+        raise ValueError(_("Error. Got None trying to fetch senses. "+
+                        "Please report this as an issue."))
 #
 #
 #

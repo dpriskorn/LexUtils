@@ -2,16 +2,16 @@
 import asyncio
 import gettext
 import logging
-import re
+# import re
 from typing import List
 
 import httpx
 
-from lexutils import config
+from lexutils.config.config import riksdagen_max_results_size, debug_json, debug, debug_summaries
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata import Form
-from lexutils.modules import util
+# from lexutils.modules import util
 from lexutils.modules import tui
 
 _ = gettext.gettext
@@ -45,8 +45,8 @@ async def async_fetch(word):
     # Get total results count
     results = get_result_count(word)
     # Generate the urls
-    if results > config.riksdagen_max_results_size:
-        results = config.riksdagen_max_results_size
+    if results > riksdagen_max_results_size:
+        results = riksdagen_max_results_size
     # generate urls
     urls = []
     # divide by 20 to know how many requests to send
@@ -78,7 +78,7 @@ def process_async_responses(word) -> List[RiksdagenRecord]:
                 records.append(RiksdagenRecord(entry))
     length = len(records)
     logger.info(f"Got {length} records")
-    if config.debug_json:
+    if debug_json:
         logger.debug(f"records:{records}")
     return records
 
@@ -91,12 +91,12 @@ def filter_matching_records(records, form: Form) -> List[RiksdagenRecord]:
     count = 1
     records_with_exact_match = []
     for record in records:
-        if config.debug_summaries:
+        if debug_summaries:
             logging.info(f"Working of record number {count}")
         record.find_form_representation_in_summary(form.representation)
         if record.exact_hit:
             records_with_exact_match.append(record)
-            if config.debug_summaries:
+            if debug_summaries:
                 logger.info(
                     f"Found exact hit in https://data.riksdagen.se/dokument/{record.id}"
                 )
@@ -114,7 +114,7 @@ def get_records(form: Form) -> List[UsageExample]:
 def process_records(records: List[RiksdagenRecord], form: Form):
     logger = logging.getLogger(__name__)
     if records is not None:
-        if config.debug:
+        if debug:
             print("Looping through records from Riksdagen")
         records = filter_matching_records(records, form)
         usage_examples = []
