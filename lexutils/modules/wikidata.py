@@ -29,8 +29,7 @@ from lexutils.modules import tui
 
 
 def fetch_senses(form: Form = None) -> List[Sense]:
-    """Returns dictionary with numbers as keys and a dictionary as value with
-    sense id and gloss"""
+    """Fetch the senses on the lexeme"""
     logger = logging.getLogger(__name__)
     if form is None:
         raise ValueError("form was None")
@@ -38,7 +37,8 @@ def fetch_senses(form: Form = None) -> List[Sense]:
     # helping with this query.
     tui.fetching_senses()
     logging.info(f"...from {form.lexeme_id}")
-    result = (execute_sparql_query(f'''
+    result = execute_sparql_query(
+        f'''
     SELECT
     ?sense ?gloss
     WHERE {{
@@ -48,8 +48,10 @@ def fetch_senses(form: Form = None) -> List[Sense]:
       # Get only the swedish gloss, exclude otherwise
       FILTER(LANG(?gloss) = "{language_code}")
       # Exclude lexemes without a linked QID from at least one sense
-      ?sense wdt:P5137 [].
-    }}'''))
+      # ?sense wdt:P5137 [].
+    }}'''
+    # debug=True
+    )
     senses = []
     number = 1
     # TODO Move this into the model
@@ -64,15 +66,15 @@ def fetch_senses(form: Form = None) -> List[Sense]:
                     Sense(
                         id=row["sense"]["value"],
                         gloss=row["gloss"]["value"]
-                ))
+                    ))
                 number += 1
             logging.debug(f"senses:{senses}")
             return senses
         else:
             raise ValueError("number of senses was 0")
     else:
-        raise ValueError(_("Error. Got None trying to fetch senses. "+
-                        "Please report this as an issue."))
+        raise ValueError(_("Error. Got None trying to fetch senses. " +
+                           "Please report this as an issue."))
 #
 #
 #

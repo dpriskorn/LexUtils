@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime, timezone
 from enum import Enum
 # from time import sleep
@@ -246,7 +247,7 @@ class Lexeme:
                 sense = Sense(variable)
                 self.senses.append(sense)
             if variable == "category":
-                self.lexical_category = EntityID(wdqs.extract_wikibase_value(variable))
+                self.lexical_category = EntityID(extract_wikibase_value(variable))
 
     def url(self):
         return f"{config.wd_prefix}{self.id}"
@@ -546,6 +547,8 @@ class LexemeLanguage:
         logger = logging.getLogger(__name__)
         # title:Forms that have no example demonstrating them and that have at least
         # one sense with P5137 (item for this sense)
+        random_offset = random.randint(20,1000)
+        logger.info(f"random offset:{random_offset}")
         results = execute_sparql_query(f'''
             select ?lexeme ?form ?form_representation ?category  
             (group_concat(distinct ?feature; separator = ",") as ?grammatical_features)
@@ -566,6 +569,7 @@ class LexemeLanguage:
                 }}
             }}
             group by ?lexeme ?form ?form_representation ?category
+            offset {random_offset}
             limit 50''')
         self.forms_without_an_example = []
         logger.info("Got the data")

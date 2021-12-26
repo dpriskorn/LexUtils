@@ -30,15 +30,11 @@ class Completer(Completer):
 
             
 def main():
-    logger = logging.getLogger(__name__)
-    print(logger.getEffectiveLevel())
-    logger.setLevel(10)
-    #logger = logging.getLogger(__name__)
+    # logger = logging.getLogger(__name__)
     # TODO enable choosing work language
     print(_('This is the REPL. ' +
             'Type one of the names of the tools to begin: ' +
             'Examples'))
-
     while 1:
         user_input = prompt(u'LexUtils>',
                             history=FileHistory('history.txt'),

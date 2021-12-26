@@ -8,7 +8,7 @@ from typing import Union, List
 # from lexutils import config
 from lexutils.config.config import sparql_results_size, language_code, debug_sentences, show_sense_urls, wd_prefix, \
     sleep_time
-from lexutils.config.enums import SupportedExampleSources, Choices
+from lexutils.config.enums import SupportedExampleSources, Choices, Result
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 
@@ -90,8 +90,6 @@ def introduction():
 def start():
     # rewrite to OOP
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    print(logger.getEffectiveLevel())
     # disabled for now
     # begin = introduction()
     begin = True
@@ -105,10 +103,6 @@ def start():
         # logger.debug(f"forms:{len(language.forms_without_an_example)}")
         # results = fetch_lexeme_data()
         process_forms(language)
-
-
-def sense_selection_handler():
-    pass
 
 
 def prompt_single_sense(
@@ -231,7 +225,7 @@ def choose_sense_handler(
         form: Form = None,
         usage_example: UsageExample = None,
         senses: List[Sense] = None
-) -> str:
+) -> Union[Choices, Result]:
     """Helper to choose a suitable sense for
     the example in question"""
     if form is None:
@@ -282,6 +276,7 @@ def choose_sense_handler(
             # logger.info("debug exit")
             # exit(0)
             # json_cache.save_to_exclude_list(usage_example)
+            return Result.USAGE_EXAMPLE_ADDED
         else:
             # No result from WBI, what does that mean?
             raise Exception("Error. WBI returned None.")
@@ -302,8 +297,8 @@ def handle_usage_example(
         raise ValueError("form was None")
     result: Choices = util.yes_no_skip_question(
         tui.found_sentence(
-            form=form,
-            usage_example=usage_example)
+        form=form,
+        usage_example=usage_example)
     )
     if result is Choices.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
@@ -312,12 +307,12 @@ def handle_usage_example(
         for sense in senses:
             logging.info(sense)
         # raise NotImplementedError("Update to OOP")
-        sense_result = choose_sense_handler(
+        handler_result = choose_sense_handler(
             usage_example=usage_example,
             senses=senses,
             form=form
         )
-        return sense_result
+        return handler_result
     else:
         # Return the choice
         return result
@@ -373,14 +368,13 @@ def process_result(
                     form=form,
                     usage_example=example
                 )
+                logger.info(f"process_result: result: {result}")
                 count += 1
                 if result == Choices.SKIP_USAGE_EXAMPLE:
                     continue
-                elif result == Choices.SKIP_FORM:
+                elif result == Choices.SKIP_FORM or result == Result.USAGE_EXAMPLE_ADDED:
                     print(separator)
                     return result
-        elif number_of_examples == 0:
-            print(separator)
         else:
             print(separator)
 
@@ -412,11 +406,13 @@ def process_forms(language: LexemeLanguage = None):
                 logging.info(f"processing:{form.representation}")
                 if form.lexeme_id is None:
                     raise ValueError("lexeme_id on form was None")
-                exit = process_result(
+                result = process_result(
                     form=form,
                     language=language
                 )
                 earlier_choices.append(form)
+                if result == Choices.SKIP_FORM:
+                    continue
                 # if exit:
                 #     run = False
 

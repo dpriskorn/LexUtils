@@ -12,12 +12,15 @@ from lexutils.config.config import show_sense_urls, wd_prefix
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata import Form, Sense
 from lexutils.modules import europarl, util
+
 # from lexutils.modules.examples import _
 
 _ = gettext.gettext
 
+
 # Functions in here only have side-effects and use .format
 # because gettext does not work with f-strings
+
 
 def downloading_from(api_name):
     print(_("Downloading from {}...".format(api_name)))
@@ -25,7 +28,7 @@ def downloading_from(api_name):
 
 def europarl_download():
     print(_("Downloading {} sentence file for {}".format(
-            europarl.api_name, config.language,
+        europarl.api_name, config.language,
     )))
 
 
@@ -54,10 +57,10 @@ def found_sentence(form: Form = None,
         raise ValueError("form was None")
     # FIXME add grammatical features here
     word_count = util.count_words(usage_example.content)
-    print(_("Found the following sentence with {} ".format(word_count) +
-            "words. Is it suitable as a usage example " +
-            "for the {} form '{}'? \n".format(form.lexeme_category.name.lower(), form.representation) +
-            "'{}'".format(usage_example.content)))
+    return (_("Found the following sentence with {} ".format(word_count) +
+              "words. Is it suitable as a usage example " +
+              "for the {} form '{}'? \n".format(form.lexeme_category.name.lower(), form.representation) +
+              "'{}'".format(usage_example.content)))
 
 
 def fetching_senses():
@@ -77,9 +80,9 @@ def cancel_sentence(word: str):
             "language." +
             "\nSearch for {} in Wikidata: ".format(word)) +
           quote("https://www.wikidata.org/w/index.php?" +
-          "search={}&title=Special%3ASearch&".format(word) +
-          "profile=advanced&fulltext=0&" +
-          "advancedSearch-current=%7B%7D&ns0=1"))
+                "search={}&title=Special%3ASearch&".format(word) +
+                "profile=advanced&fulltext=0&" +
+                "advancedSearch-current=%7B%7D&ns0=1"))
 
 
 def prompt_choose_sense(senses: List[Sense] = None):

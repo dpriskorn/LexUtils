@@ -20,3 +20,9 @@ class LanguageStyle(Enum):
 class ReferenceType(Enum):
     WRITTEN = "Q47461344"
     ORAL = "Q52946"
+
+
+class Result(Enum):
+    USAGE_EXAMPLE_ADDED = auto()
+    # Todo improve this by using a custom error type instead
+    ERROR = auto()

@@ -45,6 +45,8 @@ def yes_no_skip_question(message: str) -> Choices:
                 # the == operator just returns a boolean,
                 if answer[0].lower() == 'y':
                     return Choices.ACCEPT_USAGE_EXAMPLE
+                else:
+                    return Choices.SKIP_USAGE_EXAMPLE
 
 
 def yes_no_question(message: str):
