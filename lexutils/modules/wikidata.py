@@ -56,12 +56,12 @@ def fetch_senses(form: Form = None) -> List[Sense]:
     number = 1
     # TODO Move this into the model
     if result is not None:
-        print(f"result:{result}")
+        # logger.debug(f"result:{result}")
         rows = result["results"]["bindings"]
         number_of_rows = len(rows)
         if number_of_rows > 0:
             for row in rows:
-                print(f"row:{row}")
+                logger.debug(f"row:{row}")
                 senses.append(
                     Sense(
                         id=row["sense"]["value"],

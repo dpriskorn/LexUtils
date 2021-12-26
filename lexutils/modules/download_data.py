@@ -57,4 +57,4 @@ def fetch():
                 with open(txt_filename, 'wb') as out:
                     out.write(f.read())
         else:
-            print("Error. Download failed. Report this bug.")
+            logging.error("Error. Download failed. Report this bug.")

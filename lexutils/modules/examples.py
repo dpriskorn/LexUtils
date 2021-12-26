@@ -15,7 +15,7 @@ from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata import LexemeLanguage, Form, Sense, Lexeme
 # from lexutils.modules import download_data
 # from lexutils.modules import europarl
-from lexutils.modules import json_cache
+# from lexutils.modules import json_cache
 # from lexutils.modules import ksamsok
 from lexutils.modules import riksdagen
 from lexutils.modules import tui
