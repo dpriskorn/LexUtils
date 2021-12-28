@@ -18,6 +18,9 @@ class Record:
     summary: str
     type_of_reference = ReferenceType
 
+    def lookup_qid(self):
+        pass
+
     def url(self):
         if self.base_url is None:
             raise ValueError("base_url was None")
