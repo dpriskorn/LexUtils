@@ -6,7 +6,7 @@ from wikibaseintegrator.wbi_helpers import execute_sparql_query
 from lexutils.config import config
 from lexutils.helpers import tui
 from lexutils.models.wikidata.entities import EntityID
-from lexutils.models.wikidata.enums import WikidataGrammaticalFeature, WikidataLexicalCategory
+from lexutils.models.wikidata.enums import WikidataLexicalCategory
 from lexutils.models.wikidata.sense import Sense
 
 
@@ -52,12 +52,7 @@ class Form:
             logger.debug(json["grammatical_features"])
             for feature in json["grammatical_features"]["value"].split(","):
                 # TODO look up labels of features using WD
-                try:
-                    feature_string = WikidataGrammaticalFeature(str(EntityID(feature))).name
-                except ValueError:
-                    logging.error(f"the grammatical feature {feature} was not recognized")
-                    feature_string = feature
-                self.grammatical_features.append(feature_string)
+                self.grammatical_features.append(feature)
         except KeyError:
             pass
 
