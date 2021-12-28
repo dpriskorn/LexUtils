@@ -5,9 +5,11 @@ import logging
 from time import sleep
 from typing import Union, List
 
-# from lexutils import config
-from lexutils.config.config import sparql_results_size, language_code, debug_sentences, show_sense_urls, sleep_time
+from lexutils.config import config
 from lexutils.config.enums import Choices, Result
+from lexutils.helpers.console import console
+from lexutils.models.wikidata.enums import WikimediaLanguageCode
+from lexutils.modules import wikisource
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 
@@ -23,7 +25,7 @@ from lexutils.modules import riksdagen
 from lexutils.helpers import tui, util
 from rich import print
 
-from lexutils.helpers.tui import prompt_choose_sense, print_separator
+from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
 from lexutils.helpers.util import add_to_watchlist, yes_no_question
 
 _ = gettext.gettext
@@ -61,27 +63,23 @@ def introduction():
 
 
 def start():
-    # rewrite to OOP
     logger = logging.getLogger(__name__)
     # disabled for now
     # begin = introduction()
     begin = True
     if begin:
+        choosen_language: WikimediaLanguageCode = select_language_menu()
         # TODO store lexuse_introduction_read=1 to settings.json
-        print(_("Fetching lexeme forms to work on"))
-        # logger.debug("Fetching lexeme data")
-        logger.info("Fetching forms")
-        language = LexemeLanguage("sv")
-        language.fetch_forms_missing_an_example()
-        # logger.debug(f"forms:{len(language.forms_without_an_example)}")
-        # results = fetch_lexeme_data()
-        process_forms(language)
+        console.print(f"Fetching lexeme forms to work on for {choosen_language.name.title()}")
+        lexemelanguage = LexemeLanguage(language_code=choosen_language.value)
+        lexemelanguage.fetch_forms_missing_an_example()
+        process_forms(lexemelanguage)
 
 
 def prompt_single_sense(form: Form = None) -> Union[Choices, Sense]:
     if form is None:
         raise ValueError("form was None")
-    if show_sense_urls:
+    if config.show_sense_urls:
         question = _("Found only one sense. " +
                      "Does this example fit the following " +
                      "gloss?\n{}\n'{}'".format(form.senses[0].url(),
@@ -94,7 +92,7 @@ def prompt_single_sense(form: Form = None) -> Union[Choices, Sense]:
         return form.senses[0]
     else:
         tui.cancel_sentence(form.representation)
-        sleep(sleep_time)
+        sleep(config.sleep_time)
         return Choices.SKIP_USAGE_EXAMPLE
 
 
@@ -107,7 +105,7 @@ def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
     sense = None
     # TODO check that all senses has a gloss matching the language of
     # the example
-    sense: Sense = prompt_choose_sense(form.senses)
+    sense: Sense = choose_sense_menu(form.senses)
     if sense is not None:
         logging.info("a sense was accepted")
         return sense
@@ -118,46 +116,40 @@ def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
 
 def get_usage_examples_from_apis(
         form: Form = None,
-        language: LexemeLanguage = None
+        lexemelanguage: LexemeLanguage = None
 ) -> List[UsageExample]:
     """Find examples and return them as Example objects"""
     logger = logging.getLogger(__name__)
     examples = []
-    # TODO add grammatical features
     tui.working_on(form)
-    # logging.info(f"lid:{lid}")
-    if language_code == "sv":
-        # TODO move to own module for each language modules/lang/sv.py
-        records = {}
-        # TODO support wiktionary
-        # Europarl corpus
-        # Download first if not on disk
-        # TODO convert to UsageExample
-        # download_data.fetch()
-        # europarl_records = europarl.get_records(form)
-        # for record in europarl_records:
-        #     records[record] = europarl_records[record]
-        # logger.debug(f"records in total:{len(records)}")
-        # ksamsok
-        # Disabled because it yields very little of value
-        # unfortunately because the data is such low quality overall
-        # ksamsok_records = ksamsok.get_records(form)
-        # for record in ksamsok_records:
-        #     records[record] = ksamsok_records[record]
-        # logger.debug(f"records in total:{len(records)}")
-        # Riksdagen API is slow, only use it if we don't have a lot of sentences already
-        if len(records) < 50:
+    # Wikisource
+    examples.extend(wikisource.get_records(
+        form=form,
+        lexemelanguage=lexemelanguage
+    ))
+    # Europarl corpus
+    # Download first if not on disk
+    # TODO convert to UsageExample
+    # download_data.fetch()
+    # europarl_records = europarl.get_records(form)
+    # for record in europarl_records:
+    #     records[record] = europarl_records[record]
+    # logger.debug(f"records in total:{len(records)}")
+    # ksamsok
+    # Disabled because it yields very little of value
+    # unfortunately because the data is such low quality overall
+    # ksamsok_records = ksamsok.get_records(form)
+    # for record in ksamsok_records:
+    #     records[record] = ksamsok_records[record]
+    # logger.debug(f"records in total:{len(records)}")
+    # Riksdagen API is slow, only use it if we don't have a lot of sentences already
+    if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
+        if len(examples) < 50:
             riksdagen_examples: List[UsageExample] = riksdagen.get_records(form)
             examples.extend(riksdagen_examples)
-        if debug_sentences:
-            logger.debug(f"returning from apis:{examples}")
-        return examples
-    else:
-        raise ValueError(_("Error. Language code: {} not supported. Feel free to" +
-                           "open an issue in the repo if you know any sources " +
-                           "that have CC0 metadata and useful sentences.".format(
-                               language_code,
-                           )))
+    if config.debug_sentences:
+        logger.debug(f"returning from apis:{examples}")
+    return examples
 
 
 def choose_sense_handler(
@@ -254,7 +246,7 @@ def handle_usage_example(
 
 
 def process_usage_examples(
-        examples: List[UsageExample],
+        examples: List[UsageExample] = None,
         form: Form = None,
 ):
     """Go through each usage example and present it"""
@@ -287,6 +279,8 @@ def process_usage_examples(
             elif result == Choices.SKIP_FORM or result == Result.USAGE_EXAMPLE_ADDED:
                 print_separator()
                 return result
+    else:
+        raise ValueError("examples was None")
 
 
 def process_result(
@@ -306,7 +300,7 @@ def process_result(
         if number_of_examples == 0:
             print_separator()
         elif number_of_examples > 0:
-            process_usage_examples(
+            return process_usage_examples(
                 examples=examples,
                 form=form
             )
@@ -314,7 +308,7 @@ def process_result(
             print_separator()
 
 
-def process_forms(language: LexemeLanguage = None):
+def process_forms(lexemelanguage: LexemeLanguage = None):
     """Process forms into the Form model"""
     logger = logging.getLogger(__name__)
     logger.info("Processing forms")
@@ -322,7 +316,7 @@ def process_forms(language: LexemeLanguage = None):
     earlier_choices = []
     run = True
     while (run):
-        if len(earlier_choices) == sparql_results_size:
+        if len(earlier_choices) == config.sparql_results_size:
             # We have gone checked all results now
             # TODO offer to fetch more
             print("No more results. "
@@ -337,13 +331,13 @@ def process_forms(language: LexemeLanguage = None):
             #     continue
             # else:
             # not in exclude_list
-            for form in language.forms_without_an_example:
+            for form in lexemelanguage.forms_without_an_example:
                 logging.info(f"processing:{form.representation}")
                 if form.lexeme_id is None:
                     raise ValueError("lexeme_id on form was None")
                 result = process_result(
                     form=form,
-                    language=language
+                    language=lexemelanguage
                 )
                 earlier_choices.append(form)
                 if result == Choices.SKIP_FORM:

@@ -16,7 +16,7 @@ class Form:
     """
     id: str
     representation: str
-    grammatical_features: List[WikidataGrammaticalFeature]
+    grammatical_features: List[str]
     # We store these on the form because they are needed
     # to determine if an example fits or not
     lexeme_id: str
@@ -27,12 +27,12 @@ class Form:
         """Parse the form json"""
         logger = logging.getLogger(__name__)
         try:
-            logger.info(json["lexeme"])
+            logger.debug(json["lexeme"])
             self.lexeme_id = str(EntityID(json["lexeme"]["value"]))
         except KeyError:
             pass
         try:
-            logger.info(json["form"])
+            logger.debug(json["form"])
             self.id = str(EntityID(json["form"]["value"]))
         except KeyError:
             pass
@@ -49,11 +49,15 @@ class Form:
                              f'{json["category"]["value"]}')
         try:
             self.grammatical_features = []
-            logger.info(json["grammatical_features"])
+            logger.debug(json["grammatical_features"])
             for feature in json["grammatical_features"]["value"].split(","):
-                # TODO parse features with Enum
-                feature_id = WikidataGrammaticalFeature(str(EntityID(feature)))
-                self.grammatical_features.append(feature_id)
+                # TODO look up labels of features using WD
+                try:
+                    feature_string = WikidataGrammaticalFeature(str(EntityID(feature))).name
+                except ValueError:
+                    logging.error(f"the grammatical feature {feature} was not recognized")
+                    feature_string = feature
+                self.grammatical_features.append(feature_string)
         except KeyError:
             pass
 
