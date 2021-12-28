@@ -6,7 +6,7 @@ import re
 import httpx
 from typing import Dict, List
 
-from lexutils import config
+from lexutils.config import config
 from lexutils.helpers import tui, util
 
 _ = gettext.gettext
