@@ -1,7 +1,8 @@
+from __future__ import annotations
 import logging
 from datetime import datetime
 import re
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
@@ -12,7 +13,9 @@ from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record
 from lexutils.helpers import util
 from lexutils.helpers.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
-from lexutils.models.wikidata.form import Form
+
+if TYPE_CHECKING:
+    from lexutils.models.wikidata.form import Form
 
 
 class RiksdagenRecord(Record):
