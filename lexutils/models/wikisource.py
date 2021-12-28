@@ -110,3 +110,6 @@ class WikisourceRecord(Record):
             logger.info(response.text)
         else:
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
+
+    def url(self):
+        return f"{self.language_code.value}.wikisource.org/wiki/{self.document_title}"
