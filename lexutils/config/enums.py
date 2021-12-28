@@ -1,13 +1,6 @@
 from enum import auto, Enum
 
 
-class SupportedLanguages(Enum):
-    # TODO replace this with a dynamic list of languages based
-    #  on a sparql result of all Wikisource versions and the ISO codes
-    ENGLISH = "en"
-    SWEDISH = "sv"
-
-
 class SupportedExampleSources(Enum):
     ENGLISH_WIKISOURCE = "Q15156406"
     RIKSDAGEN = "Q21592569"
