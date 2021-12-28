@@ -14,7 +14,7 @@ from lexutils.modules import examples
 from lexutils.modules import statistics
 
 # Settings
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 _ = gettext.gettext
 Commands = ['examples', 'statistics']
