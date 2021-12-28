@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
+from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
 
 class Record:
@@ -11,6 +12,7 @@ class Record:
     document_qid = None
     exact_hit: bool = False
     inexact_hit: bool = False
+    language_code: WikimediaLanguageCode = None
     language_style = LanguageStyle
     # This is needed for the europarl source
     line_number: int = None

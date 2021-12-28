@@ -1,5 +1,6 @@
 import logging
 from typing import List
+from urllib.parse import quote
 
 import requests
 from spacy.lang.en import English
@@ -20,7 +21,6 @@ class WikisourceRecord(Record):
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.WIKISOURCE
-    language_code: WikimediaLanguageCode = None
     document_title = None
     snippet: str = None
 
@@ -112,4 +112,4 @@ class WikisourceRecord(Record):
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
 
     def url(self):
-        return f"{self.language_code.value}.wikisource.org/wiki/{self.document_title}"
+        return f"http://{self.language_code.value}.wikisource.org/wiki/{quote(self.document_title)}"
