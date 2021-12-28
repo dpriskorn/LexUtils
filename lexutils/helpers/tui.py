@@ -11,6 +11,7 @@ from rich import print
 
 from lexutils.config import config
 from lexutils.helpers.console import console
+from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.modules import europarl
 from lexutils.helpers import util
@@ -139,9 +140,16 @@ def present_sentence(
         raise ValueError("example was None")
     if example.record is None:
         raise ValueError("record was None")
-    console.print(_("Presenting sentence " +
-                    "{}/{} ".format(count, len(examples)) +
-                    "from {} from {}".format(
-                        example.record.date,
-                        example.record.url(),
-                    )))
+    if isinstance(example.record, RiksdagenRecord):
+        console.print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(examples)) +
+                        "from {} from {}".format(
+                            example.record.date,
+                            example.record.url(),
+                        )))
+    else:
+        console.print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(examples)) +
+                        "from {}".format(
+                            example.record.url(),
+                        )))
