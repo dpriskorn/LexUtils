@@ -11,6 +11,7 @@ from rich import print
 
 from lexutils.config import config
 from lexutils.helpers.console import console
+from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.modules import europarl
 from lexutils.helpers import util
 
@@ -39,7 +40,7 @@ def europarl_download():
 def working_on(form: Form):
     features = []
     for feature in form.grammatical_features:
-        features.append(feature.name.title())
+        features.append(feature)
     print(_("Working on {} ({}) with the features: {}".format(
         form.representation, form.lexeme_category.name.lower(),
         ", ".join(features)
@@ -89,7 +90,7 @@ def cancel_sentence(word: str):
                 "advancedSearch-current=%7B%7D&ns0=1"))
 
 
-def prompt_choose_sense(senses: List[Sense] = None):
+def choose_sense_menu(senses: List[Sense] = None):
     """Returns a dictionary with sense_id -> sense_id
     and gloss -> gloss or False"""
     logger = logging.getLogger(__name__)
@@ -108,6 +109,23 @@ def prompt_choose_sense(senses: List[Sense] = None):
         return selected_item
 
 
+def select_language_menu():
+    # TODO make this scale better.
+    #  Consider showing a list based on a sparql result of all wikisource language versions
+    logger = logging.getLogger(__name__)
+    menu = SelectionMenu(WikimediaLanguageCode.__members__.keys(), "Select a language")
+    menu.show()
+    menu.join()
+    selected_language_index = menu.selected_option
+    mapping = {}
+    for index, item in enumerate(WikimediaLanguageCode):
+        mapping[index] = item
+    selected_language = mapping[selected_language_index]
+    logger.debug(f"selected:{selected_language_index}="
+                 f"{selected_language}")
+    return selected_language
+
+
 def print_separator():
     print("----------------------------------------------------------")
 
@@ -117,6 +135,10 @@ def present_sentence(
         example: UsageExample = None,
         examples: List[UsageExample] = None
 ):
+    if example is None:
+        raise ValueError("example was None")
+    if example.record is None:
+        raise ValueError("record was None")
     console.print(_("Presenting sentence " +
                     "{}/{} ".format(count, len(examples)) +
                     "from {} from {}".format(
