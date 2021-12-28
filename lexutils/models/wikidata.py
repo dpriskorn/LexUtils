@@ -44,6 +44,7 @@ class WikidataGrammaticalFeature(Enum):
     OBLIQUE_CASE = "Q1233197"
     VOCATIVE_CASE = "Q185077"
     POSITIVE = "Q3482678"
+    MASCULINE = "Q499327"
 
 
 class WikidataLexicalCategory(Enum):
@@ -247,7 +248,7 @@ class Lexeme:
                 sense = Sense(variable)
                 self.senses.append(sense)
             if variable == "category":
-                self.lexical_category = EntityID(extract_wikibase_value(variable))
+                self.lexical_category = str(EntityID(extract_wikibase_value_from_result(variable)))
 
     def url(self):
         return f"{config.wd_prefix}{self.id}"
@@ -580,7 +581,7 @@ class LexemeLanguage:
                 #logger.info(f"data:{entry.keys()}")
                 #logging.info(f"lexeme_json:{entry}")
                 form = Form(entry)
-                print(f"appending {form}")
+                logger.info(f"appending {form} to list of forms")
                 #logger.info("debug exit")
                 #exit(0)
                 self.forms_without_an_example.append(form)
