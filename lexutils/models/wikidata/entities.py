@@ -12,6 +12,7 @@ from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources
 from lexutils.helpers import wdqs
 from lexutils.helpers.console import console
+from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikidataNamespaceLetters
 
@@ -192,17 +193,18 @@ class Lexeme:
                 second=0,
             ).strftime("+%Y-%m-%dT%H:%M:%SZ")
         )
-        if usage_example.record.date is not None:
-            publication_date = Time(
-                prop_nr="P577",  # Publication date
-                time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z")
-            )
-        else:
-            logger.error(_("Publication date of document {} ".format(usage_example.record.id) +
-                    "is missing. We have no fallback for that at the moment. " +
-                    "Aborting."))
-            return "error"
         if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
+            logger.info("Riksdagen record detected")
+            if usage_example.record.date is not None:
+                publication_date = Time(
+                    prop_nr="P577",  # Publication date
+                    time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z")
+                )
+            else:
+                logger.error(_("Publication date of document {} ".format(usage_example.record.id) +
+                        "is missing. We have no fallback for that at the moment. " +
+                        "Aborting."))
+                return "error"
             if usage_example.record.document_qid is not None:
                 logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
                 stated_in = Item(
@@ -215,6 +217,20 @@ class Lexeme:
                     publication_date,
                     type_of_reference_qualifier,
                 ]
+            elif usage_example.record.source == SupportedExampleSources.WIKISOURCE:
+                logger.info("Wikisource record detected")
+                usage_example.record.lookup_qid()
+                if usage_example.record.document_qid is not None:
+                    logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
+                    stated_in = Item(
+                        prop_nr="P248",
+                        value=usage_example.record.document_qid
+                    )
+                    reference = [
+                        stated_in,
+                        point_in_time,
+                        type_of_reference_qualifier,
+                    ]
             else:
                 stated_in = Item(
                     prop_nr="P248",
@@ -227,8 +243,7 @@ class Lexeme:
                 reference = [
                     stated_in,
                     document_id,
-                    point_in_time,
-                    publication_date,
+                    # point_in_time, # does this exist for Wikisource?
                     type_of_reference_qualifier,
                 ]
         # elif source == "europarl":
