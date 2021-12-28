@@ -4,12 +4,10 @@ import gettext
 import logging
 import re
 import httpx
-from pprint import pprint
 from typing import Dict, List
 
 from lexutils import config
-from lexutils.modules import util
-from lexutils.modules import tui
+from lexutils.helpers import tui, util
 
 _ = gettext.gettext
 

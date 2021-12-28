@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 import gettext
 import logging
 
-from typing import Dict, List
+from typing import List, TYPE_CHECKING
 from urllib.parse import quote
 
 from consolemenu import *
-from consolemenu.items import *
 from rich import print
 
-from lexutils import config
-# from lexutils.config.config import show_sense_urls, wd_prefix
-from lexutils.models.usage_example import UsageExample
-from lexutils.models.wikidata import Form, Sense
-from lexutils.modules import europarl, util
+from lexutils.config import config
+from lexutils.helpers.console import console
+from lexutils.modules import europarl
+from lexutils.helpers import util
 
-# from lexutils.modules.examples import _
+if TYPE_CHECKING:
+    from lexutils.models.usage_example import UsageExample
+    from lexutils.models.wikidata.form import Form
+    from lexutils.models.wikidata.sense import Sense
 
 _ = gettext.gettext
 
@@ -91,48 +93,33 @@ def prompt_choose_sense(senses: List[Sense] = None):
     """Returns a dictionary with sense_id -> sense_id
     and gloss -> gloss or False"""
     logger = logging.getLogger(__name__)
-    #raise NotImplementedError("Update to OOP and TUI library")
+    # raise NotImplementedError("Update to OOP and TUI library")
     if senses is None:
         raise ValueError("senses was None")
     menu = SelectionMenu(senses, "Select a sense")
     menu.show()
     menu.join()
     index = menu.selected_option
-    selected_item = senses[index]
-    logger.debug(f"selected:{index}="
-                 f"{selected_item}")
-    return selected_item
+    logger.debug(f"index:{index}")
+    if index is not None:
+        selected_item = senses[index]
+        logger.debug(f"selected:{index}="
+                     f"{selected_item}")
+        return selected_item
 
-    # from https://stackoverflow.com/questions/23294658/
-    # asking-the-user-for-input-until-they-give-a-valid-response
-    # while True:
-    #     try:
-    #         options = _("Please choose the correct sense corresponding " +
-    #                     "to the meaning in the usage example")
-    #         number = 1
-    #         # Put each key -> value into a new nested dictionary
-    #         for sense in senses:
-    #             options += _(
-    #                 "\n{}) {}".format(number, senses[number]['gloss'])
-    #             )
-    #             if show_sense_urls:
-    #                 options += " ({} )".format(
-    #                     wd_prefix + senses[number]['sense_id']
-    #                 )
-    #             number += 1
-    #         options += _("\nPlease input a number or 0 to cancel: ")
-    #         choice = int(input(options))
-    #     except ValueError:
-    #         print(_("Sorry, I didn't understand that."))
-    #         # better try again... Return to the start of the loop
-    #         continue
-    #     else:
-    #         logging.debug(f"length_of_senses:{len(senses)}")
-    #         if choice > 0 and choice <= len(senses):
-    #             return {
-    #                 "sense_id": senses[choice]["sense_id"],
-    #                 "gloss": senses[choice]["gloss"]
-    #             }
-    #         else:
-    #             print(_("Cancelled adding this sentence."))
-    #             return False
+
+def print_separator():
+    print("----------------------------------------------------------")
+
+
+def present_sentence(
+        count: int = None,
+        example: UsageExample = None,
+        examples: List[UsageExample] = None
+):
+    console.print(_("Presenting sentence " +
+                    "{}/{} ".format(count, len(examples)) +
+                    "from {} from {}".format(
+                        example.record.date,
+                        example.record.url(),
+                    )))

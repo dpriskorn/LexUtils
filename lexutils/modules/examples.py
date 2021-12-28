@@ -6,56 +6,29 @@ from time import sleep
 from typing import Union, List
 
 # from lexutils import config
-from lexutils.config.config import sparql_results_size, language_code, debug_sentences, show_sense_urls, wd_prefix, \
-    sleep_time
-from lexutils.config.enums import SupportedExampleSources, Choices, Result
+from lexutils.config.config import sparql_results_size, language_code, debug_sentences, show_sense_urls, sleep_time
+from lexutils.config.enums import Choices, Result
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 
-from lexutils.models.wikidata import LexemeLanguage, Form, Sense, Lexeme
 # from lexutils.modules import download_data
 # from lexutils.modules import europarl
 # from lexutils.modules import json_cache
 # from lexutils.modules import ksamsok
+from lexutils.models.wikidata.entities import Lexeme
+from lexutils.models.wikidata.form import Form
+from lexutils.models.wikidata.misc import LexemeLanguage
+from lexutils.models.wikidata.sense import Sense
 from lexutils.modules import riksdagen
-from lexutils.modules import tui
-from lexutils.modules import util
+from lexutils.helpers import tui, util
 from rich import print
 
-# from lexutils.modules.wdqs import extract_wikibase_value_from_result
-from lexutils.modules.tui import prompt_choose_sense
-from lexutils.modules.util import add_to_watchlist, yes_no_question
-from lexutils.modules.wikidata import fetch_senses
+from lexutils.helpers.tui import prompt_choose_sense, print_separator
+from lexutils.helpers.util import add_to_watchlist, yes_no_question
 
 _ = gettext.gettext
 
 
-# Program flow
-#
-# Entry through start()
-
-#
-# Program flow
-#
-# Entry through start()
-# Fetch data using sparqldataframes
-# Call in while loop
-#   if not excluded:
-#     process_result()
-#       Call get_sentences_from_apis()
-#         Call europarl.get_records(data)
-#         Call riksdagen.get_records(data)
-#         Collect records in one big dictionary
-#       for loop
-#         present_sentence()
-#           Sort showing shortest first
-#           call prompt_sense_approval()
-#             if >1
-#               call prompt_choose_sense()
-#           Add usage example
-#           Add to watchlist
-#           Add form to exclude list to avoid duplicates caused by sparql lag
-#
 # Data flow
 # 
 # entrypoint: start()
@@ -63,9 +36,9 @@ _ = gettext.gettext
 # for each one it calls process_result()
 # this calls get_sentences_from_apis()
 # this goes through the implemented api's and fetch data from them and return
-# sentences and their metadata
-# then we loop through each sentence and ask the user if it is suitable by
-# calling present_sentence()
+# usage examples
+# then we loop through each usage example and ask the user if it is suitable by
+# calling tui.present_sentence()
 # if the user approves it we call add_usage_example() and add it to WD and the
 # lexeme to the users watchlist.
 
@@ -105,76 +78,42 @@ def start():
         process_forms(language)
 
 
-def prompt_single_sense(
-        form: Form = None,
-        senses: List[Sense] = None):
+def prompt_single_sense(form: Form = None) -> Union[Choices, Sense]:
     if form is None:
         raise ValueError("form was None")
-    if senses is None:
-        raise ValueError("senses was None")
     if show_sense_urls:
         question = _("Found only one sense. " +
                      "Does this example fit the following " +
-                     "gloss?\n{}\n'{}'".format(senses[0].url(),
-                                               senses[0].gloss))
+                     "gloss?\n{}\n'{}'".format(form.senses[0].url(),
+                                               form.senses[0].gloss))
     else:
         question = _("Found only one sense. " +
                      "Does this example fit the following " +
-                     "gloss?\n'{}'".format(senses[0].gloss))
+                     "gloss?\n'{}'".format(form.senses[0].gloss))
     if util.yes_no_question(question):
-        return senses[0]
+        return form.senses[0]
     else:
         tui.cancel_sentence(form.representation)
         sleep(sleep_time)
         return Choices.SKIP_USAGE_EXAMPLE
 
 
-def prompt_multiple_senses(senses: List[Sense] = None):
+def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
     """Prompt and enable user to choose between multiple senses"""
-    number_of_senses = len(senses)
+    if form is None:
+        raise ValueError("form was None")
+    number_of_senses = len(form.senses)
     print(_("Found {} senses.".format(number_of_senses)))
     sense = None
     # TODO check that all senses has a gloss matching the language of
     # the example
-    sense: Sense = prompt_choose_sense(senses)
+    sense: Sense = prompt_choose_sense(form.senses)
     if sense is not None:
         logging.info("a sense was accepted")
         return sense
     else:
         # should this be propagated from prompt_choose_sense() instead?
         return Choices.SKIP_USAGE_EXAMPLE
-
-
-# def sense_approval_handler(
-#         form: Form = None,
-#         senses: List[Sense] = None,
-#         usage_example: UsageExample = None,
-# ) -> Union[Sense, Choices]:
-#     """Prompts for validating that we have a sense matching the use example
-#     Calls prompt_single_sense() or prompt_multiple_senses()"""
-#     logger = logging.getLogger(__name__)
-#     if form is None:
-#         raise ValueError("form was None")
-#     if senses is None:
-#         raise ValueError("senses was None")
-#     if usage_example is None:
-#         raise ValueError("usage_example was None")
-#     # raise NotImplementedError("Update to OOP")
-#     number_of_senses = len(senses)
-#     logging.info(f"number_of_senses:{number_of_senses}")
-#     if number_of_senses == 0:
-#         raise ValueError("Error. Zero senses. this should never be reached " +
-#                          "if the SPARQL result was sane")
-#     elif number_of_senses == 1:
-#         return prompt_single_sense(
-#             form=form,
-#             senses=senses
-#         )
-#     else:
-#         return prompt_multiple_senses(
-#             # form=form,
-#             senses=senses
-#         )
 
 
 def get_usage_examples_from_apis(
@@ -223,32 +162,27 @@ def get_usage_examples_from_apis(
 
 def choose_sense_handler(
         form: Form = None,
-        usage_example: UsageExample = None,
-        senses: List[Sense] = None
+        usage_example: UsageExample = None
 ) -> Union[Choices, Result]:
     """Helper to choose a suitable sense for
     the example in question"""
     if form is None:
         raise ValueError("form was None")
-    if senses is None:
-        raise ValueError("senses was None")
     if usage_example is None:
         raise ValueError("usage_example was None")
     logger = logging.getLogger(__name__)
-    number_of_senses = len(senses)
+    number_of_senses = len(form.senses)
     logging.info(f"number_of_senses:{number_of_senses}")
     if number_of_senses == 0:
         raise ValueError("Error. Zero senses. this should never be reached " +
                          "if the SPARQL result was sane")
     elif number_of_senses == 1:
         sense_choice = prompt_single_sense(
-            form=form,
-            senses=senses
+            form=form
         )
     else:
         sense_choice = prompt_multiple_senses(
-            # form=form,
-            senses=senses
+            form=form
         )
     # sense_choice: Union[Sense, Choices] = sense_approval_handler(
     #     usage_example=usage_example,
@@ -297,19 +231,20 @@ def handle_usage_example(
         raise ValueError("form was None")
     result: Choices = util.yes_no_skip_question(
         tui.found_sentence(
-        form=form,
-        usage_example=usage_example)
+            form=form,
+            usage_example=usage_example
+        )
     )
     if result is Choices.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
-        senses = fetch_senses(form=form)
-        logging.info(f"senses found:")
-        for sense in senses:
+        senses = form.fetch_senses()
+        if form.senses is None:
+            raise ValueError("form.senses was None")
+        for sense in form.senses:
             logging.info(sense)
         # raise NotImplementedError("Update to OOP")
         handler_result = choose_sense_handler(
             usage_example=usage_example,
-            senses=senses,
             form=form
         )
         return handler_result
@@ -318,65 +253,65 @@ def handle_usage_example(
         return result
 
 
+def process_usage_examples(
+        examples: List[UsageExample],
+        form: Form = None,
+):
+    """Go through each usage example and present it"""
+    if form is None:
+        raise ValueError("form was None")
+    logger = logging.getLogger(__name__)
+    if examples is not None:
+        # Sort so that the shortest sentence is first
+        # raise NotImplementedError("presenting the examples is not implemented yet")
+        # TODO How to do this with objects?
+        # sorted_sentences = sorted(
+        #     examples, key=len,
+        # )
+        count = 1
+        # Loop through usage examples
+        for example in examples:
+            tui.present_sentence(
+                count=count,
+                example=example,
+                examples=examples
+            )
+            result = handle_usage_example(
+                form=form,
+                usage_example=example
+            )
+            logger.info(f"process_result: result: {result}")
+            count += 1
+            if result == Choices.SKIP_USAGE_EXAMPLE:
+                continue
+            elif result == Choices.SKIP_FORM or result == Result.USAGE_EXAMPLE_ADDED:
+                print_separator()
+                return result
+
+
 def process_result(
         form: Form = None,
         language: LexemeLanguage = None
 ):
-    """This has only side-effects"""
+    """This loops through each form, gets usage examples and present them to the user one by one.
+    It has only side-effects"""
     logger = logging.getLogger(__name__)
     # ask to continue
     if yes_no_question(f"\nWork on {form.representation}?"):
-        separator = "----------------------------------------------------------"
+
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
         number_of_examples = len(examples)
         tui.number_of_found_sentences(number_of_examples)
         if number_of_examples == 0:
-            print(separator)
-        if examples is not None:
-            # Sort so that the shortest sentence is first
-            # raise NotImplementedError("presenting the examples is not implemented yet")
-            # TODO How to do this with objects?
-            # sorted_sentences = sorted(
-            #     examples, key=len,
-            # )
-            count = 1
-            # Loop through sentence list (that has no result data)
-            for example in examples:
-                if example.record.source == SupportedExampleSources.RIKSDAGEN:
-                    print(_("Presenting sentence " +
-                            "{}/{} ".format(count, number_of_examples) +
-                            "from {} from {}".format(
-                                example.record.date,
-                                example.record.url(),
-                            )))
-                #     elif source == "europarl":
-                #         print(_("Presenting sentence " +
-                #                 "{}/{} ".format(count, number_of_examples) +
-                #                 "from europarl"))
-                #     elif source == "ksamsok":
-                #         # ksamsok.api_name
-                #         print(_("Presenting sentence " +
-                #                 "{}/{} ".format(count, len(sorted_sentences)) +
-                #                 "from {}".format(ksamsok.baseurl + document_id)))
-                # else:
-                #     logger.error(_("Internal error. Source is missing. Please report" +
-                #                    " this bug."))
-                #     exit = True
-                #     return True
-                result = handle_usage_example(
-                    form=form,
-                    usage_example=example
-                )
-                logger.info(f"process_result: result: {result}")
-                count += 1
-                if result == Choices.SKIP_USAGE_EXAMPLE:
-                    continue
-                elif result == Choices.SKIP_FORM or result == Result.USAGE_EXAMPLE_ADDED:
-                    print(separator)
-                    return result
+            print_separator()
+        elif number_of_examples > 0:
+            process_usage_examples(
+                examples=examples,
+                form=form
+            )
         else:
-            print(separator)
+            print_separator()
 
 
 def process_forms(language: LexemeLanguage = None):
@@ -413,89 +348,3 @@ def process_forms(language: LexemeLanguage = None):
                 earlier_choices.append(form)
                 if result == Choices.SKIP_FORM:
                     continue
-                # if exit:
-                #     run = False
-
-# def fetch_and_process_dataframes():
-#     # fetch lexeme data
-#     df = fetch_lexeme_data()
-#     if len(df) == 0:
-#         print(_("No suitable lexemes found. Please add senses and P5137 to"+
-#                 " lexemes and run the program again."))
-#         exit(0)
-#     # group forms by formid
-#     forms = df.groupby("formid")["feature"].apply(', '.join).reset_index()
-#     # They are ordered from F1-~
-#     # Loop through the rows
-#     # https://stackoverflow.com/a/36394939
-#     for index, row in forms.iterrows():
-#         formid = row["formid"]
-#         # find index where formid appears in the original df
-#         dfindex = df.index[df["formid"] == formid].tolist()[0]
-#         #print(f"dfindex: {dfindex}")
-#         word = df.loc[dfindex]["word"]
-#         lid = df.loc[dfindex]["lid"]
-#         features = row["feature"]
-#         category = df.loc[dfindex]["category"]
-#         print(lid, formid, features, category, word)
-#         # print(list(df))
-#         #  Check if word is in exlude list and find example sentence if not
-#         if util.in_exclude_list(dict(
-#                 formid=formid,
-#                 word=word,
-#                 lid=lid)):
-#             # Skip if found in the exclude_list
-#             logging.debug(
-#                 f"Skipping result {word} found in exclude_list",
-#             )
-#             continue
-#         else:
-#             # not in exclude_list
-#             logging.debug(f"processing:{word}")
-#             senses = df.loc[df.lid == lid].groupby("senseid")
-#             exit = process_result(
-#                 #result=result,
-#                 data=dict(
-#                     formid=formid,
-#                     word=word,
-#                     features=features,
-#                     category=category,
-#                     lid=lid,
-#                     senses=senses,  # dataframe
-#                 ),
-#             )
-#         #  present example
-#         # print(type(senses))
-#         # print(senses)
-#         # print(list(senses))
-#         # We don't need to worry about length because the SPARQL query only
-#         # returns lexemes with at least one sense. :)
-#         # print("Senses:")
-#         # for sense in senses:
-#         #     # print("printing sense")
-#         #     # print(sense)
-#         #     # Extract first part of tuple which has the senseid
-#         #     senseid = sense[0]
-#         #     # Pick from group df the first (outputs a series) and take the
-#         #     # second part. Reset the index and get the gloss from the first frame
-#         #     gloss = sense[1].reset_index().at[0,"gloss"]
-#         #     # print(type(gloss))
-#         #     print(f"{senseid}: {gloss}")
-#         #  upload
-#         #  save to exclude list
-#         # json_cache.save_to_exclude_list(dict(formid=formid,
-#         #                                      word=word)
-#
-#     exit(0)
-#
-#     # get dataframes from Wikidata
-#     # df = wikidata.fetch_lexeme_forms()
-#     #import pandas as pd
-#     #pd.set_option("display.max_columns", 10)
-#     # print(df.sample(n=1))
-#     # print(df.describe())
-#     # print(list(df))
-#     #grouped= df.groupby("lid", "senseid", "formid")
-#     #senses = df.groupby("lid", "senseid")
-#     # print(forms)
-#     # print(list(forms))

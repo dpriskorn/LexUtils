@@ -10,9 +10,9 @@ from lexutils.config.config import debug_summaries, debug_excludes, max_word_cou
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record
-from lexutils.models.wikidata import Form
-from lexutils.modules import util
-from lexutils.modules.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
+from lexutils.helpers import util
+from lexutils.helpers.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
+from lexutils.models.wikidata.form import Form
 
 
 class RiksdagenRecord(Record):

@@ -1,6 +1,4 @@
-import logging
-
-from lexutils.models.wikidata import LexemeStatistics
+from lexutils.models.wikidata.misc import LexemeStatistics
 
 
 def main():

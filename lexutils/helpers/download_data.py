@@ -8,7 +8,7 @@ import sys
 import requests
 
 from lexutils import config
-from lexutils.modules import tui
+from lexutils.helpers import tui
 
 _ = gettext.gettext
 
