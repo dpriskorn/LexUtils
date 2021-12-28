@@ -2,7 +2,7 @@ from enum import auto, Enum
 
 
 class SupportedExampleSources(Enum):
-    ENGLISH_WIKISOURCE = "Q15156406"
+    WIKISOURCE = "Q15156406"
     RIKSDAGEN = "Q21592569"
 
 

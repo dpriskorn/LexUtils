@@ -19,7 +19,7 @@ class WikisourceRecord(Record):
     # This is based on the riksdagen model
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
-    source = SupportedExampleSources.ENGLISH_WIKISOURCE
+    source = SupportedExampleSources.WIKISOURCE
     language_code: WikimediaLanguageCode = None
     document_title = None
     snippet: str = None
