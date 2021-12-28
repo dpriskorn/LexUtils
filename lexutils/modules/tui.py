@@ -5,10 +5,12 @@ import logging
 from typing import Dict, List
 from urllib.parse import quote
 
+from consolemenu import *
+from consolemenu.items import *
 from rich import print
 
 from lexutils import config
-from lexutils.config.config import show_sense_urls, wd_prefix
+# from lexutils.config.config import show_sense_urls, wd_prefix
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata import Form, Sense
 from lexutils.modules import europarl, util
@@ -88,10 +90,19 @@ def cancel_sentence(word: str):
 def prompt_choose_sense(senses: List[Sense] = None):
     """Returns a dictionary with sense_id -> sense_id
     and gloss -> gloss or False"""
-    raise NotImplementedError("Update to OOP and TUI library")
+    logger = logging.getLogger(__name__)
+    #raise NotImplementedError("Update to OOP and TUI library")
     if senses is None:
         raise ValueError("senses was None")
-    # TODO use the TUI library from itemsubjector instead
+    menu = SelectionMenu(senses, "Select a sense")
+    menu.show()
+    menu.join()
+    index = menu.selected_option
+    selected_item = senses[index]
+    logger.debug(f"selected:{index}="
+                 f"{selected_item}")
+    return selected_item
+
     # from https://stackoverflow.com/questions/23294658/
     # asking-the-user-for-input-until-they-give-a-valid-response
     # while True:
