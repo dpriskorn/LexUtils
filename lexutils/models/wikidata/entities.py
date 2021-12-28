@@ -6,7 +6,8 @@ from typing import List, TYPE_CHECKING
 from wikibaseintegrator import wbi_config, wbi_login, WikibaseIntegrator
 from wikibaseintegrator.wbi_enums import ActionIfExists
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
-from wikibaseintegrator.datatypes import ExternalID, Form as WBIForm, Sense as WBISense, Time, MonolingualText, Item
+from wikibaseintegrator.datatypes import ExternalID, Form as WBIForm, Sense as WBISense, Time, MonolingualText, Item, \
+    URL
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources
@@ -160,25 +161,10 @@ class Lexeme:
             prop_nr="P6072",
             value=sense.id
         )
-        # if language_style == "formal":
-        #     style = "Q104597585"
-        # else:
-        #     if language_style == "informal":
-        #         style = "Q901711"
-        #     else:
-        #         print(_("Error. Language style {} ".format(language_style) +
-        #                 "not one of (formal,informal). Please report a bug at " +
-        #                 "https://github.com/egils-consulting/LexUtils/issues"))
-        #         sleep(config.sleep_time)
-        #         return "error"
-        logging.debug("Generating qualifier language_style " +
-                      f"with {usage_example.record.language_style.name}")
         language_style_qualifier = Item(
             prop_nr="P6191",
             value=usage_example.record.language_style.value
         )
-        logging.info("Generating qualifier type of reference " +
-                        "with {}".format(usage_example.record.type_of_reference))
         type_of_reference_qualifier = Item(
             prop_nr="P3865",
             value=usage_example.record.type_of_reference.value
@@ -217,20 +203,6 @@ class Lexeme:
                     publication_date,
                     type_of_reference_qualifier,
                 ]
-            elif usage_example.record.source == SupportedExampleSources.WIKISOURCE:
-                logger.info("Wikisource record detected")
-                usage_example.record.lookup_qid()
-                if usage_example.record.document_qid is not None:
-                    logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
-                    stated_in = Item(
-                        prop_nr="P248",
-                        value=usage_example.record.document_qid
-                    )
-                    reference = [
-                        stated_in,
-                        point_in_time,
-                        type_of_reference_qualifier,
-                    ]
             else:
                 stated_in = Item(
                     prop_nr="P248",
@@ -243,7 +215,38 @@ class Lexeme:
                 reference = [
                     stated_in,
                     document_id,
-                    # point_in_time, # does this exist for Wikisource?
+                    point_in_time,
+                    type_of_reference_qualifier,
+                ]
+        elif usage_example.record.source == SupportedExampleSources.WIKISOURCE:
+            logger.info("Wikisource record detected")
+            usage_example.record.lookup_qid()
+            if usage_example.record.document_qid is not None:
+                logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
+                stated_in = Item(
+                    prop_nr="P248",
+                    value=usage_example.record.document_qid
+                )
+                reference = [
+                    stated_in,
+                    point_in_time,
+                    type_of_reference_qualifier,
+                ]
+            else:
+                # fixme how do we easily determine this?
+                # search via sparql for english wikisource QID?
+                # stated_in = Item(
+                #     prop_nr="P248",
+                #     value=
+                # )
+                wikimedia_import_url = URL(
+                    prop_nr="P4656",
+                    value=usage_example.record.url()
+                )
+                reference = [
+                    #stated_in,
+                    wikimedia_import_url,
+                    point_in_time,
                     type_of_reference_qualifier,
                 ]
         # elif source == "europarl":
@@ -335,7 +338,7 @@ class Lexeme:
             claim = MonolingualText(
                 text=usage_example.content,
                 prop_nr="P5831",
-                language=config.language_code,
+                language=usage_example.record.language_code.value,
                 # Add qualifiers
                 qualifiers=[
                     link_to_form,
