@@ -229,7 +229,7 @@ def handle_usage_example(
     )
     if result is Choices.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
-        senses = form.fetch_senses()
+        senses = form.fetch_senses(usage_example=usage_example)
         if form.senses is None:
             raise ValueError("form.senses was None")
         for sense in form.senses:

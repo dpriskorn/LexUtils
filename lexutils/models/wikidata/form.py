@@ -5,6 +5,7 @@ from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.helpers import tui
+from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.entities import EntityID
 from lexutils.models.wikidata.enums import WikidataLexicalCategory
 from lexutils.models.wikidata.sense import Sense
@@ -59,9 +60,12 @@ class Form:
     def __str__(self):
         return f"{self.id}/{self.lexeme_id}/{self.representation}"
 
-    def fetch_senses(self):
+    def fetch_senses(self,
+                     usage_example: UsageExample = None):
         """Fetch the senses on the lexeme"""
         logger = logging.getLogger(__name__)
+        if usage_example is None:
+            raise ValueError("usage_example was None")
         # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
         # helping with this query.
         tui.fetching_senses()
@@ -75,7 +79,7 @@ class Form:
           ?l ontolex:sense ?sense.
           ?sense skos:definition ?gloss.
           # Get only the swedish gloss, exclude otherwise
-          FILTER(LANG(?gloss) = "{config.language_code}")
+          FILTER(LANG(?gloss) = "{usage_example.record.language_code.value}")
           # Exclude lexemes without a linked QID from at least one sense
           # ?sense wdt:P5137 [].
         }}'''
