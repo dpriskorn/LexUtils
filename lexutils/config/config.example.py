@@ -10,7 +10,8 @@ sleep_time = 5
 wd_prefix = "http://www.wikidata.org/entity/"
 user_agent = f"LexUtils/{version}"
 
-# Settings for Examples
+# Settings for UsageExamples
+number_of_forms_to_fetch = 50
 sparql_results_size = 40
 sparql_offset = 1000
 ksamsok_max_results_size = 500  # keep to multiples of 50

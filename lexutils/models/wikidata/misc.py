@@ -70,7 +70,7 @@ class LexemeLanguage:
             }}
             group by ?lexeme ?form ?form_representation ?category
             offset {random_offset}
-            limit 50''')
+            limit {config.number_of_forms_to_fetch}''')
         self.forms_without_an_example = []
         logger.info("Got the data")
         logger.info(f"data:{results.keys()}")
