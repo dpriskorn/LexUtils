@@ -136,10 +136,13 @@ class WikisourceRecord(Record):
                                 logger.info(decoded_result)
                                 if "pageprops" in decoded_result["query"]["pages"]:
                                     for page_id in decoded_result["query"]["pages"]:
-                                        if page_id["wikibase_item"] is not None:
+                                        logging.info(f"found {page_id}")
+                                        if "wikibase_item" in page_id:
                                             self.document_qid = page_id["wikibase_item"]
                                             logger.info(f"Found QID {self.document_qid}")
                                             break
+                                print("debug exit")
+                                exit(0)
             else:
                 non_json_result = response.text
                 raise ValueError("Got no JSON result from Wikisource")
