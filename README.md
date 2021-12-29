@@ -45,3 +45,9 @@ so please be careful using it.
 
 Currently it does not support editgroups so if you need to 
 rollback a change you have to do it manually.
+
+An earlier implementation, LexUse, 
+had sorting of usage examples by length before presentation. 
+This has not been implemented yet, 
+see https://github.com/dpriskorn/LexUtils/issues/18 and 
+feel free to send a pull request :)
