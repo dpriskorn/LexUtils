@@ -6,8 +6,6 @@ from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
-from lexutils.config.config import debug_summaries, debug_excludes, max_word_count, min_word_count, debug_sentences, \
-    debug_duplicates
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record

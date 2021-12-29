@@ -7,10 +7,9 @@ from typing import List
 
 import httpx
 
-from lexutils.config.config import riksdagen_max_results_size, debug_json, debug, debug_summaries
+from lexutils.config.config import riksdagen_max_results_size
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
-# from lexutils.modules import util
 from lexutils.helpers import tui
 from lexutils.models.wikidata.form import Form
 
