@@ -124,7 +124,7 @@ class WikisourceRecord(Record):
             raise ValueError("document_title was None")
         url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
                f"action=query&prop=pageprops&ppprop=wikibase_item&"
-               f"redirects=1&format=json&titles={self.document_title}")
+               f"redirects=1&format=json&titles={quote(self.document_title)}")
         logger.info(f"Looking up {url}")
         response = requests.get(url, headers={"Accept": "application/json"})
         if response.status_code == 200:
@@ -132,32 +132,39 @@ class WikisourceRecord(Record):
                 decoded_result = response.json()
                 logger.info(decoded_result)
                 if "pageprops" in decoded_result["query"]["pages"]:
-                    self.document_qid = decoded_result["query"]["pages"]["wikibase_item"]
-                    logger.info(f"Found QID {self.document_qid}")
+                    for page_id in decoded_result["query"]["pages"]:
+                        if page_id["wikibase_item"] is not None:
+                            self.document_qid = page_id["wikibase_item"]
+                            logger.info(f"Found QID {self.document_qid}")
+                            break
                 else:
                     logger.info("Found no QID for this page")
                     # TODO try finding a QID by truncating the title
                     truncated_title = self.document_title.split("/")[0]
-                    logger.info(f"Trying to find QID using the truncated title: {truncated_title}")
-                    url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
-                           f"action=query&prop=pageprops&ppprop=wikibase_item&"
-                           f"redirects=1&format=json&titles={truncated_title}")
-                    logger.info(f"Looking up {url}")
-                    response = requests.get(url, headers={"Accept": "application/json"})
-                    if response.status_code == 200:
-                        if 'application/json' in response.headers['Content-Type']:
-                            decoded_result = response.json()
-                            logger.info(decoded_result)
-                            if "pageprops" in decoded_result["query"]["pages"]:
-                                self.document_qid = decoded_result["query"]["pages"]["wikibase_item"]
-                                logger.info(f"Found QID {self.document_qid}")
-                            else:
-                                logger.info("Could not find a QID for this page or work in Wikisource.")
+                    if self.document_title != truncated_title:
+                        logger.info(f"Trying to find QID using the truncated title: {truncated_title}")
+                        url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
+                               f"action=query&prop=pageprops&ppprop=wikibase_item&"
+                               f"redirects=1&format=json&titles={quote(truncated_title)}")
+                        logger.info(f"Looking up {url}")
+                        response = requests.get(url, headers={"Accept": "application/json"})
+                        if response.status_code == 200:
+                            if 'application/json' in response.headers['Content-Type']:
+                                decoded_result = response.json()
+                                logger.info(decoded_result)
+                                if "pageprops" in decoded_result["query"]["pages"]:
+                                    for page_id in decoded_result["query"]["pages"]:
+                                        if page_id["wikibase_item"] is not None:
+                                            self.document_qid = page_id["wikibase_item"]
+                                            logger.info(f"Found QID {self.document_qid}")
+                                            break
             else:
                 non_json_result = response.text
                 raise ValueError("Got no JSON result from Wikisource")
         else:
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
+        if self.document_qid is None:
+            logger.info("Could not find a QID for this page or work in Wikisource. :/")
 
     def url(self):
         return f"http://{self.language_code.value}.wikisource.org/wiki/{quote(self.document_title)}"
