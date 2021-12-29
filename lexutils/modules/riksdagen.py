@@ -112,8 +112,7 @@ def get_records(form: Form) -> List[UsageExample]:
 def process_records(records: List[RiksdagenRecord], form: Form):
     logger = logging.getLogger(__name__)
     if records is not None:
-        if debug:
-            print("Looping through records from Riksdagen")
+        logger.debug("Looping through records from Riksdagen")
         records = filter_matching_records(records, form)
         usage_examples = []
         for record in records:
