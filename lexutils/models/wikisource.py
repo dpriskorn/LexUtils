@@ -72,7 +72,6 @@ class WikisourceRecord(Record):
         if form is None:
             raise ValueError("form was None")
         logger = logging.getLogger(__name__)
-        examples = []
         # find sentences
         # order in a list by length
         # pick the shortest one where the form representation appears
@@ -83,7 +82,7 @@ class WikisourceRecord(Record):
         elif self.language_code == WikimediaLanguageCode.SWEDISH:
             nlp = Swedish()
         elif self.language_code == WikimediaLanguageCode.DANISH:
-            logger.info("using the English spaCy pipeline")
+            logger.info("using the Danish spaCy pipeline")
             try:
                 nlp = spacy.load('da_core_news_sm')
             except:
@@ -97,11 +96,16 @@ class WikisourceRecord(Record):
                                       f"is not supported yet, feel free to open an issue at "
                                       f"https://github.com/dpriskorn/LexUtils/issues")
         doc = nlp(self.snippet)
+        sentences = set()
         for sentence in doc.sents:
             logger.info(sentence.text)
-            # This is a very crude test for relevancy
-            if form.representation in sentence.text:
-                examples.append(UsageExample(sentence=sentence.text, record=self))
+            # This is a very crude test for relevancy, we lower first to improve matching
+            if f" {form.representation.lower()} " in sentence.text.lower():
+                # Add to the set first to avoid duplicates
+                sentences.add(sentence.text)
+        examples = []
+        for sentence in sentences:
+            examples.append(UsageExample(sentence=sentence, record=self))
         # print("debug exit")
         # exit(0)
         return examples
@@ -115,20 +119,38 @@ class WikisourceRecord(Record):
             raise ValueError("document_title was None")
         url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
                f"action=query&prop=pageprops&ppprop=wikibase_item&"
-               f"redirects=1&titles={self.document_title}")
-        logger.debug(url)
-        response = requests.get(url, headers={"Accept: application/json"})
+               f"redirects=1&format=json&titles={self.document_title}")
+        logger.info(f"Looking up {url}")
+        response = requests.get(url, headers={"Accept": "application/json"})
         if response.status_code == 200:
             if 'application/json' in response.headers['Content-Type']:
                 decoded_result = response.json()
                 logger.info(decoded_result)
-                print("debug exit")
-                exit(0)
+                if "pageprops" in decoded_result["query"]["pages"]:
+                    self.document_qid = decoded_result["query"]["pages"]["wikibase_item"]
+                    logger.info(f"Found QID {self.document_qid}")
+                else:
+                    logger.info("Found no QID for this page")
+                    # TODO try finding a QID by truncating the title
+                    truncated_title = self.document_title.split("/")[0]
+                    logger.info(f"Trying to find QID using the truncated title: {truncated_title}")
+                    url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
+                           f"action=query&prop=pageprops&ppprop=wikibase_item&"
+                           f"redirects=1&format=json&titles={truncated_title}")
+                    logger.info(f"Looking up {url}")
+                    response = requests.get(url, headers={"Accept": "application/json"})
+                    if response.status_code == 200:
+                        if 'application/json' in response.headers['Content-Type']:
+                            decoded_result = response.json()
+                            logger.info(decoded_result)
+                            if "pageprops" in decoded_result["query"]["pages"]:
+                                self.document_qid = decoded_result["query"]["pages"]["wikibase_item"]
+                                logger.info(f"Found QID {self.document_qid}")
+                            else:
+                                logger.info("Could not find a QID for this page or work in Wikisource.")
             else:
                 non_json_result = response.text
-                logger.info(non_json_result)
-                print("debug exit")
-                exit(0)
+                raise ValueError("Got no JSON result from Wikisource")
         else:
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
 
