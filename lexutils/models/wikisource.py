@@ -3,6 +3,7 @@ from typing import List
 from urllib.parse import quote
 
 import requests
+import spacy as spacy
 from spacy.lang.en import English
 from spacy.lang.sv import Swedish
 
@@ -81,6 +82,16 @@ class WikisourceRecord(Record):
             nlp.add_pipe('sentencizer')
         elif self.language_code == WikimediaLanguageCode.SWEDISH:
             nlp = Swedish()
+        elif self.language_code == WikimediaLanguageCode.DANISH:
+            logger.info("using the English spaCy pipeline")
+            try:
+                nlp = spacy.load('da_core_news_sm')
+            except:
+                raise ModuleNotFoundError(
+                    f"Please install the spacy model for Danish by running: "
+                    f"'python -m spacy download da_core_news_sm' "
+                    f"in the terminal/cmd/powershell"
+                )
         else:
             raise NotImplementedError(f"Sentence extraction for {self.language_code.name} "
                                       f"is not supported yet, feel free to open an issue at "
@@ -91,8 +102,8 @@ class WikisourceRecord(Record):
             # This is a very crude test for relevancy
             if form.representation in sentence.text:
                 examples.append(UsageExample(sentence=sentence.text, record=self))
-        #print("debug exit")
-        #exit(0)
+        # print("debug exit")
+        # exit(0)
         return examples
 
     def lookup_qid(self):
@@ -105,9 +116,19 @@ class WikisourceRecord(Record):
         url = (f"https://{self.language_code.value}.wikisource.org/w/api.php?"
                f"action=query&prop=pageprops&ppprop=wikibase_item&"
                f"redirects=1&titles={self.document_title}")
-        response = requests.get(url)
+        logger.debug(url)
+        response = requests.get(url, headers={"Accept: application/json"})
         if response.status_code == 200:
-            logger.info(response.text)
+            if 'application/json' in response.headers['Content-Type']:
+                decoded_result = response.json()
+                logger.info(decoded_result)
+                print("debug exit")
+                exit(0)
+            else:
+                non_json_result = response.text
+                logger.info(non_json_result)
+                print("debug exit")
+                exit(0)
         else:
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
 

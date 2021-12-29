@@ -2,8 +2,10 @@
 #gettext
 asyncio
 console-menu
+fuzzyfinder
 git+git://github.com/LeMyst/WikibaseIntegrator@v0.12.0.dev5#egg=wikibaseintegrator
 httpx
 prompt-toolkit
 requests
 rich
+spacy
