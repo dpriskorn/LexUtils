@@ -24,3 +24,6 @@ exclude_list = "exclude_list.json"
 
 # Global variables
 login_instance = None
+
+# Debug
+debug_summaries = False
