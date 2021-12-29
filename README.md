@@ -51,3 +51,9 @@ had sorting of usage examples by length before presentation.
 This has not been implemented yet, 
 see https://github.com/dpriskorn/LexUtils/issues/18 and 
 feel free to send a pull request :)
+
+# NLP pipelines
+UsageExamples use NLP pipelines to detect sentence boundaries. 
+The quality of this detection seems to vary between languages.
+As of this writing English and Swedish work pretty well, 
+but Danish is slow and cuts a lot of sentences.
