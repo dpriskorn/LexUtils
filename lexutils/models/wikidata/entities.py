@@ -227,13 +227,19 @@ class Lexeme:
                     prop_nr="P248",
                     value=usage_example.record.document_qid
                 )
+                wikimedia_import_url = URL(
+                    prop_nr="P4656",
+                    value=usage_example.record.url()
+                )
                 reference = [
                     stated_in,
+                    wikimedia_import_url,
                     point_in_time,
                     type_of_reference_qualifier,
                 ]
             else:
-                # fixme how do we easily determine this?
+                # TODO discuss whether we want to add this, it can rather easily
+                #  be inferred from the import url and the QID of the work
                 # search via sparql for english wikisource QID?
                 # stated_in = Item(
                 #     prop_nr="P248",
