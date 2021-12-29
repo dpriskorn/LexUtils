@@ -33,6 +33,7 @@ def downloading_from(api_name):
 
 
 def europarl_download():
+    raise NotImplementedError("Update to new language chooser")
     print(_("Downloading {} sentence file for {}".format(
         europarl.api_name, config.language,
     )))
@@ -41,8 +42,9 @@ def europarl_download():
 def working_on(form: Form):
     features = []
     for feature in form.grammatical_features:
-        features.append(feature)
-    print(_("Working on {} ({}) with the features: {}".format(
+        features.append(feature.value)
+    print(_(
+        "Working on {} ({}) with the features: {}".format(
         form.representation, form.lexeme_category.name.lower(),
         ", ".join(features)
     )))

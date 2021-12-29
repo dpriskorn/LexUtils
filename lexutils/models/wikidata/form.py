@@ -1,9 +1,13 @@
 import logging
 from typing import List
 
+from wikibaseintegrator import WikibaseIntegrator
+from wikibaseintegrator.models import LanguageValue
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
+from wikibaseintegrator.entities import Item
 
 from lexutils.config import config
+from lexutils.config.config import login_instance
 from lexutils.helpers import tui
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.entities import EntityID
@@ -17,7 +21,7 @@ class Form:
     """
     id: str
     representation: str
-    grammatical_features: List[str]
+    grammatical_features: List[LanguageValue]
     # We store these on the form because they are needed
     # to determine if an example fits or not
     lexeme_id: str
@@ -52,8 +56,16 @@ class Form:
             self.grammatical_features = []
             logger.debug(json["grammatical_features"])
             for feature in json["grammatical_features"]["value"].split(","):
-                # TODO look up labels of features using WD
-                self.grammatical_features.append(feature)
+                wbi = WikibaseIntegrator(login=login_instance)
+                item = wbi.item.get(entity_id=str(EntityID(feature)))
+                # TODO get the language code from somewhere
+                #label = item.labels.get(language=)
+                # English is fallback
+                label = item.labels.get(language="en")
+                logger.info(f"found feature: {label.value}")
+                # print("debug exit")
+                # exit(0)
+                self.grammatical_features.append(label)
         except KeyError:
             pass
 
