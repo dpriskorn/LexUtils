@@ -43,7 +43,7 @@ def main():
                             )
         if user_input.lower() == "examples":
             # raise Exception("Rewrite to use OOP not finished yet")
-            examples.start()
+            usage_examples.start()
         if user_input.lower() == "statistics":
             statistics.main()
         # if user_input.lower() == "lexcombine":
