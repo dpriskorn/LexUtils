@@ -77,8 +77,7 @@ def process_async_responses(word) -> List[RiksdagenRecord]:
                 records.append(RiksdagenRecord(entry))
     length = len(records)
     logger.info(f"Got {length} records")
-    if debug_json:
-        logger.debug(f"records:{records}")
+    # logger.debug(f"records:{records}")
     return records
 
 
