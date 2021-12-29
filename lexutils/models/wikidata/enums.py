@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class WikidataLexicalCategory(Enum):
+    # FIXME this does not scale at all
     NOUN = "Q1084"
     VERB = "Q24905"
     ADVERB = "Q380057"
@@ -9,6 +10,7 @@ class WikidataLexicalCategory(Enum):
     AFFIX = "Q62155"
     PROPER_NOUN = "Q147276"
     PRONOUN = "Q36224"
+    PERSONAL_PRONOUN = "Q468801"
 
 
 class WikimediaLanguageCode(Enum):
