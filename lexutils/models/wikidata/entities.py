@@ -13,7 +13,6 @@ from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources
 from lexutils.helpers import wdqs
 from lexutils.helpers.console import console
-from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikidataNamespaceLetters
 
