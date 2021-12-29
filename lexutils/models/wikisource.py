@@ -46,24 +46,6 @@ class WikisourceRecord(Record):
     def __str__(self):
         return f"{self.document_title}: {self.snippet}"
 
-    def find_form_representation_in_summary(self, word):
-        logger = logging.getLogger(__name__)
-        if word in self.summary:
-            inexact_hit = True
-            if f" {word} " in self.summary or f">{word}<" in self.summary:
-                self.exact_hit = True
-                if config.debug_summaries:
-                    logging.debug(
-                        f"found word_spaces or word_angle_parens in {self.summary}"
-                    )
-            else:
-                if config.debug_summaries:
-                    logging.info("No exact hit in summary. Skipping.")
-        # else:
-        #     if config.debug_summaries and added is False:
-        #         print(f"'{word}' not found as part of a word or a " +
-        #               "word in the summary. Skipping")
-
     def find_usage_examples_from_summary(
             self,
             form: Form = None,
