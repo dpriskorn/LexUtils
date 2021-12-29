@@ -1,6 +1,7 @@
+from __future__ import annotations
 import logging
 import random
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator import wbi_config
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
@@ -9,7 +10,9 @@ from lexutils.config import config
 from lexutils.helpers import wdqs
 from lexutils.models.wikidata.entities import Lexeme, EntityID
 from lexutils.models.wikidata.enums import WikimediaLanguageCode, WikimediaLanguageQID
-from lexutils.models.wikidata.form import Form
+
+if TYPE_CHECKING:
+    from lexutils.models.wikidata.form import Form
 
 wbi_config.config['USER_AGENT'] = config.user_agent
 
@@ -37,6 +40,7 @@ class LexemeLanguage:
     forms: int
     forms_with_an_example: int
     forms_without_an_example: List[Form]
+    number_of_forms_without_an_example: int
     lexemes_count: int
 
     def __init__(self, language_code: str):
@@ -79,6 +83,7 @@ class LexemeLanguage:
             for entry in results["results"]['bindings']:
                 #logger.info(f"data:{entry.keys()}")
                 #logging.info(f"lexeme_json:{entry}")
+                from lexutils.models.wikidata.form import Form
                 form = Form(entry)
                 logger.info(f"appending {form} to list of forms")
                 #logger.info("debug exit")
@@ -92,51 +97,51 @@ class LexemeLanguage:
     def fetch_lexemes(self):
         # TODO port to use the Lexeme class instead of heavy dataframes which we don't need
         raise Exception("This is deprecated.")
-        results = execute_sparql_query(f'''
-        SELECT DISTINCT
-        ?entity_lid ?form ?word (?categoryLabel as ?category) 
-        (?grammatical_featureLabel as ?feature) ?sense ?gloss
-        WHERE {{
-          ?entity_lid a ontolex:LexicalEntry; dct:language wd:{self.language_qid.value}.
-          VALUES ?excluded {{
-            # exclude affixes and interfix
-            wd:Q62155 # affix
-            wd:Q134830 # prefix
-            wd:Q102047 # suffix
-            wd:Q1153504 # interfix
-          }}
-          MINUS {{?entity_lid wdt:P31 ?excluded.}}
-          ?entity_lid wikibase:lexicalCategory ?category.
-
-          # We want only lexemes with both forms and at least one sense
-          ?entity_lid ontolex:lexicalForm ?form.
-          ?entity_lid ontolex:sense ?sense.
-
-          # Exclude lexemes without a linked QID from at least one sense
-          ?sense wdt:P5137 [].
-          ?sense skos:definition ?gloss.
-          # Get only the swedish gloss, exclude otherwise
-          FILTER(LANG(?gloss) = "{self.language_code.value}")
-
-          # This remove all lexemes with at least one example which is not
-          # ideal
-          MINUS {{?entity_lid wdt:P5831 ?example.}}
-          ?form wikibase:grammaticalFeature ?grammatical_feature.
-          # We extract the word of the form
-          ?form ontolex:representation ?word.
-          SERVICE wikibase:label
-          {{ bd:serviceParam wikibase:language "{self.language_code.value},en". }}
-        }}
-        limit {config.sparql_results_size}
-        offset {config.sparql_offset}
-        ''')
-        self.lexemes = []
-        for lexeme_json in results:
-            logging.debug(f"lexeme_json:{lexeme_json}")
-            l = Lexeme.parse_wdqs_json(lexeme_json)
-            self.lexemes.append(l)
-        logging.info(f"Got {len(self.lexemes)} lexemes from "
-                     f"WDQS for language {self.language_code.name}")
+        # results = execute_sparql_query(f'''
+        # SELECT DISTINCT
+        # ?entity_lid ?form ?word (?categoryLabel as ?category)
+        # (?grammatical_featureLabel as ?feature) ?sense ?gloss
+        # WHERE {{
+        #   ?entity_lid a ontolex:LexicalEntry; dct:language wd:{self.language_qid.value}.
+        #   VALUES ?excluded {{
+        #     # exclude affixes and interfix
+        #     wd:Q62155 # affix
+        #     wd:Q134830 # prefix
+        #     wd:Q102047 # suffix
+        #     wd:Q1153504 # interfix
+        #   }}
+        #   MINUS {{?entity_lid wdt:P31 ?excluded.}}
+        #   ?entity_lid wikibase:lexicalCategory ?category.
+        #
+        #   # We want only lexemes with both forms and at least one sense
+        #   ?entity_lid ontolex:lexicalForm ?form.
+        #   ?entity_lid ontolex:sense ?sense.
+        #
+        #   # Exclude lexemes without a linked QID from at least one sense
+        #   ?sense wdt:P5137 [].
+        #   ?sense skos:definition ?gloss.
+        #   # Get only the swedish gloss, exclude otherwise
+        #   FILTER(LANG(?gloss) = "{self.language_code.value}")
+        #
+        #   # This remove all lexemes with at least one example which is not
+        #   # ideal
+        #   MINUS {{?entity_lid wdt:P5831 ?example.}}
+        #   ?form wikibase:grammaticalFeature ?grammatical_feature.
+        #   # We extract the word of the form
+        #   ?form ontolex:representation ?word.
+        #   SERVICE wikibase:label
+        #   {{ bd:serviceParam wikibase:language "{self.language_code.value},en". }}
+        # }}
+        # limit {config.sparql_results_size}
+        # offset {config.sparql_offset}
+        # ''')
+        # self.lexemes = []
+        # for lexeme_json in results:
+        #     logging.debug(f"lexeme_json:{lexeme_json}")
+        #     l = Lexeme.parse_wdqs_json(lexeme_json)
+        #     self.lexemes.append(l)
+        # logging.info(f"Got {len(self.lexemes)} lexemes from "
+        #              f"WDQS for language {self.language_code.name}")
 
     def count_number_of_lexemes(self):
         """Returns an int"""
@@ -187,7 +192,7 @@ class LexemeLanguage:
         }}'''))
         count: int = wdqs.extract_count(result)
         logging.debug(f"count:{count}")
-        self.forms_without_an_example = count
+        self.number_of_forms_without_an_example = count
 
     def count_number_of_forms_with_examples(self):
         pass
@@ -219,7 +224,7 @@ class LexemeStatistics:
         self.calculate_total_lexemes()
         self.rank_languages_based_on_statistics()
 
-    def calculate_total_lexemes(self) -> int:
+    def calculate_total_lexemes(self):
         """Calculate how many lexemes exists in Wikidata"""
         result = (execute_sparql_query(f'''
         SELECT
