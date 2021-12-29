@@ -9,8 +9,7 @@ from prompt_toolkit.completion import Completer, Completion
 #import click
 from fuzzyfinder import fuzzyfinder
 
-#from lexutils import config
-from lexutils.modules import examples
+from lexutils.modules import usage_examples
 from lexutils.modules import statistics
 
 # Settings
