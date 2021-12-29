@@ -3,6 +3,7 @@ from typing import List
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
+from lexutils.config import config
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.form import Form
 from lexutils.models.wikidata.misc import LexemeLanguage
@@ -35,7 +36,7 @@ def get_records(
   BIND(CONCAT("https://br.wikisource.org/wiki/", ENCODE_FOR_URI(?title)) AS ?titleUrl)
   BIND(REPLACE(REPLACE(?snippet_, '</span>', ''), '<span class="searchmatch">', '') AS ?snippet)
 }}
-LIMIT 50
+LIMIT {config.wikisource_max_results_size}
 ''')
     logger.debug(f"results:{results}")
     records = []
