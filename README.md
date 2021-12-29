@@ -31,3 +31,17 @@ password = "password"
 ## Use
 When you get a prompt like "[Y/n]" the capitalized selection can be selected by
 pressing Enter. To select "n" type "n" followed by Enter.
+
+## UsageExamples
+Warning: Currently only senses with a gloss in the current working 
+language are fetched and shown to the user.
+
+This tool enables you to easily find usage examples 
+for any lexeme form (in the supported languages) in 
+Wikidata that does not already have one.
+
+Being a CLI tool it enables you to quickly screw things up, 
+so please be careful using it.
+
+Currently it does not support editgroups so if you need to 
+rollback a change you have to do it manually.
