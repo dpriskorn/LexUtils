@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 from typing import List
 
 from wikibaseintegrator import WikibaseIntegrator
@@ -59,7 +60,7 @@ class Form:
                 wbi = WikibaseIntegrator(login=login_instance)
                 item = wbi.item.get(entity_id=str(EntityID(feature)))
                 # TODO get the language code from somewhere
-                #label = item.labels.get(language=)
+                # label = item.labels.get(language=)
                 # English is fallback
                 label = item.labels.get(language="en")
                 logger.info(f"found feature: {label.value}")
@@ -115,7 +116,10 @@ class Form:
                     number += 1
                 logging.debug(f"senses found:{self.senses}")
             else:
-                raise ValueError("number of senses was 0")
+                logger.warning(f"No senses with a gloss in the current language "
+                               f"{usage_example.record.language_code.name.title()} was found. "
+                               f"Please go to {self.url()} and improve the glosses if you can.")
+                sleep(5)
         else:
             raise ValueError(_("Error. Got None trying to fetch senses. " +
                                "Please report this as an issue."))
