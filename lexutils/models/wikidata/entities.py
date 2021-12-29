@@ -380,7 +380,6 @@ class Lexeme:
                 summary=("Added usage example " +
                       "with [[Wikidata:Tools/LexUtils]] v{}".format(config.version))
                 )
-            if config.debug_json:
-                logging.debug(f"result from WBI:{result}")
+            # logging.debug(f"result from WBI:{result}")
             # TODO add handling of result from WBI and return True == Success or False
             return result
