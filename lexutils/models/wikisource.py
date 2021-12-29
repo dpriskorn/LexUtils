@@ -63,6 +63,7 @@ class WikisourceRecord(Record):
             nlp.add_pipe('sentencizer')
         elif self.language_code == WikimediaLanguageCode.SWEDISH:
             nlp = Swedish()
+            nlp.add_pipe('sentencizer')
         elif self.language_code == WikimediaLanguageCode.DANISH:
             logger.info("using the Danish spaCy pipeline")
             try:
@@ -136,9 +137,10 @@ class WikisourceRecord(Record):
                                 decoded_result = response.json()
                                 logger.info(decoded_result)
                                 if "pageprops" in decoded_result["query"]["pages"]:
-                                    for page_id in decoded_result["query"]["pages"]:
-                                        logging.info(f"found {page_id}")
-                                        if "wikibase_item" in page_id:
+                                    for page_id in decoded_result["query"]["pages"].keys():
+                                        data = decoded_result["query"]["pages"][page_id]
+                                        logging.info(f'found {data}')
+                                        if "wikibase_item" in data:
                                             self.document_qid = page_id["wikibase_item"]
                                             logger.info(f"Found QID {self.document_qid}")
                                             break

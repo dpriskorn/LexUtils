@@ -145,7 +145,10 @@ def get_usage_examples_from_apis(
     # Riksdagen API is slow, only use it if we don't have a lot of sentences already
     if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
         if len(examples) < 50:
-            riksdagen_examples: List[UsageExample] = riksdagen.get_records(form)
+            riksdagen_examples: List[UsageExample] = riksdagen.get_records(
+                form=form,
+                lexemelanguage=lexemelanguage
+            )
             examples.extend(riksdagen_examples)
     logger.debug(f"returning from apis:{examples}")
     return examples
