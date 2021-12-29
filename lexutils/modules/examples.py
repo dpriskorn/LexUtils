@@ -147,8 +147,7 @@ def get_usage_examples_from_apis(
         if len(examples) < 50:
             riksdagen_examples: List[UsageExample] = riksdagen.get_records(form)
             examples.extend(riksdagen_examples)
-    if config.debug_sentences:
-        logger.debug(f"returning from apis:{examples}")
+    logger.debug(f"returning from apis:{examples}")
     return examples
 
 
