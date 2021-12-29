@@ -64,11 +64,11 @@ def found_sentence(form: Form = None,
     if form is None:
         raise ValueError("form was None")
     # FIXME add grammatical features here
-    word_count = util.count_words(usage_example.content)
+    word_count = util.count_words(usage_example.text)
     return (_("Found the following sentence with {} ".format(word_count) +
               "words. Is it suitable as a usage example " +
               "for the {} form '{}'? \n".format(form.lexeme_category.name.lower(), form.representation) +
-              "'{}'".format(usage_example.content)))
+              "'{}'".format(usage_example.text)))
 
 
 def fetching_senses():

@@ -17,7 +17,7 @@ class Record:
     # This is needed for the europarl source
     line_number: int = None
     source = SupportedExampleSources
-    summary: str
+    text: str
     type_of_reference = ReferenceType
 
     def lookup_qid(self):

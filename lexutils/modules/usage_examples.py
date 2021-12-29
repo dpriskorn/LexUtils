@@ -263,6 +263,9 @@ def process_usage_examples(
         #     examples, key=len,
         # )
         count = 1
+        # Sort the usage examples by word count
+        # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
+        examples.sort(key=lambda x: x.word_count, reverse=False)
         # Loop through usage examples
         for example in examples:
             tui.present_sentence(

@@ -23,7 +23,6 @@ class WikisourceRecord(Record):
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.WIKISOURCE
     document_title = None
-    snippet: str = None
 
     def __init__(self,
                  json=None,
@@ -33,7 +32,7 @@ class WikisourceRecord(Record):
         except KeyError:
             raise KeyError("Could not find title")
         try:
-            self.snippet = json["snippet"]["value"]
+            self.text = json["snippet"]["value"]
         except KeyError:
             raise KeyError("Could not find snippet")
         self.language_code = lexemelanguage.language_code
@@ -44,7 +43,7 @@ class WikisourceRecord(Record):
         #     raise KeyError("Could not find id")
 
     def __str__(self):
-        return f"{self.document_title}: {self.snippet}"
+        return f"{self.document_title}: {self.text}"
 
     def find_usage_examples_from_summary(
             self,
@@ -78,7 +77,7 @@ class WikisourceRecord(Record):
             raise NotImplementedError(f"Sentence extraction for {self.language_code.name} "
                                       f"is not supported yet, feel free to open an issue at "
                                       f"https://github.com/dpriskorn/LexUtils/issues")
-        doc = nlp(self.snippet)
+        doc = nlp(self.text)
         sentences = set()
         for sentence in doc.sents:
             logger.info(sentence.text)

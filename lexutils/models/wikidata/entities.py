@@ -341,7 +341,7 @@ class Lexeme:
         else:
             # This is the usage example statement
             claim = MonolingualText(
-                text=usage_example.content,
+                text=usage_example.text,
                 prop_nr="P5831",
                 language=usage_example.record.language_code.value,
                 # Add qualifiers

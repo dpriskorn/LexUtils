@@ -32,33 +32,33 @@ class RiksdagenRecord(Record):
         except KeyError:
             raise KeyError("Could not find id")
         try:
-            self.summary = json["summary"]
+            self.text = json["summary"]
         except KeyError:
-            raise KeyError("Could not find id")
+            raise KeyError("Could not find summary")
         try:
             # self.date = datetime.strptime(json["datum"], "%d%m%Y")
             self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")
         except KeyError:
-            raise KeyError("Could not find id")
+            raise KeyError("Could not find datum")
         self.language_code = lexemelanguage.language_code
 
-    def find_form_representation_in_summary(self, word):
+    def find_form_representation_in_the_text(self, word):
         logger = logging.getLogger(__name__)
-        if word in self.summary:
+        if word in self.text:
             inexact_hit = True
-            if f" {word} " in self.summary or f">{word}<" in self.summary:
+            if f" {word} " in self.text or f">{word}<" in self.text:
                 self.exact_hit = True
                 if config.debug_summaries:
                     logging.debug(
-                        f"found word_spaces or word_angle_parens in {self.summary}"
+                        f"found word_spaces or word_angle_parens in {self.text}"
                     )
             else:
                 if config.debug_summaries:
-                    logging.info("No exact hit in summary. Skipping.")
+                    logging.info("No exact hit in text. Skipping.")
         # else:
         #     if config.debug_summaries and added is False:
         #         print(f"'{word}' not found as part of a word or a " +
-        #               "word in the summary. Skipping")
+        #               "word in the text. Skipping")
 
     def find_usage_examples_from_summary(self, form: Form) -> List[UsageExample]:
         """This tries to find and clean sentences and return the shortest one"""
@@ -75,32 +75,34 @@ class RiksdagenRecord(Record):
             dddd="skr.",
         )
 
-        def clean_summary(summary):
-            return summary.replace(
+        def clean_text(text):
+            """This cleans the html formatting that the API adds automatically.
+            It cannot be turned of == bad API design"""
+            return text.replace(
                 '<span class="traff-markering">', ""
             ).replace('</span>', "")
 
-        def substitute_common_abbreviations(cleaned_summary):
+        def substitute_common_abbreviations(cleaned_text):
             # replace abbreviations "t.ex." temporarily to help detect sentence boundaries
             for key in substitutions:
-                cleaned_summary = cleaned_summary.replace(
+                cleaned_text = cleaned_text.replace(
                     substitutions[key], key,
                 )
-            return cleaned_summary
+            return cleaned_text
 
-        def remove_duplicates(cleaned_summary):
+        def remove_duplicates(cleaned_text):
             # from https://stackoverflow.com/questions/3549075/
             # regex-to-find-all-sentences-of-text
             # TODO check for near duplicates and remove (fuzzymatch?)
             # TODO flesh out regex sentence detecting to own module
             sentences = re.findall(
-                "[A-Z].*?[\.!?]", cleaned_summary, re.MULTILINE | re.DOTALL
+                "[A-Z].*?[\.!?]", cleaned_text, re.MULTILINE | re.DOTALL
             )
             # Remove duplicates naively using sets
             return list(set(sentences))
 
         def find_suitable_usage_examples(sentences_without_duplicates,
-                                         cleaned_summary, form: Form):
+                                         cleaned_text, form: Form):
             usage_examples = []
             for sentence in sentences_without_duplicates:
                 """For each sentence we first try to exclude it, 
@@ -149,7 +151,7 @@ class RiksdagenRecord(Record):
                 if f" {form.representation} " in sentence and exclude_this_sentence is False:
                     # restore the abbreviations
                     for key in substitutions:
-                        cleaned_summary = cleaned_summary.replace(key, substitutions[key])
+                        cleaned_text = cleaned_text.replace(key, substitutions[key])
                     # Last cleaning
                     ellipsis: str = "…"
                     sentence = (sentence
@@ -165,13 +167,13 @@ class RiksdagenRecord(Record):
             return usage_examples
 
         logger = logging.getLogger(__name__)
-        cleaned_summary = clean_summary(self.summary)
+        cleaned_text = clean_text(self.text)
         sentences_without_duplicates = remove_duplicates(
-            substitute_common_abbreviations(cleaned_summary)
+            substitute_common_abbreviations(cleaned_text)
         )
         logger.debug("Sentences after duplicate removal " +
                      f"{sentences_without_duplicates}")
-        return find_suitable_usage_examples(sentences_without_duplicates, cleaned_summary, form)
+        return find_suitable_usage_examples(sentences_without_duplicates, cleaned_text, form)
 
     def lookup_qid(self):
         # Given a docuemnt id lookup the QID if any

@@ -108,7 +108,7 @@ def filter_matching_records(
     for record in records:
         if config.debug_summaries:
             logging.info(f"Working of record number {count}")
-        record.find_form_representation_in_summary(form.representation)
+        record.find_form_representation_in_the_text(form.representation)
         if record.exact_hit:
             records_with_exact_match.append(record)
             if config.debug_summaries:
