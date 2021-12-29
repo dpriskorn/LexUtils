@@ -76,6 +76,7 @@ def count_words(string):
 
 def add_to_watchlist(lid: str):
     """This add a lexeme to the users watchlist"""
+    # TODO use WBI for this instead
     # Get session from WBI, it cannot be None because this comes after adding an
     # usage example with WBI.
     session = config.login_instance.get_session()
@@ -103,9 +104,10 @@ def add_to_watchlist(lid: str):
     result = session.post(
         url, data=params_watch
     )
-    if config.debug_json:
-        print(result.text)
+    #logging.debug(result.text)
     print(_("Added {} to your watchlist".format(lid)))
+
+
 def in_exclude_list(data: dict):
     # Check if in exclude_list
     if os.path.isfile('exclude_list.json'):
