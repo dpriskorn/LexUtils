@@ -294,11 +294,9 @@ def process_result(
         form: Form = None,
         language: LexemeLanguage = None
 ):
-    """This loops through each form, gets usage examples and present them to the user one by one.
+    """This handles confirmation working on a form and gets usage examples
     It has only side-effects"""
-    logger = logging.getLogger(__name__)
-    # ask to continue
-    if yes_no_question(tui.work_on(form=form)):
+    def fetch_usage_examples():
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
         number_of_examples = len(examples)
@@ -312,6 +310,14 @@ def process_result(
             )
         else:
             print_separator()
+
+    logger = logging.getLogger(__name__)
+    # ask to continue
+    if config.require_form_confirmation:
+        if yes_no_question(tui.work_on(form=form)):
+            fetch_usage_examples()
+    else:
+        fetch_usage_examples()
 
 
 def process_forms(lexemelanguage: LexemeLanguage = None):
