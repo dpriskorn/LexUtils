@@ -98,6 +98,17 @@ class WikisourceRecord(Record):
         return examples
 
     def lookup_qid(self):
+        def extract_wikidata_qid(json):
+            for page_id in json["query"]["pages"].keys():
+                page_data = json["query"]["pages"][page_id]
+                if "pageprops" in page_data:
+                    page_properties = page_data["pageprops"]
+                    logging.debug(f'found {page_properties}')
+                    if "wikibase_item" in page_properties:
+                        self.document_qid = page_properties["wikibase_item"]
+                        logger.info(f"Found QID {self.document_qid}")
+                        break
+
         #  https://stackoverflow.com/questions/37024807/how-to-get-wikidata-id-for-an-wikipedia-article-by-api
         logger = logging.getLogger(__name__)
         if self.language_code is None:
@@ -113,16 +124,9 @@ class WikisourceRecord(Record):
             if 'application/json' in response.headers['Content-Type']:
                 decoded_result = response.json()
                 logger.info(decoded_result)
-                if "pageprops" in decoded_result["query"]["pages"]:
-                    for page_id in decoded_result["query"]["pages"]:
-                        logging.info(f"found {page_id}")
-                        if "wikibase_item" in page_id:
-                            self.document_qid = page_id["wikibase_item"]
-                            logger.info(f"Found QID {self.document_qid}")
-                            break
-                else:
-                    logger.info("Found no QID for this page")
-                    # TODO try finding a QID by truncating the title
+                extract_wikidata_qid(decoded_result)
+                if self.document_qid is None:
+                    # try finding a QID by truncating the title
                     truncated_title = self.document_title.split("/")[0]
                     if self.document_title != truncated_title:
                         logger.info(f"Trying to find QID using the truncated title: {truncated_title}")
@@ -134,17 +138,12 @@ class WikisourceRecord(Record):
                         if response.status_code == 200:
                             if 'application/json' in response.headers['Content-Type']:
                                 decoded_result = response.json()
-                                logger.info(decoded_result)
-                                if "pageprops" in decoded_result["query"]["pages"]:
-                                    for page_id in decoded_result["query"]["pages"].keys():
-                                        data = decoded_result["query"]["pages"][page_id]
-                                        logging.info(f'found {data}')
-                                        if "wikibase_item" in data:
-                                            self.document_qid = page_id["wikibase_item"]
-                                            logger.info(f"Found QID {self.document_qid}")
-                                            break
-                                print("debug exit")
-                                exit(0)
+                                logger.debug(decoded_result)
+                                extract_wikidata_qid(decoded_result)
+                                if self.document_qid is None:
+                                    logger.info("Found no QID for this page")
+                # print("debug exit")
+                # exit(0)
             else:
                 non_json_result = response.text
                 raise ValueError("Got no JSON result from Wikisource")
