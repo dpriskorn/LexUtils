@@ -321,7 +321,7 @@ def process_forms(lexemelanguage: LexemeLanguage = None):
     earlier_choices = []
     run = True
     while (run):
-        if len(earlier_choices) == config.sparql_results_size:
+        if len(earlier_choices) == config.number_of_forms_to_fetch:
             # We have gone checked all results now
             # TODO offer to fetch more
             print("No more results. "
