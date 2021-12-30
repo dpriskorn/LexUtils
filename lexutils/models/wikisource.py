@@ -115,7 +115,7 @@ class WikisourceRecord(Record):
                 page_data = json["query"]["pages"][page_id]
                 if "pageprops" in page_data:
                     page_properties = page_data["pageprops"]
-                    logging.debug(f'found {page_properties}')
+                    logger.debug(f'found {page_properties}')
                     if "wikibase_item" in page_properties:
                         self.document_qid = page_properties["wikibase_item"]
                         logger.info(f"Found QID {self.document_qid}")
@@ -135,7 +135,7 @@ class WikisourceRecord(Record):
         if response.status_code == 200:
             if 'application/json' in response.headers['Content-Type']:
                 decoded_result = response.json()
-                logger.info(decoded_result)
+                logger.debug(decoded_result)
                 extract_wikidata_qid(decoded_result)
                 if self.document_qid is None:
                     # try finding a QID by truncating the title
