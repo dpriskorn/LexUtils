@@ -45,9 +45,9 @@ def working_on(form: Form):
         features.append(feature.value)
     print(_(
         "Working on {} ({}) with the features: {}".format(
-        form.representation, form.lexeme_category.name.lower(),
-        ", ".join(features)
-    )))
+            form.representation, form.lexeme_category.name.lower(),
+            ", ".join(features)
+        )))
     print(form.url())
 
 
@@ -104,12 +104,17 @@ def choose_sense_menu(senses: List[Sense] = None):
     menu.show()
     menu.join()
     index = menu.selected_option
-    logger.debug(f"index:{index}")
+    # logger.debug(f"index:{index}")
+    # exit(0)
     if index is not None:
-        selected_item = senses[index]
-        logger.debug(f"selected:{index}="
-                     f"{selected_item}")
-        return selected_item
+        logger.debug(f"selected:{index}")
+        if index == len(senses) + 1:
+            logger.debug("No sense was chosen")
+            return None
+        else:
+            selected_item = senses[index]
+            logger.debug("Returning the chosen sense")
+            return selected_item
 
 
 def select_language_menu():
