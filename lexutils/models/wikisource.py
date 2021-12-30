@@ -63,14 +63,21 @@ class WikisourceRecord(Record):
         elif self.language_code == WikimediaLanguageCode.SWEDISH:
             nlp = Swedish()
             nlp.add_pipe('sentencizer')
-        elif self.language_code == WikimediaLanguageCode.DANISH:
-            logger.info("using the Danish spaCy pipeline")
+        elif (
+                self.language_code == WikimediaLanguageCode.FRENCH or
+                self.language_code == WikimediaLanguageCode.GERMAN or
+                self.language_code == WikimediaLanguageCode.BOKMÅL or
+                self.language_code == WikimediaLanguageCode.DANISH
+        ):
+            logger.info(f"using the {self.language_code.name.title()} spaCy pipeline")
             try:
-                nlp = spacy.load('da_core_news_sm')
+                nlp = spacy.load(f'{self.language_code.value}_core_news_sm')
             except:
                 raise ModuleNotFoundError(
-                    f"Please install the spacy model for Danish by running: "
-                    f"'python -m spacy download da_core_news_sm' "
+                    f"Please install the spacy model for "
+                    f"{self.language_code.name.title()} by running: "
+                    f"'python -m spacy download "
+                    f"{self.language_code.value}_core_news_sm' "
                     f"in the terminal/cmd/powershell"
                 )
         else:
