@@ -80,33 +80,42 @@ class Form:
     def fetch_senses(self,
                      usage_example: UsageExample = None):
         """Fetch the senses on the lexeme"""
-        logger = logging.getLogger(__name__)
-        if usage_example is None:
-            raise ValueError("usage_example was None")
-        # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
-        # helping with this query.
-        tui.fetching_senses()
-        logging.info(f"...from {self.lexeme_id}")
-        result = execute_sparql_query(
-            f'''
-        SELECT
-        ?sense ?gloss
-        WHERE {{
-          VALUES ?l {{wd:{self.lexeme_id}}}.
-          ?l ontolex:sense ?sense.
-          ?sense skos:definition ?gloss.
-          # Get only the swedish gloss, exclude otherwise
-          FILTER(LANG(?gloss) = "{usage_example.record.language_code.value}")
-          # Exclude lexemes without a linked QID from at least one sense
-          # ?sense wdt:P5137 [].
-        }}'''
-            # debug=True
-        )
-        self.senses = []
-        number = 1
-        # TODO Move this into the model
-        if result is not None:
-            # logger.debug(f"result:{result}")
+        def sparql_query(fallback: bool = False):
+            if fallback == True:
+                # Fall back to English as gloss language
+                return execute_sparql_query(
+                    f'''
+                        SELECT
+                        ?sense ?gloss
+                        WHERE {{
+                          VALUES ?l {{wd:{self.lexeme_id}}}.
+                          ?l ontolex:sense ?sense.
+                          ?sense skos:definition ?gloss.
+                          # Get only the swedish gloss, exclude otherwise
+                          FILTER(LANG(?gloss) = "en")
+                          # Exclude lexemes without a linked QID from at least one sense
+                          # ?sense wdt:P5137 [].
+                        }}'''
+                    # debug=True
+                )
+            else:
+                return execute_sparql_query(
+                    f'''
+                        SELECT
+                        ?sense ?gloss
+                        WHERE {{
+                          VALUES ?l {{wd:{self.lexeme_id}}}.
+                          ?l ontolex:sense ?sense.
+                          ?sense skos:definition ?gloss.
+                          # Get only the swedish gloss, exclude otherwise
+                          FILTER(LANG(?gloss) = "{usage_example.record.language_code.value}")
+                          # Exclude lexemes without a linked QID from at least one sense
+                          # ?sense wdt:P5137 [].
+                        }}'''
+                    # debug=True
+                )
+
+        def extract_and_convert_the_result_to_senses(result):
             rows = result["results"]["bindings"]
             number_of_rows = len(rows)
             if number_of_rows > 0:
@@ -117,13 +126,32 @@ class Form:
                             id=row["sense"]["value"],
                             gloss=row["gloss"]["value"]
                         ))
-                    number += 1
                 logging.debug(f"senses found:{self.senses}")
-            else:
-                logger.warning(f"No senses with a gloss in the current language "
+
+        logger = logging.getLogger(__name__)
+        if usage_example is None:
+            raise ValueError("usage_example was None")
+        # Thanks to Lucas Werkmeister https://www.wikidata.org/wiki/Q57387675 for
+        # helping with this query.
+        tui.fetching_senses()
+        logging.info(f"...from {self.lexeme_id}")
+        result = sparql_query()
+        self.senses = []
+        # TODO Move this into the model
+        if result is not None:
+            extract_and_convert_the_result_to_senses(result)
+            if len(self.senses) == 0:
+                logger.warning(f"No senses with a gloss in the  "
                                f"{usage_example.record.language_code.name.title()} was found. "
-                               f"Please go to {self.url()} and improve the glosses if you can.")
-                sleep(5)
+                               f"Please go to {self.url()} and improve the glosses if you can. "
+                               f"Falling back to English as gloss language.")
+                result = sparql_query(fallback=True)
+                if result is not None:
+                    extract_and_convert_the_result_to_senses(result)
+                    if len(self.senses) == 0:
+                        logger.warning(f"No senses with a gloss in the fallback language English "
+                                       f" was found. "
+                                       f"Please go to {self.url()} and improve the glosses if you can.")
         else:
             raise ValueError(_("Error. Got None trying to fetch senses. " +
                                "Please report this as an issue."))
