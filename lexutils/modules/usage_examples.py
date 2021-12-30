@@ -327,7 +327,7 @@ def process_forms(lexemelanguage: LexemeLanguage = None):
             # TODO offer to fetch more
             print("No more results. "
                   "Run the script again to continue")
-            exit(0)
+            run = False
         else:
             # if util.in_exclude_list(data):
             #     # Skip if found in the exclude_list
