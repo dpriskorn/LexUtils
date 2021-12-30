@@ -1,4 +1,5 @@
 import logging
+from html import unescape
 from typing import List
 from urllib.parse import quote
 
@@ -32,7 +33,8 @@ class WikisourceRecord(Record):
         except KeyError:
             raise KeyError("Could not find title")
         try:
-            self.text = json["snippet"]["value"]
+            # Remove &quot; and the like from the snippet
+            self.text = unescape(json["snippet"]["value"])
         except KeyError:
             raise KeyError("Could not find snippet")
         self.language_code = lexemelanguage.language_code
