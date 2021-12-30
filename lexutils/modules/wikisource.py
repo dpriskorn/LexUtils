@@ -19,6 +19,10 @@ def get_records(
         raise ValueError("form was None")
     if lexemelanguage is None:
         raise ValueError("language was None")
+    if lexemelanguage.language_code in config.fast_nlp_languages:
+        limit = config.wikisource_max_results_size_fast_nlp
+    else:
+        limit = config.wikisource_max_results_size_slow_nlp
     # search using sparql
     # borrowed from Scholia
     # thanks to Vigneron for the tip :)
@@ -36,7 +40,7 @@ def get_records(
   BIND(CONCAT("https://br.wikisource.org/wiki/", ENCODE_FOR_URI(?title)) AS ?titleUrl)
   BIND(REPLACE(REPLACE(?snippet_, '</span>', ''), '<span class="searchmatch">', '') AS ?snippet)
 }}
-LIMIT {config.wikisource_max_results_size}
+LIMIT {limit}
 ''')
     logger.debug(f"results:{results}")
     records = []

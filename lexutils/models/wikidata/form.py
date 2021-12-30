@@ -12,7 +12,6 @@ from lexutils.config.config import login_instance
 from lexutils.helpers import tui
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.entities import EntityID
-from lexutils.models.wikidata.enums import WikidataLexicalCategory
 from lexutils.models.wikidata.sense import Sense
 
 
