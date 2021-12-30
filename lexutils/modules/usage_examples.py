@@ -233,16 +233,17 @@ def handle_usage_example(
     if result is Choices.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
         senses = form.fetch_senses(usage_example=usage_example)
-        if form.senses is None:
-            raise ValueError("form.senses was None")
-        for sense in form.senses:
-            logging.info(sense)
-        # raise NotImplementedError("Update to OOP")
-        handler_result = choose_sense_handler(
-            usage_example=usage_example,
-            form=form
-        )
-        return handler_result
+        if len(form.senses) == 0:
+            return Choices.SKIP_USAGE_EXAMPLE
+        else:
+            for sense in form.senses:
+                logging.info(sense)
+            # raise NotImplementedError("Update to OOP")
+            handler_result = choose_sense_handler(
+                usage_example=usage_example,
+                form=form
+            )
+            return handler_result
     else:
         # Return the choice
         return result
