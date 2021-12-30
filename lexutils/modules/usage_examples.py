@@ -300,7 +300,7 @@ def process_result(
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
         number_of_examples = len(examples)
-        tui.number_of_found_sentences(number_of_examples)
+        tui.number_of_found_sentences(number_of_examples, form=form)
         if number_of_examples == 0:
             print_separator()
         elif number_of_examples > 0:

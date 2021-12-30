@@ -50,9 +50,10 @@ def work_on(form: Form = None):
     )
 
 
-def number_of_found_sentences(dict_length):
-    print(_("Found {} suitable sentences".format(
-        dict_length,
+def number_of_found_sentences(number_of_usage_examples: int = None,
+                              form: Form = None):
+    print(_("Found {} suitable sentences for {} with id {}".format(
+        number_of_usage_examples, form.representation, form.id
     )))
 
 
