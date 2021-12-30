@@ -44,11 +44,11 @@ def work_on(form: Form = None):
     for feature in form.grammatical_features:
         features.append(feature.value)
     return (
-        "Work on {} ({}) with the features: {}".format(
-            form.representation, form.lexeme_category.value,
-            ", ".join(features)
-        ) +
-        f"\n{form.url()}"
+            "Work on {} ({}) with the features: {}".format(
+                form.representation, form.lexeme_category.value,
+                ", ".join(features)
+            ) +
+            f"\n{form.url()}"
     )
 
 
@@ -88,76 +88,72 @@ def cancel_sentence(word: str):
             "with similar labels and descriptions in the lexeme " +
             "language." +
             "\nSearch for {} in Wikidata: ".format(word)) +
-          quote("https://www.wikidata.org/w/index.php?" +
-                "search={}&title=Special%3ASearch&".format(word) +
-                "profile=advanced&fulltext=0&" +
-                "advancedSearch-current=%7B%7D&ns0=1"))
+          "https://www.wikidata.org/w/index.php?" +
+          "search={}&title=Special%3ASearch&".format(quote(word)) +
+          "profile=advanced&fulltext=0&" +
+          "advancedSearch-current=%7B%7D&ns0=1")
 
+    def choose_sense_menu(senses: List[Sense] = None):
+        """Returns a dictionary with sense_id -> sense_id
+        and gloss -> gloss or False"""
+        logger = logging.getLogger(__name__)
+        # raise NotImplementedError("Update to OOP and TUI library")
+        if senses is None:
+            raise ValueError("senses was None")
+        menu = SelectionMenu(senses, "Select a sense")
+        menu.show()
+        menu.join()
+        index = menu.selected_option
+        # logger.debug(f"index:{index}")
+        # exit(0)
+        if index is not None:
+            logger.debug(f"selected:{index}")
+            if index > (len(senses) - 1):
+                logger.debug("No sense was chosen")
+                return None
+            else:
+                selected_item = senses[index]
+                logger.debug("Returning the chosen sense")
+                return selected_item
 
-def choose_sense_menu(senses: List[Sense] = None):
-    """Returns a dictionary with sense_id -> sense_id
-    and gloss -> gloss or False"""
-    logger = logging.getLogger(__name__)
-    # raise NotImplementedError("Update to OOP and TUI library")
-    if senses is None:
-        raise ValueError("senses was None")
-    menu = SelectionMenu(senses, "Select a sense")
-    menu.show()
-    menu.join()
-    index = menu.selected_option
-    # logger.debug(f"index:{index}")
-    # exit(0)
-    if index is not None:
-        logger.debug(f"selected:{index}")
-        if index > (len(senses) - 1):
-            logger.debug("No sense was chosen")
-            return None
+    def select_language_menu():
+        # TODO make this scale better.
+        #  Consider showing a list based on a sparql result of all wikisource language versions
+        logger = logging.getLogger(__name__)
+        menu = SelectionMenu(WikimediaLanguageCode.__members__.keys(), "Select a language")
+        menu.show()
+        menu.join()
+        selected_language_index = menu.selected_option
+        mapping = {}
+        for index, item in enumerate(WikimediaLanguageCode):
+            mapping[index] = item
+        selected_language = mapping[selected_language_index]
+        logger.debug(f"selected:{selected_language_index}="
+                     f"{selected_language}")
+        return selected_language
+
+    def print_separator():
+        print("----------------------------------------------------------")
+
+    def present_sentence(
+            count: int = None,
+            example: UsageExample = None,
+            examples: List[UsageExample] = None
+    ):
+        if example is None:
+            raise ValueError("example was None")
+        if example.record is None:
+            raise ValueError("record was None")
+        if isinstance(example.record, RiksdagenRecord):
+            console.print(_("Presenting sentence " +
+                            "{}/{} ".format(count, len(examples)) +
+                            "from {} from {}".format(
+                                example.record.date,
+                                example.record.url(),
+                            )))
         else:
-            selected_item = senses[index]
-            logger.debug("Returning the chosen sense")
-            return selected_item
-
-
-def select_language_menu():
-    # TODO make this scale better.
-    #  Consider showing a list based on a sparql result of all wikisource language versions
-    logger = logging.getLogger(__name__)
-    menu = SelectionMenu(WikimediaLanguageCode.__members__.keys(), "Select a language")
-    menu.show()
-    menu.join()
-    selected_language_index = menu.selected_option
-    mapping = {}
-    for index, item in enumerate(WikimediaLanguageCode):
-        mapping[index] = item
-    selected_language = mapping[selected_language_index]
-    logger.debug(f"selected:{selected_language_index}="
-                 f"{selected_language}")
-    return selected_language
-
-
-def print_separator():
-    print("----------------------------------------------------------")
-
-
-def present_sentence(
-        count: int = None,
-        example: UsageExample = None,
-        examples: List[UsageExample] = None
-):
-    if example is None:
-        raise ValueError("example was None")
-    if example.record is None:
-        raise ValueError("record was None")
-    if isinstance(example.record, RiksdagenRecord):
-        console.print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(examples)) +
-                        "from {} from {}".format(
-                            example.record.date,
-                            example.record.url(),
-                        )))
-    else:
-        console.print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(examples)) +
-                        "from {}".format(
-                            example.record.url(),
-                        )))
+            console.print(_("Presenting sentence " +
+                            "{}/{} ".format(count, len(examples)) +
+                            "from {}".format(
+                                example.record.url(),
+                            )))
