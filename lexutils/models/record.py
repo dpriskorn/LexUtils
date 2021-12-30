@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import quote
 
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -26,4 +27,4 @@ class Record:
     def url(self):
         if self.base_url is None:
             raise ValueError("base_url was None")
-        return f"{self.base_url}{self.id}"
+        return f"{self.base_url}{quote(self.id)}"
