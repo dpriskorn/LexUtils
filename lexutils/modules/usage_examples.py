@@ -122,7 +122,7 @@ def get_usage_examples_from_apis(
     logger = logging.getLogger(__name__)
     examples = []
     # Wikisource
-    with console.status(f"Fetching usage examples from {lexemelanguage.language_code.name.title()} Wikisource..."):
+    with console.status(f"Fetching usage examples from the {lexemelanguage.language_code.name.title()} Wikisource..."):
         examples.extend(wikisource.get_records(
             form=form,
             lexemelanguage=lexemelanguage
