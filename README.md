@@ -1,6 +1,6 @@
 # LexUtils
 
-*NOTE: rewrite in progress. This is in alpha state right now.*
+*NOTE: This is in alpha state right now.*
 
 This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
 
@@ -51,3 +51,15 @@ UsageExamples use spaCy NLP pipelines to detect sentence boundaries.
 The quality of this detection seems to vary between languages.
 As of this writing English and Swedish work pretty well, 
 but Danish, French and German are slow and cuts a lot of sentences.
+
+## What I learned making this tool
+* rewriting a tool with many parts can be difficult.
+* async fetching with httpx is fun
+* integrating with WikibaseIntegrator is fun and it has 
+useful classes that I can reuse to avoid reinventing the wheel
+* programming with objects and enums lowers the complexity of the program. 
+No more passing around strings and dicts between functions.
+* some users have low tolerance for errors before giving up. 
+It's important to test installing in a fresh VM or set up a CI 
+with github actions  to catch user facing errors before they are released.
+* NLP pipelines can be optimized, some are not and it is not apparent before they are used.
