@@ -33,27 +33,21 @@ When you get a prompt like "[Y/n]" the capitalized selection can be selected by
 pressing Enter. To select "n" type "n" followed by Enter.
 
 ## UsageExamples
-Warning: Currently only senses with a gloss in the current working 
-language are fetched and shown to the user.
-
 This tool enables you to easily find usage examples 
 for any lexeme form (in the supported languages) in 
-Wikidata that does not already have one.
+Wikidata that does not already have one and match them to a sense 
+and then add them to the lexeme.
+
+Warning: Currently only senses with a gloss in the current working 
+language (with fallback to English) are fetched and shown to the user.
 
 Being a CLI tool it enables you to quickly screw things up, 
-so please be careful using it.
-
-Currently it does not support editgroups so if you need to 
+so please be careful using it. Currently it does not support 
+editgroups so if you need to 
 rollback a change you have to do it manually.
 
-An earlier implementation, LexUse, 
-had sorting of usage examples by length before presentation. 
-This has not been implemented yet, 
-see https://github.com/dpriskorn/LexUtils/issues/18 and 
-feel free to send a pull request :)
-
-# NLP pipelines
-UsageExamples use NLP pipelines to detect sentence boundaries. 
+### NLP pipelines
+UsageExamples use spaCy NLP pipelines to detect sentence boundaries. 
 The quality of this detection seems to vary between languages.
 As of this writing English and Swedish work pretty well, 
-but Danish is slow and cuts a lot of sentences.
+but Danish, French and German are slow and cuts a lot of sentences.
