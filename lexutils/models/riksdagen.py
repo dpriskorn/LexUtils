@@ -171,8 +171,8 @@ class RiksdagenRecord(Record):
         sentences_without_duplicates = remove_duplicates(
             substitute_common_abbreviations(cleaned_text)
         )
-        logger.debug("Sentences after duplicate removal " +
-                     f"{sentences_without_duplicates}")
+        # logger.debug("Sentences after duplicate removal " +
+        #              f"{sentences_without_duplicates}")
         return find_suitable_usage_examples(sentences_without_duplicates, cleaned_text, form)
 
     def lookup_qid(self):
