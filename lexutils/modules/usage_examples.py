@@ -200,7 +200,8 @@ def choose_sense_handler(
             logger.info(f"wbi:{sense_choice}")
             print("Successfully added usage example " +
                   f"to {form.url()}")
-            add_to_watchlist(form.lexeme_id)
+            if config.add_to_watchlist:
+                add_to_watchlist(form.lexeme_id)
             # logger.info("debug exit")
             # exit(0)
             # json_cache.save_to_exclude_list(usage_example)
