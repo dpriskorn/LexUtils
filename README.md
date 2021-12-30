@@ -1,12 +1,12 @@
 # LexUtils
-
-*NOTE: This is in beta state right now.*
+![bild](https://user-images.githubusercontent.com/68460690/147775837-e89d752c-143e-426d-884b-cf1f510ca5f6.png)
+*UsageExamples in action with Swedish examples from Wikisource and Riksdagen* 
 
 This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
 
 When LexUtils start you can choose on of the following tools currently available:
-* UsageExamples (successor to LexUse)
-* Lexeme Statistics
+* Usage Examples (Beta)
+* Lexeme Statistics (Beta)
 * ...your tool idea here... [see So9qs ideas](https://www.wikidata.org/wiki/User:So9q/Tool_ideas) 
 
 ## Requirements
@@ -32,7 +32,7 @@ password = "password"
 When you get a prompt like "[Y/n]" the capitalized selection can be selected by
 pressing Enter. To select "n" type "n" followed by Enter.
 
-## UsageExamples
+## Usage Examples
 This tool enables you to easily find usage examples 
 for any lexeme form (in the supported languages) in 
 Wikidata that does not already have one and match them to a sense 
