@@ -70,9 +70,9 @@ def start():
     if begin:
         choosen_language: WikimediaLanguageCode = select_language_menu()
         # TODO store lexuse_introduction_read=1 to settings.json
-        console.print(f"Fetching lexeme forms to work on for {choosen_language.name.title()}")
-        lexemelanguage = LexemeLanguage(language_code=choosen_language.value)
-        lexemelanguage.fetch_forms_missing_an_example()
+        with console.status(f"Fetching lexeme forms to work on for {choosen_language.name.title()}"):
+            lexemelanguage = LexemeLanguage(language_code=choosen_language.value)
+            lexemelanguage.fetch_forms_missing_an_example()
         process_forms(lexemelanguage)
 
 
@@ -105,7 +105,7 @@ def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
     sense = None
     # TODO check that all senses has a gloss matching the language of
     # the example
-    sense: Sense = choose_sense_menu(form.senses)
+    sense: Union[Sense, None] = choose_sense_menu(form.senses)
     if sense is not None:
         logging.info("a sense was accepted")
         return sense
@@ -121,12 +121,12 @@ def get_usage_examples_from_apis(
     """Find examples and return them as Example objects"""
     logger = logging.getLogger(__name__)
     examples = []
-    tui.working_on(form)
     # Wikisource
-    examples.extend(wikisource.get_records(
-        form=form,
-        lexemelanguage=lexemelanguage
-    ))
+    with console.status(f"Fetching usage examples from {lexemelanguage.language_code.name.title()} Wikisource..."):
+        examples.extend(wikisource.get_records(
+            form=form,
+            lexemelanguage=lexemelanguage
+        ))
     # Europarl corpus
     # Download first if not on disk
     # TODO convert to UsageExample
@@ -296,8 +296,7 @@ def process_result(
     It has only side-effects"""
     logger = logging.getLogger(__name__)
     # ask to continue
-    if yes_no_question(f"\nWork on {form.representation}?"):
-
+    if yes_no_question(tui.work_on(form=form)):
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
         number_of_examples = len(examples)

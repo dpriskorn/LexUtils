@@ -39,16 +39,17 @@ def europarl_download():
     )))
 
 
-def working_on(form: Form):
+def work_on(form: Form = None):
     features = []
     for feature in form.grammatical_features:
         features.append(feature.value)
-    print(_(
-        "Working on {} ({}) with the features: {}".format(
+    return (
+        "Work on {} ({}) with the features: {}".format(
             form.representation, form.lexeme_category.name.lower(),
             ", ".join(features)
-        )))
-    print(form.url())
+        ) +
+        f"\n{form.url()}"
+    )
 
 
 def number_of_found_sentences(dict_length):
