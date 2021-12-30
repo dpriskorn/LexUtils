@@ -13,8 +13,6 @@ user_agent = f"LexUtils/{version}"
 # Settings for UsageExamples
 add_to_watchlist = True
 number_of_forms_to_fetch = 50
-sparql_results_size = 40
-sparql_offset = 1000
 ksamsok_max_results_size = 500  # keep to multiples of 50
 riksdagen_max_results_size = 500  # keep to multiples of 20
 wikisource_max_results_size = 25
