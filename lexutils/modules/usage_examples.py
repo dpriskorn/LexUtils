@@ -150,7 +150,7 @@ def get_usage_examples_from_apis(
                 lexemelanguage=lexemelanguage
             )
             examples.extend(riksdagen_examples)
-    logger.debug(f"returning from apis:{examples}")
+    logger.debug(f"examples found:{[example.text for example in examples]}")
     return examples
 
 
