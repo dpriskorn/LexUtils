@@ -1,6 +1,6 @@
 # LexUtils
 
-*NOTE: This is in alpha state right now.*
+*NOTE: This is in beta state right now.*
 
 This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
 
