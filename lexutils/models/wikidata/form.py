@@ -26,7 +26,7 @@ class Form:
     # We store these on the form because they are needed
     # to determine if an example fits or not
     lexeme_id: str
-    lexeme_category: WikidataLexicalCategory = None
+    lexeme_category: LanguageValue = None
     senses: List[Sense] = None
 
     def __init__(self, json):
@@ -47,11 +47,16 @@ class Form:
         except KeyError:
             pass
         try:
-            self.lexeme_category = WikidataLexicalCategory(
-                str(EntityID(json["category"]["value"]))
-            )
-        except:
-            raise ValueError(f'Could not find lexical category from '
+            wbi = WikibaseIntegrator(login=login_instance)
+            item = wbi.item.get(entity_id=str(EntityID(json["category"]["value"])))
+            # TODO get the language code from somewhere
+            # label = item.labels.get(language=)
+            # English is fallback
+            label = item.labels.get(language="en")
+            logger.info(f"found feature: {label.value}")
+            self.lexeme_category = label
+        except ValueError:
+            logger.error(f'Could not find lexical category from '
                              f'{json["category"]["value"]}')
         try:
             self.grammatical_features = []
