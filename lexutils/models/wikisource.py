@@ -92,7 +92,12 @@ class WikisourceRecord(Record):
                 sentences.add(sentence.text)
         examples = []
         for sentence in sentences:
-            examples.append(UsageExample(sentence=sentence, record=self))
+            sentence_length = len(sentence.split(" "))
+            if (
+                    sentence_length > config.min_word_count and
+                    sentence_length < config.max_word_count
+            ):
+                examples.append(UsageExample(sentence=sentence, record=self))
         # print("debug exit")
         # exit(0)
         return examples
