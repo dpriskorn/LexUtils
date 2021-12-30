@@ -53,13 +53,20 @@ As of this writing English and Swedish work pretty well,
 but Danish, French and German are slow and cuts a lot of sentences.
 
 ## What I learned making this tool
-* rewriting a tool with many parts can be difficult.
-* async fetching with httpx is fun
-* integrating with WikibaseIntegrator is fun and it has 
+* Rewriting a tool with many parts can be difficult.
+* Async fetching with httpx is fun
+* Integrating with WikibaseIntegrator is fun and it has 
 useful classes that I can reuse to avoid reinventing the wheel
-* programming with objects and enums lowers the complexity of the program. 
+* Programming with objects and enums lowers the complexity of the program. 
 No more passing around strings and dicts between functions.
-* some users have low tolerance for errors before giving up. 
+* Some users have low tolerance for errors before giving up. 
 It's important to test installing in a fresh VM or set up a CI 
 with github actions  to catch user facing errors before they are released.
 * NLP pipelines can be optimized, some are not and it is not apparent before they are used.
+* Generator expressions are very useful when playing with objects.
+* I'm very happy 
+[with my solution using a lambda expression](https://github.com/dpriskorn/LexUtils/blob/2290547164afc19b7f38da63cd5c950c5857cb65/lexutils/modules/usage_examples.py#L270) 
+to the sorting of UsageExamples by length. 
+This required me to make a new attribute `count` and populate it during init.
+* Some modules like `gettext` do not work on Windows, 
+I need to find a better module to enable translation of the program it seems.
