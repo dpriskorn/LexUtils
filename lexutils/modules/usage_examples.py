@@ -183,7 +183,7 @@ def choose_sense_handler(
     #     senses=senses,
     #     form=form
     # )
-    if isinstance(sense_choice, Sense):
+    if isinstance(sense_choice, Sense):n
         logger.info("We got a sense that was accepted")
         # Prepare
         if isinstance(usage_example.record, RiksdagenRecord):
@@ -199,7 +199,7 @@ def choose_sense_handler(
         if result is not None:
             logger.info(f"wbi:{sense_choice}")
             print("Successfully added usage example " +
-                  f"to {form.url()}")
+                  f"{lexeme.usage_example_url()}")
             if config.add_to_watchlist:
                 add_to_watchlist(form.lexeme_id)
             # logger.info("debug exit")

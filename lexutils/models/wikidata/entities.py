@@ -87,6 +87,9 @@ class Lexeme:
     def url(self):
         return f"{config.wd_prefix}{self.id}"
 
+    def usage_example_url(self):
+        return f"https://www.wikidata.org/wiki/Lexeme:{self.id}#P5831"
+
     # def upload_foreign_id_to_wikidata(self,
     #                                   foreign_id: ForeignID = None):
     #     """Upload to enrich the wonderful Wikidata <3"""
