@@ -183,7 +183,7 @@ def choose_sense_handler(
     #     senses=senses,
     #     form=form
     # )
-    if isinstance(sense_choice, Sense):
+    if isinstance(sense_choice, Sense):n
         logger.info("We got a sense that was accepted")
         # Prepare
         if isinstance(usage_example.record, RiksdagenRecord):
@@ -199,7 +199,7 @@ def choose_sense_handler(
         if result is not None:
             logger.info(f"wbi:{sense_choice}")
             print("Successfully added usage example " +
-                  f"to {form.url()}")
+                  f"{lexeme.usage_example_url()}")
             if config.add_to_watchlist:
                 add_to_watchlist(form.lexeme_id)
             # logger.info("debug exit")
@@ -294,15 +294,13 @@ def process_result(
         form: Form = None,
         language: LexemeLanguage = None
 ):
-    """This loops through each form, gets usage examples and present them to the user one by one.
+    """This handles confirmation working on a form and gets usage examples
     It has only side-effects"""
-    logger = logging.getLogger(__name__)
-    # ask to continue
-    if yes_no_question(tui.work_on(form=form)):
+    def fetch_usage_examples():
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
         number_of_examples = len(examples)
-        tui.number_of_found_sentences(number_of_examples)
+        tui.number_of_found_sentences(number_of_examples, form=form)
         if number_of_examples == 0:
             print_separator()
         elif number_of_examples > 0:
@@ -312,6 +310,14 @@ def process_result(
             )
         else:
             print_separator()
+
+    logger = logging.getLogger(__name__)
+    # ask to continue
+    if config.require_form_confirmation:
+        if yes_no_question(tui.work_on(form=form)):
+            fetch_usage_examples()
+    else:
+        fetch_usage_examples()
 
 
 def process_forms(lexemelanguage: LexemeLanguage = None):
