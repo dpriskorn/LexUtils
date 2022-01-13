@@ -89,13 +89,14 @@ class WikisourceRecord(Record):
         doc = nlp(self.text)
         sentences = set()
         for sentence in doc.sents:
-            logger.info(sentence.text)
+            # logger.info(sentence.text)
             # This is a very crude test for relevancy, we lower first to improve matching
             cleaned_sentence = sentence.text.lower()
             punctations = [".", ",", "!", "?", "„", "“"]
             for punctation in punctations:
                 if punctation in cleaned_sentence:
                     cleaned_sentence = cleaned_sentence.replace(punctation, " ")
+            logger.debug(f"cleaned sentence:{cleaned_sentence}")
             if f" {form.representation.lower()} " in cleaned_sentence:
                 # Add to the set first to avoid duplicates
                 sentences.add(sentence.text)
