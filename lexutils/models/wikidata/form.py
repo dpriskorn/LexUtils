@@ -49,7 +49,7 @@ class Form:
         try:
             qid = str(EntityID(json["category"]["value"]))
             label = read_from_cache(qid=qid)
-            logger.info(f"got {label} from the cache")
+            logger.debug(f"got {label} from the cache")
             if label is None:
                 wbi = WikibaseIntegrator(login=login_instance)
                 item = wbi.item.get(entity_id=qid)
@@ -57,7 +57,7 @@ class Form:
                 # label = item.labels.get(language=)
                 # English is fallback
                 label = item.labels.get(language="en")
-                logger.info(f"fetched feature not found in the cache: {label.value}")
+                logger.debug(f"fetched feature not found in the cache: {label.value}")
                 add_to_cache(qid=qid, label=label.value)
             if isinstance(label, LanguageValue):
                 self.lexeme_category = label.value
@@ -74,7 +74,7 @@ class Form:
             for feature in json["grammatical_features"]["value"].split(","):
                 qid = str(EntityID(feature))
                 label: Optional[str] = read_from_cache(qid=qid)
-                logger.info(f"got {label} from the cache")
+                logger.debug(f"got {label} from the cache")
                 if label is None:
                     wbi = WikibaseIntegrator(login=login_instance)
                     item = wbi.item.get(entity_id=qid)
@@ -82,7 +82,7 @@ class Form:
                     # label = item.labels.get(language=)
                     # English is fallback
                     label: LanguageValue = item.labels.get(language="en")
-                    logger.info(f"fetched feature not found in the cache: {label.value}")
+                    logger.debug(f"fetched feature not found in the cache: {label.value}")
                     add_to_cache(qid=qid, label=label.value)
                 if isinstance(label, LanguageValue):
                     self.grammatical_features.append(label.value)

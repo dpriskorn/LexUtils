@@ -18,7 +18,7 @@ def read_from_cache(
     """Returns None or result from the cache"""
     if qid is None:
         raise ValueError("did not get all we need")
-    logger.info("Reading from the cache")
+    logger.debug("Reading from the cache")
     if exists("cache.pkl"):
         df = pd.read_pickle("cache.pkl")
         # This tests whether any row matches
@@ -39,7 +39,7 @@ def add_to_cache(
 ) -> None:
     if label is None or qid is None:
         raise ValueError("did not get all we need")
-    logger.info("Adding to cache")
+    logger.debug("Adding to cache")
     data = dict(qid=qid, label=label)
     if exists("cache.pkl"):
         df = pd.read_pickle("cache.pkl")
@@ -49,7 +49,7 @@ def add_to_cache(
         if not match:
             # We only give save the value once for now
             df = df.append(pd.DataFrame(data=[data]))
-            logger.info(f"Saving pickle with new label {label}")
+            logger.debug(f"Saving pickle with new label {label}")
             df.to_pickle("cache.pkl")
     else:
         pd.DataFrame(data=[data]).to_pickle("cache.pkl")
