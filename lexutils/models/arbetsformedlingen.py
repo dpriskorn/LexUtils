@@ -70,7 +70,7 @@ class HistoricalJobAd(Record):
             logger.debug(f"cleaned sentence:{cleaned_sentence}")
             if f" {form.representation.lower()} " in f" {cleaned_sentence} ":
                 # Add to the set first to avoid duplicates
-                sentences.add(sentence.text)
+                sentences.add(sentence.text.replace("\n", "").strip())
         logger.info(f"Found {len(sentences)} sentences which contained {form.representation}")
         examples = []
         count_discarded = 0
