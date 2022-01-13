@@ -4,6 +4,7 @@ from enum import auto, Enum
 class SupportedExampleSources(Enum):
     WIKISOURCE = "Q15156406"
     RIKSDAGEN = "Q21592569"
+    HISTORICAL_ADS = "Q110544812"
 
 
 class Choices(Enum):

@@ -2,9 +2,11 @@ from enum import Enum
 
 
 class WikimediaLanguageCode(Enum):
+    # TODO this does not scale. Implement lookup and cache
     DANISH = "da"
     SWEDISH = "sv"
     BOKMÅL = "nb"
+    NORWEGIAN = "no"
     ENGLISH = "en"
     FRENCH = "fr"
     RUSSIAN = "ru"

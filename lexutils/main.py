@@ -31,24 +31,25 @@ class Completer(Completer):
             
 def main():
     # logger = logging.getLogger(__name__)
-    # TODO enable choosing work language
-    print(_('This is the REPL. ' +
-            'Type one of the names of the tools to begin: ' +
-            'Examples'))
-    while 1:
-        user_input = prompt(u'LexUtils>',
-                            history=FileHistory('history.txt'),
-                            auto_suggest=AutoSuggestFromHistory(),
-                            completer=Completer(),
-                            )
-        if user_input.lower() == "examples":
-            # raise Exception("Rewrite to use OOP not finished yet")
-            usage_examples.start()
-        if user_input.lower() == "statistics":
-            statistics.main()
-        # if user_input.lower() == "lexcombine":
-        #     print(_('LexCombine has not been implemented yet.'+
-        #           ' Feel free to help out by sending pull requests'))
+    usage_examples.start()
+    # # TODO enable choosing work language
+    # print(_('This is the REPL. ' +
+    #         'Type one of the names of the tools to begin: ' +
+    #         'Examples'))
+    # while 1:
+    #     user_input = prompt(u'LexUtils>',
+    #                         history=FileHistory('history.txt'),
+    #                         auto_suggest=AutoSuggestFromHistory(),
+    #                         completer=Completer(),
+    #                         )
+    #     if user_input.lower() == "examples":
+    #         # raise Exception("Rewrite to use OOP not finished yet")
+    #         usage_examples.start()
+    #     if user_input.lower() == "statistics":
+    #         statistics.main()
+    #     # if user_input.lower() == "lexcombine":
+    #     #     print(_('LexCombine has not been implemented yet.'+
+    #     #           ' Feel free to help out by sending pull requests'))
 
 
 if __name__ == "__main__":

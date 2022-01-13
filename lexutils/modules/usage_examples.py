@@ -3,30 +3,30 @@ import gettext
 import logging
 # import random
 from time import sleep
-from typing import Union, List
+from typing import Union, List, Optional
+
+from rich import print
 
 from lexutils.config import config
 from lexutils.config.enums import Choices, Result
+from lexutils.helpers import tui, util, download_data
 from lexutils.helpers.console import console
-from lexutils.models.wikidata.enums import WikimediaLanguageCode
-from lexutils.modules import wikisource
+from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
+from lexutils.helpers.util import add_to_watchlist, yes_no_question
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
-
 # from lexutils.modules import download_data
 # from lexutils.modules import europarl
 # from lexutils.modules import json_cache
 # from lexutils.modules import ksamsok
 from lexutils.models.wikidata.entities import Lexeme
+from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.form import Form
 from lexutils.models.wikidata.misc import LexemeLanguage
 from lexutils.models.wikidata.sense import Sense
+from lexutils.modules import historical_job_ads
 from lexutils.modules import riksdagen
-from lexutils.helpers import tui, util
-from rich import print
-
-from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
-from lexutils.helpers.util import add_to_watchlist, yes_no_question
+from lexutils.modules import wikisource
 
 _ = gettext.gettext
 
@@ -121,12 +121,6 @@ def get_usage_examples_from_apis(
     """Find examples and return them as Example objects"""
     logger = logging.getLogger(__name__)
     examples = []
-    # Wikisource
-    with console.status(f"Fetching usage examples from the {lexemelanguage.language_code.name.title()} Wikisource..."):
-        examples.extend(wikisource.get_records(
-            form=form,
-            lexemelanguage=lexemelanguage
-        ))
     # Europarl corpus
     # Download first if not on disk
     # TODO convert to UsageExample
@@ -144,12 +138,29 @@ def get_usage_examples_from_apis(
     # logger.debug(f"records in total:{len(records)}")
     # Riksdagen API is slow, only use it if we don't have a lot of sentences already
     if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
-        if len(examples) < 50:
-            riksdagen_examples: List[UsageExample] = riksdagen.get_records(
+        historical_job_ads_examples: Optional[List[UsageExample]] = historical_job_ads.find_form_representation_in_the_dataframe(
+            dataframe=lexemelanguage.historical_ads_dataframe,
+            form=form
+        )
+        if historical_job_ads_examples:
+            examples.extend(historical_job_ads_examples)
+        #print("debug exit")
+        #exit()
+        riksdagen_examples: List[UsageExample] = riksdagen.get_records(
+            form=form,
+            lexemelanguage=lexemelanguage
+        )
+        examples.extend(riksdagen_examples)
+    # Wikisource
+    if len(examples) < 50:
+        # If we already got 50 examples from a better source,
+        # then don't fetch from Wikisource
+        with console.status(
+                f"Fetching usage examples from the {lexemelanguage.language_code.name.title()} Wikisource..."):
+            examples.extend(wikisource.get_records(
                 form=form,
                 lexemelanguage=lexemelanguage
-            )
-            examples.extend(riksdagen_examples)
+            ))
     logger.debug(f"examples found:{[example.text for example in examples]}")
     return examples
 
@@ -183,7 +194,7 @@ def choose_sense_handler(
     #     senses=senses,
     #     form=form
     # )
-    if isinstance(sense_choice, Sense):n
+    if isinstance(sense_choice, Sense):
         logger.info("We got a sense that was accepted")
         # Prepare
         if isinstance(usage_example.record, RiksdagenRecord):
@@ -296,6 +307,7 @@ def process_result(
 ):
     """This handles confirmation working on a form and gets usage examples
     It has only side-effects"""
+
     def fetch_usage_examples():
         # Fetch sentence data from all APIs
         examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
@@ -325,6 +337,10 @@ def process_forms(lexemelanguage: LexemeLanguage = None):
     logger = logging.getLogger(__name__)
     logger.info("Processing forms")
     # from http://stackoverflow.com/questions/306400/ddg#306417
+    # We do this now because we only want to do it once
+    # and keep it in memory during the looping through all the forms
+    if lexemelanguage.language_code.SWEDISH:
+        lexemelanguage.historical_ads_dataframe = historical_job_ads.download_and_load_into_memory()
     earlier_choices = []
     run = True
     while (run):

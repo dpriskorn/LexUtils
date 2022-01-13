@@ -3,6 +3,7 @@ import logging
 import random
 from typing import List, TYPE_CHECKING
 
+from pandas import DataFrame
 from wikibaseintegrator import wbi_config
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
@@ -32,16 +33,17 @@ class ForeignID:
 
 
 class LexemeLanguage:
-    lexemes: List[Lexeme]
-    language_code: WikimediaLanguageCode
-    language_qid: WikimediaLanguageQID
-    senses_with_P5137_per_lexeme: float
-    senses_with_P5137: int
     forms: int
     forms_with_an_example: int
     forms_without_an_example: List[Form]
-    number_of_forms_without_an_example: int
+    historical_ads_dataframe: DataFrame = None
+    language_code: WikimediaLanguageCode
+    language_qid: WikimediaLanguageQID
+    lexemes: List[Lexeme]
     lexemes_count: int
+    number_of_forms_without_an_example: int
+    senses_with_P5137: int
+    senses_with_P5137_per_lexeme: float
 
     def __init__(self, language_code: str):
         self.language_code = WikimediaLanguageCode(language_code)
