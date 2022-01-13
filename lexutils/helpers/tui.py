@@ -10,6 +10,7 @@ from consolemenu import *
 from rich import print
 
 from lexutils.helpers.console import console
+from lexutils.models.arbetsformedlingen import HistoricalJobAd
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.helpers import util
@@ -134,8 +135,10 @@ def select_language_menu():
                  f"{selected_language}")
     return selected_language
 
+
 def print_separator():
     print("----------------------------------------------------------")
+
 
 def present_sentence(
         count: int = None,
@@ -151,6 +154,13 @@ def present_sentence(
                         "{}/{} ".format(count, len(examples)) +
                         "from {} from {}".format(
                             example.record.date,
+                            example.record.url(),
+                        )))
+    elif isinstance(example.record, HistoricalJobAd):
+        console.print(_("Presenting sentence " +
+                        "{}/{} ".format(count, len(examples)) +
+                        "with id {} from {}".format(
+                            example.record.id,
                             example.record.url(),
                         )))
     else:
