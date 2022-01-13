@@ -136,7 +136,6 @@ def get_usage_examples_from_apis(
     # for record in ksamsok_records:
     #     records[record] = ksamsok_records[record]
     # logger.debug(f"records in total:{len(records)}")
-    # Riksdagen API is slow, only use it if we don't have a lot of sentences already
     if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
         historical_job_ads_examples: Optional[List[UsageExample]] = historical_job_ads.find_form_representation_in_the_dataframe(
             dataframe=lexemelanguage.historical_ads_dataframe,
@@ -146,11 +145,13 @@ def get_usage_examples_from_apis(
             examples.extend(historical_job_ads_examples)
         #print("debug exit")
         #exit()
-        riksdagen_examples: List[UsageExample] = riksdagen.get_records(
-            form=form,
-            lexemelanguage=lexemelanguage
-        )
-        examples.extend(riksdagen_examples)
+        # Riksdagen API is slow, only use it if we don't have a lot of sentences already
+        if len(examples) < 25:
+            riksdagen_examples: List[UsageExample] = riksdagen.get_records(
+                form=form,
+                lexemelanguage=lexemelanguage
+            )
+            examples.extend(riksdagen_examples)
     # Wikisource
     if len(examples) < 50:
         # If we already got 50 examples from a better source,
