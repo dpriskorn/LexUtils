@@ -35,10 +35,17 @@ def find_form_representation_in_the_dataframe(
                     f"{form.representation} in the Historical Ads")
         examples = []
         count = 1
+        if config.historical_ads_max_results_size > number_of_matches:
+            maximum_result_size_reached = False
+        else:
+            maximum_result_size_reached = True
         for row in result.itertuples(index=False):
             if count < config.historical_ads_max_results_size:
-                logger.info(f"Processing match {count}/{config.historical_ads_max_results_size} "
-                            f"out of a total of {number_of_matches} matches")
+                if maximum_result_size_reached:
+                    logger.info(f"Processing match {count}/{config.historical_ads_max_results_size} "
+                                f"out of a total of {number_of_matches} matches")
+                else:
+                    logger.info(f"Processing match {count}/{number_of_matches} matches")
                 record: HistoricalJobAd = row.object
                 examples.append(record.find_usage_examples_from_summary(form=form))
                 count += 1
