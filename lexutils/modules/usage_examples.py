@@ -9,7 +9,7 @@ from rich import print
 
 from lexutils.config import config
 from lexutils.config.enums import Choices, Result
-from lexutils.helpers import tui, util, download_data
+from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
 from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
 from lexutils.helpers.util import add_to_watchlist, yes_no_question
@@ -137,14 +137,15 @@ def get_usage_examples_from_apis(
     #     records[record] = ksamsok_records[record]
     # logger.debug(f"records in total:{len(records)}")
     if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
-        historical_job_ads_examples: Optional[List[UsageExample]] = historical_job_ads.find_form_representation_in_the_dataframe(
-            dataframe=lexemelanguage.historical_ads_dataframe,
-            form=form
-        )
+        historical_job_ads_examples: Optional[List[UsageExample]] = \
+            historical_job_ads.find_form_representation_in_the_dataframe(
+                dataframe=lexemelanguage.historical_ads_dataframe,
+                form=form
+            )
         if historical_job_ads_examples:
             examples.extend(historical_job_ads_examples)
-        #print("debug exit")
-        #exit()
+        # print("debug exit")
+        # exit()
         # Riksdagen API is slow, only use it if we don't have a lot of sentences already
         if len(examples) < 25:
             riksdagen_examples: List[UsageExample] = riksdagen.get_records(
@@ -162,6 +163,10 @@ def get_usage_examples_from_apis(
                 form=form,
                 lexemelanguage=lexemelanguage
             ))
+    # Check for nested list
+    for example in examples:
+        if not isinstance(example, UsageExample):
+            raise ValueError("Nested list error")
     if len(examples) > 0:
         logger.debug(f"examples found:{[example.text for example in examples]}")
     return examples
@@ -305,14 +310,17 @@ def process_usage_examples(
 
 def process_result(
         form: Form = None,
-        language: LexemeLanguage = None
+        lexemelanguage: LexemeLanguage = None
 ) -> Optional[Choices]:
     """This handles confirmation working on a form and gets usage examples
     It has only side-effects"""
 
     def fetch_usage_examples():
         # Fetch sentence data from all APIs
-        examples: List[UsageExample] = get_usage_examples_from_apis(form, language)
+        examples: List[UsageExample] = get_usage_examples_from_apis(
+            form=form,
+            lexemelanguage=lexemelanguage
+        )
         number_of_examples = len(examples)
         tui.number_of_found_sentences(number_of_examples, form=form)
         if number_of_examples == 0:
@@ -369,7 +377,7 @@ def process_forms(lexemelanguage: LexemeLanguage = None):
                     raise ValueError("lexeme_id on form was None")
                 result = process_result(
                     form=form,
-                    language=lexemelanguage
+                    lexemelanguage=lexemelanguage
                 )
                 earlier_choices.append(form)
                 if result == Choices.SKIP_FORM:
