@@ -57,19 +57,23 @@ class HistoricalJobAd(Record):
         nlp.add_pipe('sentencizer')
         doc = nlp(self.text)
         sentences = set()
-        for sentence in doc.sents:
-            logger.info(sentence.text)
+        raw_sentences = list(doc.sents)
+        logger.info(f"Got {len(raw_sentences)} sentences from spaCy")
+        for sentence in raw_sentences:
+            #logger.info(sentence.text)
             # This is a very crude test for relevancy, we lower first to improve matching
             cleaned_sentence = sentence.text.lower()
-            punctations = [".", ",", "!", "?", "„", "“"]
+            punctations = [".", ",", "!", "?", "„", "“", "\n"]
             for punctation in punctations:
                 if punctation in cleaned_sentence:
                     cleaned_sentence = cleaned_sentence.replace(punctation, " ")
-            if f" {form.representation.lower()} " in cleaned_sentence:
+            logger.debug(f"cleaned sentence:{cleaned_sentence}")
+            if f" {form.representation.lower()} " in f" {cleaned_sentence} ":
                 # Add to the set first to avoid duplicates
                 sentences.add(sentence.text)
         logger.info(f"Found {len(sentences)} sentences which contained {form.representation}")
         examples = []
+        count_discarded = 0
         for sentence in sentences:
             sentence_length = len(sentence.split(" "))
             if (
@@ -77,6 +81,10 @@ class HistoricalJobAd(Record):
                     sentence_length < config.max_word_count
             ):
                 examples.append(UsageExample(sentence=sentence, record=self))
+            else:
+                count_discarded += 1
+        if count_discarded > 0:
+            logger.info(f"{count_discarded} was discarded based on length")
         #print("debug exit")
         #exit(0)
         return examples
