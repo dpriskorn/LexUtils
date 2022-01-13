@@ -47,7 +47,7 @@ def find_form_representation_in_the_dataframe(
                 else:
                     logger.info(f"Processing match {count}/{number_of_matches} matches")
                 record: HistoricalJobAd = row.object
-                examples.append(record.find_usage_examples_from_summary(form=form))
+                examples.extend(record.find_usage_examples_from_summary(form=form))
                 count += 1
             else:
                 break
