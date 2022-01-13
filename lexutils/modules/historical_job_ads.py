@@ -6,6 +6,7 @@ from pandas import DataFrame
 import spacy as spacy
 from spacy.lang.sv import Swedish
 
+from lexutils.config import config
 from lexutils.helpers import download_data
 from lexutils.models.arbetsformedlingen import HistoricalJobAd
 from lexutils.models.usage_example import UsageExample
@@ -30,16 +31,19 @@ def find_form_representation_in_the_dataframe(
     result: DataFrame = dataframe[dataframe["text"].str.contains(form.representation)]
     number_of_matches = len(result)
     if number_of_matches > 0:
-        logger.info(f"Found {number_of_matches} number of rows matching {form.representation} in the Historical Ads")
+        logger.info(f"Found {number_of_matches} number of rows matching "
+                    f"{form.representation} in the Historical Ads")
         examples = []
+        count = 1
         for row in result.itertuples(index=False):
-            #logger.debug(type(row))
-            #logger.debug(f"row:{row}")
-            #logger.debug(row.text)
-            record: HistoricalJobAd = row.object
-            logger.debug(record)
-            #print("debug exit")
-            #exit()
-            return record.find_usage_examples_from_summary(form=form)
+            if count < config.historical_ads_max_results_size:
+                logger.info(f"Processing match {count}/{config.historical_ads_max_results_size} "
+                            f"out of a total of {number_of_matches} matches")
+                record: HistoricalJobAd = row.object
+                examples.append(record.find_usage_examples_from_summary(form=form))
+                count += 1
+            else:
+                break
+        return examples
     else:
         logger.info(f"Found no rows matching {form.representation} in the Historical Ads")

@@ -5,15 +5,16 @@ import logging
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.completion import Completer, Completion
+#from prompt_toolkit.completion import Completer, Completion
 #import click
-from fuzzyfinder import fuzzyfinder
+#from fuzzyfinder import fuzzyfinder
 
+from lexutils.config import config
 from lexutils.modules import usage_examples
-from lexutils.modules import statistics
+#from lexutils.modules import statistics
 
 # Settings
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=config.loglevel)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 _ = gettext.gettext
 Commands = ['examples', 'statistics']
