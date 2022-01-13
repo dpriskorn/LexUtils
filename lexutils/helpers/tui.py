@@ -37,14 +37,16 @@ def europarl_download():
     # )))
 
 
+def arbetsformedlingen_historical_job_ads_download():
+    print("Downloading 400MB Historical Ads data "
+          "from the Swedish Public Employment Service")
+
+
 def work_on(form: Form = None):
-    features = []
-    for feature in form.grammatical_features:
-        features.append(feature.value)
     return (
             "Work on {} ({}) with the features: {}".format(
-                form.representation, form.lexeme_category.value,
-                ", ".join(features)
+                form.representation, form.lexeme_category,
+                ", ".join(form.grammatical_features)
             ) +
             f"\n{form.url()}"
     )
@@ -67,7 +69,7 @@ def found_sentence(form: Form = None,
     word_count = util.count_words(usage_example.text)
     return (_("Found the following sentence with {} ".format(word_count) +
               "words. Is it suitable as a usage example " +
-              "for the {} form '{}'? \n".format(form.lexeme_category.value, form.representation) +
+              "for the {} form '{}'? \n".format(form.lexeme_category, form.representation) +
               "'{}'".format(usage_example.text)))
 
 

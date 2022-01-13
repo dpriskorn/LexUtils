@@ -1,6 +1,6 @@
 import logging
 from time import sleep
-from typing import List
+from typing import List, Optional
 
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator.models import LanguageValue
@@ -10,6 +10,7 @@ from wikibaseintegrator.entities import Item
 from lexutils.config import config
 from lexutils.config.config import login_instance
 from lexutils.helpers import tui
+from lexutils.helpers.caching import read_from_cache, add_to_cache
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.entities import EntityID
 from lexutils.models.wikidata.sense import Sense
@@ -21,11 +22,11 @@ class Form:
     """
     id: str
     representation: str
-    grammatical_features: List[LanguageValue]
+    grammatical_features: List[str]
     # We store these on the form because they are needed
     # to determine if an example fits or not
     lexeme_id: str
-    lexeme_category: LanguageValue = None
+    lexeme_category: str = None
     senses: List[Sense] = None
 
     def __init__(self, json):
@@ -46,14 +47,24 @@ class Form:
         except KeyError:
             pass
         try:
-            wbi = WikibaseIntegrator(login=login_instance)
-            item = wbi.item.get(entity_id=str(EntityID(json["category"]["value"])))
-            # TODO get the language code from somewhere
-            # label = item.labels.get(language=)
-            # English is fallback
-            label = item.labels.get(language="en")
-            logger.info(f"found feature: {label.value}")
-            self.lexeme_category = label
+            qid = str(EntityID(json["category"]["value"]))
+            label = read_from_cache(qid=qid)
+            logger.info(f"got {label} from the cache")
+            if label is None:
+                wbi = WikibaseIntegrator(login=login_instance)
+                item = wbi.item.get(entity_id=qid)
+                # TODO get the language code from somewhere
+                # label = item.labels.get(language=)
+                # English is fallback
+                label = item.labels.get(language="en")
+                logger.info(f"fetched feature not found in the cache: {label.value}")
+                add_to_cache(qid=qid, label=label.value)
+            if isinstance(label, LanguageValue):
+                self.lexeme_category = label.value
+            else:
+                self.lexeme_category = label
+            #print("debug exit")
+            #exit()
         except ValueError:
             logger.error(f'Could not find lexical category from '
                              f'{json["category"]["value"]}')
@@ -61,16 +72,22 @@ class Form:
             self.grammatical_features = []
             logger.debug(json["grammatical_features"])
             for feature in json["grammatical_features"]["value"].split(","):
-                wbi = WikibaseIntegrator(login=login_instance)
-                item = wbi.item.get(entity_id=str(EntityID(feature)))
-                # TODO get the language code from somewhere
-                # label = item.labels.get(language=)
-                # English is fallback
-                label = item.labels.get(language="en")
-                logger.info(f"found feature: {label.value}")
-                # print("debug exit")
-                # exit(0)
-                self.grammatical_features.append(label)
+                qid = str(EntityID(feature))
+                label: Optional[str] = read_from_cache(qid=qid)
+                logger.info(f"got {label} from the cache")
+                if label is None:
+                    wbi = WikibaseIntegrator(login=login_instance)
+                    item = wbi.item.get(entity_id=qid)
+                    # TODO get the language code from somewhere
+                    # label = item.labels.get(language=)
+                    # English is fallback
+                    label: LanguageValue = item.labels.get(language="en")
+                    logger.info(f"fetched feature not found in the cache: {label.value}")
+                    add_to_cache(qid=qid, label=label.value)
+                if isinstance(label, LanguageValue):
+                    self.grammatical_features.append(label.value)
+                else:
+                    self.grammatical_features.append(label)
         except KeyError:
             pass
 
