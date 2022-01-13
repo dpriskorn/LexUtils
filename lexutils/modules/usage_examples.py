@@ -304,7 +304,7 @@ def process_usage_examples(
 def process_result(
         form: Form = None,
         language: LexemeLanguage = None
-):
+) -> Optional[Choices]:
     """This handles confirmation working on a form and gets usage examples
     It has only side-effects"""
 
@@ -327,9 +327,11 @@ def process_result(
     # ask to continue
     if config.require_form_confirmation:
         if yes_no_question(tui.work_on(form=form)):
-            fetch_usage_examples()
+            return fetch_usage_examples()
+        else:
+            return Choices.SKIP_FORM
     else:
-        fetch_usage_examples()
+        return fetch_usage_examples()
 
 
 def process_forms(lexemelanguage: LexemeLanguage = None):
