@@ -52,7 +52,7 @@ class HistoricalJobAd(Record):
         # find sentences
         # order in a list by length
         # pick the shortest one where the form representation appears
-        logger.info("Splitting the sentences using spaCy")
+        logger.debug("Splitting the sentences using spaCy")
         nlp = Swedish()
         nlp.add_pipe('sentencizer')
         doc = nlp(self.text)
