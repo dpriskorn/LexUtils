@@ -103,7 +103,9 @@ class RiksdagenRecord(Record):
 
         def find_suitable_usage_examples(sentences_without_duplicates,
                                          cleaned_text, form: Form):
+            # FIXME refactor for increased readability
             usage_examples = []
+            sentences = set()
             for sentence in sentences_without_duplicates:
                 """For each sentence we first try to exclude it, 
                 then look for a match"""
@@ -150,6 +152,7 @@ class RiksdagenRecord(Record):
                 # Add spaces to match better
                 if f" {form.representation} " in sentence and exclude_this_sentence is False:
                     # restore the abbreviations
+                    # TODO does this do anything?
                     for key in substitutions:
                         cleaned_text = cleaned_text.replace(key, substitutions[key])
                     # Last cleaning
@@ -162,8 +165,10 @@ class RiksdagenRecord(Record):
                                 .replace(ellipsis, "")
                                 .replace("  ", " "))
                     logging.debug(f"suitable_sentence:{sentence}")
-                    # Append an Example object
-                    usage_examples.append(UsageExample(sentence, self))
+                    sentences.add(sentence)
+            for sentence in sentences:
+                # Append an Example object
+                usage_examples.append(UsageExample(sentence=sentence, record=self))
             return usage_examples
 
         logger = logging.getLogger(__name__)
