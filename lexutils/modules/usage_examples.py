@@ -270,7 +270,7 @@ def handle_usage_example(
 def process_usage_examples(
         examples: List[UsageExample] = None,
         form: Form = None,
-):
+) -> Optional[Choices]:
     """Go through each usage example and present it"""
     if form is None:
         raise ValueError("form was None")
