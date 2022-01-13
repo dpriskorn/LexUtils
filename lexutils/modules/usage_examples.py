@@ -162,7 +162,8 @@ def get_usage_examples_from_apis(
                 form=form,
                 lexemelanguage=lexemelanguage
             ))
-    logger.debug(f"examples found:{[example.text for example in examples]}")
+    if len(examples) > 0:
+        logger.debug(f"examples found:{[example.text for example in examples]}")
     return examples
 
 
