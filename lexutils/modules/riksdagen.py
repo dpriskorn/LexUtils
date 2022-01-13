@@ -6,6 +6,7 @@ import logging
 from typing import List
 
 import httpx
+from httpx import ReadTimeout
 
 from lexutils.config import config
 from lexutils.models.riksdagen import RiksdagenRecord
@@ -39,8 +40,11 @@ async def async_fetch(word):
     async def get(url, session):
         """Accepts a url and a httpx session
         This function is called for every task."""
-        response = await session.get(url)
-        return response
+        try:
+            response = await session.get(url)
+            return response
+        except ReadTimeout:
+            logger.info("Got read timeout from httpx")
 
     logger = logging.getLogger(__name__)
     # Get total results count
@@ -79,14 +83,15 @@ def process_async_responses(
     results = asyncio.run(async_fetch(word))
     records = []
     for response in results:
-        data = response.json()
-        # check if dokument is in the list
-        if "dokument" in data["dokumentlista"].keys():
-            for entry in data["dokumentlista"]["dokument"]:
-                records.append(RiksdagenRecord(
-                    entry,
-                    lexemelanguage=lexemelanguage
-                ))
+        if response is not None:
+            data = response.json()
+            # check if dokument is in the list
+            if "dokument" in data["dokumentlista"].keys():
+                for entry in data["dokumentlista"]["dokument"]:
+                    records.append(RiksdagenRecord(
+                        entry,
+                        lexemelanguage=lexemelanguage
+                    ))
     length = len(records)
     logger.info(f"Got {length} records")
     # logger.debug(f"records:{records}")
