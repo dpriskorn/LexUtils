@@ -22,12 +22,12 @@ Commands = ['examples', 'statistics']
 # This is the script that keeps the REPL up
 
 
-class Completer(Completer):
-    def get_completions(self, document, complete_event):
-        word_before_cursor = document.get_word_before_cursor(WORD=True)
-        matches = fuzzyfinder(word_before_cursor, Commands)
-        for m in matches:
-            yield Completion(m, start_position=-len(word_before_cursor))
+# class Completer(Completer):
+#     def get_completions(self, document, complete_event):
+#         word_before_cursor = document.get_word_before_cursor(WORD=True)
+#         matches = fuzzyfinder(word_before_cursor, Commands)
+#         for m in matches:
+#             yield Completion(m, start_position=-len(word_before_cursor))
 
             
 def main():
