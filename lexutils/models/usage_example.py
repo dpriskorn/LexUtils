@@ -7,7 +7,6 @@ class UsageExample:
     record: Record
     word_count: int = None
 
-
     def __init__(self, sentence: str, record: Record):
         try:
             self.text = sentence
