@@ -276,17 +276,17 @@ class Lexeme:
                 value=SupportedExampleSources.HISTORICAL_ADS.value
             )
             # TODO wait for https://www.wikidata.org/wiki/Wikidata:Property_proposal/Swedish_Historical_Job_Ads_ID to be approved
-            # id = ExternalID(
-            #     prop_nr="",  # historical ads id?
-            #     value=usage_example.record.id
-            # )
+            inventory_number = ExternalID(
+                prop_nr="P217",  #  inventory number
+                value=usage_example.record.id
+            )
             reference_url = URL(
                 prop_nr="P854",
                 value=usage_example.record.url()
             )
             published_date = Time(
                 prop_nr="P577",
-                time=usage_example.record.date.strftime("+%Y-%m-%dT%H:%M:%SZ"),
+                time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z"),
                 precision=11
                 #     (
                 #     # First parse the date string and then output it
@@ -307,6 +307,7 @@ class Lexeme:
             )
             reference = [
                 stated_in,
+                inventory_number,
                 reference_url,
                 historical_ads_retrieved_date,
                 published_date,
