@@ -12,7 +12,7 @@ from lexutils.config.enums import Choices, Result
 from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
 from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
-from lexutils.helpers.util import add_to_watchlist, yes_no_question
+from lexutils.helpers.util import yes_no_question
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 # from lexutils.modules import download_data
@@ -218,8 +218,6 @@ def choose_sense_handler(
             logger.info(f"wbi:{sense_choice}")
             print("Successfully added usage example " +
                   f"{lexeme.usage_example_url()}")
-            if config.add_to_watchlist:
-                add_to_watchlist(form.lexeme_id)
             # logger.info("debug exit")
             # exit(0)
             # json_cache.save_to_exclude_list(usage_example)

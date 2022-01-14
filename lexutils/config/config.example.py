@@ -8,7 +8,7 @@ username = ""
 password = ""
 
 # Global settings
-version = "0.2-beta0"  # Don't touch this.
+version = "0.2-beta1"  # Don't touch this.
 sleep_time = 5
 wd_prefix = "http://www.wikidata.org/entity/"
 user_agent = f"LexUtils/{version}"
@@ -19,7 +19,6 @@ loglevel = logging.INFO
 # Settings for UsageExamples
 require_form_confirmation = True
 fast_nlp_languages = [WikimediaLanguageCode.SWEDISH, WikimediaLanguageCode.ENGLISH]
-add_to_watchlist = True
 number_of_forms_to_fetch = 20
 ksamsok_max_results_size = 500  # keep to multiples of 50
 riksdagen_max_results_size = 500  # keep to multiples of 20
