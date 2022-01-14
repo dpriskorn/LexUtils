@@ -7,8 +7,8 @@ from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
 class Record:
     base_url: str = None
-    id: str
-    date: datetime
+    id: str = None
+    date: datetime = None
     # Used for Riksdagen records
     document_qid = None
     exact_hit: bool = False
