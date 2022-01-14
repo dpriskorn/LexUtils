@@ -79,7 +79,8 @@ def fetch_arbetsformedlingen_historical_job_ads():
                                 print(count)
                             count += 1
                 if not exists(pickle_filename):
-                    print("Parsing the data into a Pandas DataFrame")
+                    print("Parsing the first 100.000 lines of the data into a Pandas DataFrame. "
+                          "This might take a while.")
                     start = time.time()
                     with open(jsonl_filename, "r") as file:
                         df = pd.DataFrame()
@@ -89,6 +90,8 @@ def fetch_arbetsformedlingen_historical_job_ads():
                             df = df.append(pd.DataFrame(data=[dict(id=ad.id, text=ad.text, object=ad)]))
                             if count % 1000 == 0:
                                 print(count)
+                            if count == 100000:
+                                break
                             count += 1
                         df.to_pickle(pickle_filename)
                     end = time.time()
