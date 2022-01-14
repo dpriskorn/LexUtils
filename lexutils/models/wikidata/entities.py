@@ -275,13 +275,25 @@ class Lexeme:
                 prop_nr="P248",
                 value=SupportedExampleSources.HISTORICAL_ADS.value
             )
+            # TODO wait for https://www.wikidata.org/wiki/Wikidata:Property_proposal/Swedish_Historical_Job_Ads_ID to be approved
+            # id = ExternalID(
+            #     prop_nr="",  # historical ads id?
+            #     value=usage_example.record.id
+            # )
             reference_url = URL(
                 prop_nr="P854",
                 value=usage_example.record.url()
             )
             published_date = Time(
                 prop_nr="P577",
-                value=usage_example.record.date.strftime("+%Y-%m-%dT%H:%M:%SZ")
+                time=usage_example.record.date.strftime("+%Y-%m-%dT%H:%M:%SZ"),
+                precision=11
+                #     (
+                #     # First parse the date string and then output it
+                #     usage_example.record.date
+                #         .strptime("+%Y-%m-%dT%H:%M:%SZ")
+                #         .strftime("+%Y-%m-%dT%H:%M:%SZ")
+                # )
             )
             historical_ads_retrieved_date = Time(
                 prop_nr="P813",  # Fetched 2021-01-13
