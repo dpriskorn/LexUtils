@@ -31,7 +31,7 @@ class HistoricalJobAd(Record):
             # logger.info("Parsing ad")
             data = json.loads(json_data)
             self.id = data["id"]
-            self.date = data["publication_date"]
+            self.date = datetime.strptime(data["publication_date"], "%Y-%m-%dT%H:%M:%S")
             description = data["description"]
             if "text" in description:
                 self.text = description["text"]
