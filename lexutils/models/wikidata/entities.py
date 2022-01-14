@@ -171,7 +171,7 @@ class Lexeme:
             prop_nr="P3865",
             value=usage_example.record.type_of_reference.value
         )
-        point_in_time = Time(
+        retrieved_date = Time(
             prop_nr="P813",  # Fetched today
             time=datetime.utcnow().replace(
                 tzinfo=timezone.utc
@@ -201,7 +201,7 @@ class Lexeme:
                 )
                 reference = [
                     stated_in,
-                    point_in_time,
+                    retrieved_date,
                     publication_date,
                     type_of_reference_qualifier,
                 ]
@@ -217,7 +217,7 @@ class Lexeme:
                 reference = [
                     stated_in,
                     document_id,
-                    point_in_time,
+                    retrieved_date,
                     type_of_reference_qualifier,
                 ]
         elif usage_example.record.source == SupportedExampleSources.WIKISOURCE:
@@ -236,7 +236,7 @@ class Lexeme:
                 reference = [
                     stated_in,
                     wikimedia_import_url,
-                    point_in_time,
+                    retrieved_date,
                     type_of_reference_qualifier,
                 ]
             else:
@@ -254,9 +254,40 @@ class Lexeme:
                 reference = [
                     #stated_in,
                     wikimedia_import_url,
-                    point_in_time,
+                    retrieved_date,
                     type_of_reference_qualifier,
                 ]
+        elif usage_example.record.source == SupportedExampleSources.HISTORICAL_ADS:
+            logger.info("Historical Ad record detected")
+            stated_in = Item(
+                prop_nr="P248",
+                value=SupportedExampleSources.HISTORICAL_ADS.value
+            )
+            reference_url = URL(
+                prop_nr="P854",
+                value=usage_example.record.url()
+            )
+            published_date = Time(
+                prop_nr="P577",
+                value=usage_example.record.date.strftime("+%Y-%m-%dT%H:%M:%SZ")
+            )
+            historical_ads_retrieved_date = Time(
+                prop_nr="P813",  # Fetched 2021-01-13
+                time=datetime.strptime("2021-01-13", "%Y-%m-%d").replace(
+                    tzinfo=timezone.utc
+                ).replace(
+                    hour=0,
+                    minute=0,
+                    second=0,
+                ).strftime("+%Y-%m-%dT%H:%M:%SZ")
+            )
+            reference = [
+                stated_in,
+                reference_url,
+                historical_ads_retrieved_date,
+                published_date,
+                type_of_reference_qualifier,
+            ]
         # elif source == "europarl":
         #     stated_in = wbi_datatype.ItemID(
         #         prop_nr="P248",
