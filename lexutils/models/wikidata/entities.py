@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import logging
 from datetime import datetime, timezone
 from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator import wbi_config, wbi_login, WikibaseIntegrator
-from wikibaseintegrator.wbi_enums import ActionIfExists
-from wikibaseintegrator.wbi_helpers import execute_sparql_query
 from wikibaseintegrator.datatypes import ExternalID, Form as WBIForm, Sense as WBISense, Time, MonolingualText, Item, \
     URL
+from wikibaseintegrator.wbi_enums import ActionIfExists
+from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources
@@ -184,15 +185,24 @@ class Lexeme:
         if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
             logger.info("Riksdagen record detected")
             if usage_example.record.date is not None:
-                publication_date = Time(
-                    prop_nr="P577",  # Publication date
-                    time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z")
-                )
+                if usage_example.record.date.day == 1 and usage_example.record.date.month == 1:
+                    logger.info("Detected year precision on the date")
+                    publication_date = Time(
+                        prop_nr="P577",  # Publication date
+                        time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z"),
+                        # Precision is year if the date is 1/1
+                        precision=9
+                    )
+                else:
+                    publication_date = Time(
+                        prop_nr="P577",  # Publication date
+                        time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z"),
+                        precision=11
+                    )
             else:
-                logger.error(_("Publication date of document {} ".format(usage_example.record.id) +
-                        "is missing. We have no fallback for that at the moment. " +
-                        "Aborting."))
-                return "error"
+                raise ValueError(_("Publication date of document {} ".format(usage_example.record.id) +
+                               "is missing. We have no fallback for that at the moment. " +
+                               "Aborting."))
             if usage_example.record.document_qid is not None:
                 logger.info(f"using document QID {usage_example.record.document_qid} as value for P248")
                 stated_in = Item(
@@ -214,12 +224,14 @@ class Lexeme:
                     prop_nr="P8433",  # Riksdagen Document ID
                     value=usage_example.record.id
                 )
-                reference = [
-                    stated_in,
-                    document_id,
-                    retrieved_date,
-                    type_of_reference_qualifier,
-                ]
+                if publication_date is not None:
+                    reference = [
+                        stated_in,
+                        document_id,
+                        retrieved_date,
+                        publication_date,
+                        type_of_reference_qualifier,
+                    ]
         elif usage_example.record.source == SupportedExampleSources.WIKISOURCE:
             logger.info("Wikisource record detected")
             usage_example.record.lookup_qid()
@@ -252,7 +264,7 @@ class Lexeme:
                     value=usage_example.record.url()
                 )
                 reference = [
-                    #stated_in,
+                    # stated_in,
                     wikimedia_import_url,
                     retrieved_date,
                     type_of_reference_qualifier,
@@ -411,8 +423,8 @@ class Lexeme:
 
             result = lexeme.write(
                 summary=("Added usage example " +
-                      "with [[Wikidata:Tools/LexUtils]] v{}".format(config.version))
-                )
+                         "with [[Wikidata:Tools/LexUtils]] v{}".format(config.version))
+            )
             # logging.debug(f"result from WBI:{result}")
             # TODO add handling of result from WBI and return True == Success or False
             return result
