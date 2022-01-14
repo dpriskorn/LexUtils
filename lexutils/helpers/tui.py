@@ -39,7 +39,7 @@ def europarl_download():
 
 
 def arbetsformedlingen_historical_job_ads_download():
-    print("Downloading 400MB Historical Ads data "
+    print("Downloading 400MB Historical Job Ads data "
           "from the Swedish Public Employment Service")
 
 
