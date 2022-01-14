@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from typing import Any, List
 
 import langdetect as langdetect
@@ -84,7 +85,7 @@ class HistoricalJobAd(Record):
             else:
                 count_discarded += 1
         if count_discarded > 0:
-            logger.info(f"{count_discarded} was discarded based on length")
+            logger.info(f"{count_discarded} sentence was discarded based on length")
         #print("debug exit")
         #exit(0)
         return examples
