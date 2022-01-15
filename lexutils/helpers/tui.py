@@ -185,3 +185,7 @@ def run_again():
 
 def issue_url():
     return "https://github.com/dpriskorn/LexUtils/issues"
+
+
+def present_form(form):
+    console.print(form.presentation())
