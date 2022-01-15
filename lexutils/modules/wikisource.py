@@ -27,7 +27,7 @@ def get_records(
         limit = config.wikisource_max_results_size_fast_nlp
     else:
         limit = config.wikisource_max_results_size_slow_nlp
-    console.print(
+    logger.info(
         f"Fetching usage examples from the {lexemes.language_code.name.title()} Wikisource...")
     # search using sparql
     # borrowed from Scholia
