@@ -66,7 +66,7 @@ class Lexemes:
             limit {config.number_of_forms_to_fetch}''',
                                        debug=False)
         self.forms_without_an_example = []
-        pprint(results)
+        # pprint(results)
         if "results" in results:
             if "bindings" in results["results"]:
                 #logger.debug(f"data:{results['results']['bindings']}")
