@@ -260,12 +260,10 @@ class Lexemes:
         if len(examples) < 50:
             # If we already got 50 examples from a better source,
             # then don't fetch from Wikisource
-            with console.status(
-                    f"Fetching usage examples from the {self.language_code.name.title()} Wikisource..."):
-                examples.extend(wikisource.get_records(
-                    form=form,
-                    lexemes=self
-                ))
+            examples.extend(wikisource.get_records(
+                form=form,
+                lexemes=self
+            ))
         # Check for nested list
         for example in examples:
             if not isinstance(example, UsageExample):
