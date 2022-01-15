@@ -5,6 +5,7 @@ import re
 from typing import List, TYPE_CHECKING
 
 import langdetect
+from langdetect import LangDetectException
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
@@ -24,7 +25,7 @@ class RiksdagenRecord(Record):
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.RIKSDAGEN
-    swedish_text: bool = None
+    swedish_text: bool = False
 
     def __init__(self,
                  json,
@@ -48,12 +49,14 @@ class RiksdagenRecord(Record):
     def detect_if_swedish_or_not(self):
         """Use langdetect to detect if we got a swedish record"""
         logger = logging.getLogger(__name__)
-        if langdetect.detect(self.text) == "sv":
-            logger.debug("Swedish record detected")
-            self.swedish_text = True
-        else:
-            logger.debug("Non-Swedish record detected")
-            self.swedish_text = False
+        try:
+            if langdetect.detect(self.text) == "sv":
+                logger.debug("Swedish record detected")
+                self.swedish_text = True
+            else:
+                logger.debug("Non-Swedish record detected")
+        except LangDetectException:
+            logger.error(f"Could not detect language of {self.text}")
 
     def find_form_representation_in_the_text(self, word):
         logger = logging.getLogger(__name__)
@@ -75,6 +78,7 @@ class RiksdagenRecord(Record):
 
     def find_usage_examples_from_summary(self, form: Form) -> List[UsageExample]:
         """This tries to find and clean sentences and return the shortest one"""
+        # TODO use NLP
         substitutions = dict(
             xxx="t.ex.",
             yyy="m.m.",
