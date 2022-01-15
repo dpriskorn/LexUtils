@@ -28,3 +28,6 @@ class Record:
         if self.base_url is None:
             raise ValueError("base_url was None")
         return f"{self.base_url}{quote(self.id)}"
+
+    def human_readable_url(self):
+        return self.url()

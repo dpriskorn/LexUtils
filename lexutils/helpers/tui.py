@@ -161,20 +161,20 @@ def present_sentence(
                         "{}/{} ".format(count, form.number_of_examples_found) +
                         "from {} from {}".format(
                             example.record.date,
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
     elif isinstance(example.record, HistoricalJobAd):
         console.print(_("Presenting sentence " +
                         "{}/{} ".format(count, form.number_of_examples_found) +
                         "with id {} from {}".format(
                             example.record.id,
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
     else:
         console.print(_("Presenting sentence " +
                         "{}/{} ".format(count, form.number_of_examples_found) +
                         "from {}".format(
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
 
 

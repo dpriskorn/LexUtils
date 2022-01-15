@@ -95,10 +95,11 @@ class WikisourceRecord(Record):
             # logger.info(sentence.text)
             # This is a very crude test for relevancy, we lower first to improve matching
             cleaned_sentence = sentence.text.lower()
-            punctations = [".", ",", "!", "?", "„", "“"]
+            punctations = [".", ",", "!", "?", "„", "“", "»"]
             for punctation in punctations:
                 if punctation in cleaned_sentence:
                     cleaned_sentence = cleaned_sentence.replace(punctation, " ")
+            cleaned_sentence = cleaned_sentence.strip()
             logger.debug(f"cleaned sentence:{cleaned_sentence}")
             if f" {form.representation.lower()} " in cleaned_sentence:
                 # Add to the set first to avoid duplicates
@@ -172,3 +173,6 @@ class WikisourceRecord(Record):
 
     def url(self):
         return f"http://{self.language_code.value}.wikisource.org/wiki/{quote(self.document_title)}"
+
+    def human_readable_url(self):
+        return f"{self.document_title} at {self.url()}"
