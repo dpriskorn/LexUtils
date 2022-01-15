@@ -1,5 +1,6 @@
 import logging
 import random
+from pprint import pprint
 from typing import List, Optional
 
 from pandas import DataFrame
@@ -62,23 +63,27 @@ class Lexemes:
             }}
             group by ?lexeme ?form ?form_representation ?category
             offset {random_offset}
-            limit {config.number_of_forms_to_fetch}''')
+            limit {config.number_of_forms_to_fetch}''',
+                                       debug=False)
         self.forms_without_an_example = []
-        logger.info("Got the data")
-        logger.info(f"data:{results.keys()}")
-        try:
-            # logger.info(f"data:{results['results']['bindings']}")
-            for entry in results["results"]['bindings']:
-                # logger.info(f"data:{entry.keys()}")
-                # logging.info(f"lexeme_json:{entry}")
-                from lexutils.models.wikidata.form import Form
-                form = Form(entry)
-                logger.info(f"appending {form} to list of forms")
-                # logger.info("debug exit")
-                # exit(0)
-                self.forms_without_an_example.append(form)
-        except KeyError:
-            logger.error("Got no results")
+        pprint(results)
+        if "results" in results:
+            if "bindings" in results["results"]:
+                #logger.debug(f"data:{results['results']['bindings']}")
+                forms = results["results"]['bindings']
+                logger.info(f"Got {len(forms)} lexemes")
+                for entry in forms:
+                    # logger.info(f"data:{entry.keys()}")
+                    # logging.debug(f"lexeme_json:{entry}")
+                    form = Form(entry)
+                    logger.info(f"appending {form} to list of forms")
+                    # logger.info("debug exit")
+                    # exit(0)
+                    self.forms_without_an_example.append(form)
+            else:
+                raise ValueError("Got no bindings dict from WD")
+        else:
+            raise ValueError("Got no results dict from WD")
         if len(self.forms_without_an_example) == 0:
             console.print("Got no forms from Wikidata to work on for this language "
                           "if you think this is a bug, please open an issue here "
