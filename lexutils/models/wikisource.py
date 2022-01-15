@@ -111,6 +111,12 @@ class WikisourceRecord(Record):
                     sentence_length > config.min_word_count and
                     sentence_length < config.max_word_count
             ):
+                # Clean the sentence so it looks better
+                punctations = ["„", "“", "»"]
+                for punctation in punctations:
+                    if punctation in sentence:
+                        sentence = sentence.replace(punctation, " ")
+                sentence = sentence.strip()
                 examples.append(UsageExample(sentence=sentence, record=self))
         # print("debug exit")
         # exit(0)
