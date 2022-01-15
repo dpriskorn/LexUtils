@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import gettext
 import logging
-
 from typing import List, TYPE_CHECKING
 from urllib.parse import quote
 
 from consolemenu import *
 from rich import print
 
+from lexutils.helpers import util
 from lexutils.helpers.console import console
 from lexutils.models.arbetsformedlingen import HistoricalJobAd
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
-from lexutils.helpers import util
 
 if TYPE_CHECKING:
     from lexutils.models.usage_example import UsageExample
@@ -26,9 +26,11 @@ _ = gettext.gettext
 # Functions in here only have side-effects and use .format
 # because gettext does not work with f-strings
 
+logger = logging.getLogger(__name__)
+
 
 def downloading_from(api_name):
-    print(_("Downloading from {}...".format(api_name)))
+    logger.info(_("Downloading from {}...".format(api_name)))
 
 
 def europarl_download():
@@ -97,6 +99,7 @@ def cancel_sentence(word: str):
         "profile=advanced&fulltext=0&" +
         "advancedSearch-current=%7B%7D&ns0=1"))
 
+
 def choose_sense_menu(senses: List[Sense] = None):
     """Returns a dictionary with sense_id -> sense_id
     and gloss -> gloss or False"""
@@ -119,6 +122,7 @@ def choose_sense_menu(senses: List[Sense] = None):
             selected_item = senses[index]
             logger.debug("Returning the chosen sense")
             return selected_item
+
 
 def select_language_menu():
     # TODO make this scale better.
@@ -144,29 +148,44 @@ def print_separator():
 def present_sentence(
         count: int = None,
         example: UsageExample = None,
-        examples: List[UsageExample] = None
+        form: Form = None
 ):
     if example is None:
         raise ValueError("example was None")
     if example.record is None:
         raise ValueError("record was None")
+    if form is None:
+        raise ValueError("form was None")
     if isinstance(example.record, RiksdagenRecord):
         console.print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(examples)) +
+                        "{}/{} ".format(count, form.number_of_examples_found) +
                         "from {} from {}".format(
                             example.record.date,
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
     elif isinstance(example.record, HistoricalJobAd):
         console.print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(examples)) +
+                        "{}/{} ".format(count, form.number_of_examples_found) +
                         "with id {} from {}".format(
                             example.record.id,
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
     else:
         console.print(_("Presenting sentence " +
-                        "{}/{} ".format(count, len(examples)) +
+                        "{}/{} ".format(count, form.number_of_examples_found) +
                         "from {}".format(
-                            example.record.url(),
+                            example.record.human_readable_url(),
                         )))
+
+
+def run_again():
+    console.print("No more results. "
+                  "Run the script again to continue")
+
+
+def issue_url():
+    return "https://github.com/dpriskorn/LexUtils/issues"
+
+
+def present_form(form):
+    console.print(form.presentation())

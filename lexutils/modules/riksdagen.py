@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import asyncio
 import gettext
 import logging
-# import re
-from typing import List
+from typing import List, TYPE_CHECKING, Optional
 
 import httpx
-from httpx import ReadTimeout
+from httpx import ReadTimeout, ConnectTimeout
 
 from lexutils.config import config
-from lexutils.models.riksdagen import RiksdagenRecord
-from lexutils.models.usage_example import UsageExample
 from lexutils.helpers import tui
+from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
+
+if TYPE_CHECKING:
+    from lexutils.models.lexemes import Lexemes
+    from lexutils.models.riksdagen import RiksdagenRecord
 
 _ = gettext.gettext
 
@@ -29,11 +32,14 @@ def get_result_count(word):
     # First find out the number of results
     url = (f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
            "&sort=rel&sortorder=desc&utformat=json&a=s&p=1")
-    r = httpx.get(url)
-    data = r.json()
-    results = int(data["dokumentlista"]["@traffar"])
-    logging.info(f"results:{results}")
-    return results
+    try:
+        r = httpx.get(url)
+        data = r.json()
+        results = int(data["dokumentlista"]["@traffar"])
+        logging.info(f"results:{results}")
+        return results
+    except ConnectTimeout:
+        logger.warning("Got timeout when trying to fetch the count of hits from the Riksdagen API")
 
 
 async def async_fetch(word):
@@ -44,63 +50,67 @@ async def async_fetch(word):
             response = await session.get(url)
             return response
         except ReadTimeout:
-            logger.info("Got read timeout from httpx")
+            logger.warning("Got read timeout from the Riksdagen API")
 
     logger = logging.getLogger(__name__)
     # Get total results count
-    results = get_result_count(word)
-    # Generate the urls
-    if results > config.riksdagen_max_results_size:
-        results = config.riksdagen_max_results_size
-    # generate urls
-    urls = []
-    # divide by 20 to know how many requests to send
-    for i in range(1, int(results / 20)):
-        urls.append(f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
-                    f"&sort=rel&sortorder=desc&utformat=json&a=s&p={i}")
-    logging.debug(f"urls:{urls}")
-    # get urls asynchroniously
-    # inspired by https://trio.readthedocs.io/en/stable/tutorial.html
-    async with httpx.AsyncClient() as session:
-        logger.info("Gathering tasks.")
-        # inspired by https://stackoverflow.com/questions/56161595/
-        # how-to-use-async-for-in-python
-        results = await asyncio.gather(*[get(url, session) for url in urls])
-        logger.info(f"All {len(results)} tasks done")
-        return results
+    results: Optional[int] = get_result_count(word)
+    if results is not None:
+        # Generate the urls
+        if results > config.riksdagen_max_results_size:
+            results = config.riksdagen_max_results_size
+        # generate urls
+        urls = []
+        # divide by 20 to know how many requests to send
+        for i in range(1, int(results / 20)):
+            urls.append(f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
+                        f"&sort=rel&sortorder=desc&utformat=json&a=s&p={i}")
+        logging.debug(f"urls:{urls}")
+        # get urls asynchroniously
+        # inspired by https://trio.readthedocs.io/en/stable/tutorial.html
+        async with httpx.AsyncClient() as session:
+            logger.info("Gathering tasks.")
+            # inspired by https://stackoverflow.com/questions/56161595/
+            # how-to-use-async-for-in-python
+            results = await asyncio.gather(*[get(url, session) for url in urls])
+            logger.info(f"All {len(results)} tasks done")
+            return results
 
 
 def process_async_responses(
         word: str = None,
-        lexemelanguage: LexemeLanguage = None
+        lexemes: Lexemes = None
 ) -> List[RiksdagenRecord]:
     logger = logging.getLogger(__name__)
-    if lexemelanguage is None:
-        raise ValueError("lexemelanguage was None")
+    if lexemes is None:
+        raise ValueError("lexemes was None")
     if word is None:
         raise ValueError("word was None")
     tui.downloading_from(api_name)
     results = asyncio.run(async_fetch(word))
     records = []
+    from lexutils.models.riksdagen import RiksdagenRecord
     for response in results:
         if response is not None:
             data = response.json()
             # check if dokument is in the list
             if "dokument" in data["dokumentlista"].keys():
                 for entry in data["dokumentlista"]["dokument"]:
-                    records.append(RiksdagenRecord(
-                        entry,
-                        lexemelanguage=lexemelanguage
-                    ))
+                    record = RiksdagenRecord(
+                            entry,
+                            lexemes=lexemes
+                        )
+                    if record.swedish_text:
+                        records.append(record)
     length = len(records)
-    logger.info(f"Got {length} records")
+    logger.info(f"Got {length} records in Swedish")
     # logger.debug(f"records:{records}")
     return records
 
 
 def filter_matching_records(
         records,
-                            form: Form = None
+        form: Form = None
 ) -> List[RiksdagenRecord]:
     logger = logging.getLogger(__name__)
     if form is None:
@@ -127,15 +137,15 @@ def filter_matching_records(
 
 def get_records(
         form: Form = None,
-        lexemelanguage: LexemeLanguage = None
+        lexemes: Lexemes = None
 ) -> List[UsageExample]:
     # logger = logging.getLogger(__name__)
     if form is None:
         raise ValueError("form was None")
-    if lexemelanguage is None:
-        raise ValueError("lexemelanguage was None")
+    if lexemes is None:
+        raise ValueError("lexemes was None")
     records: List[RiksdagenRecord] = process_async_responses(form.representation,
-                                                             lexemelanguage=lexemelanguage)
+                                                             lexemes=lexemes)
     return process_records(records, form)
 
 

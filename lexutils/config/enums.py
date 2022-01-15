@@ -7,10 +7,11 @@ class SupportedExampleSources(Enum):
     HISTORICAL_ADS = "Q110544812"
 
 
-class Choices(Enum):
-    ACCEPT_USAGE_EXAMPLE = auto()
-    SKIP_FORM = auto()
-    SKIP_USAGE_EXAMPLE = auto()
+class SupportedFormPickles(Enum):
+    """These enable a persitent memory which help
+    avoid working on the same form twice"""
+    FINISHED_FORMS = "finished_forms.pkl"
+    DECLINED_FORMS = "declined_forms.pkl"
 
 
 class LanguageStyle(Enum):
@@ -23,7 +24,10 @@ class ReferenceType(Enum):
     ORAL = "Q52946"
 
 
-class Result(Enum):
-    USAGE_EXAMPLE_ADDED = auto()
+class ReturnValues(Enum):
+    ACCEPT_USAGE_EXAMPLE = auto()
     # Todo improve this by using a custom error type instead
     ERROR = auto()
+    SKIP_FORM = auto()
+    SKIP_USAGE_EXAMPLE = auto()
+    USAGE_EXAMPLE_ADDED = auto()

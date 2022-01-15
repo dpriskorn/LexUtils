@@ -1,11 +1,9 @@
 import logging
-from time import sleep
 from typing import List, Optional
 
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator.models import LanguageValue
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
-from wikibaseintegrator.entities import Item
 
 from lexutils.config import config
 from lexutils.config.config import login_instance
@@ -27,7 +25,9 @@ class Form:
     # to determine if an example fits or not
     lexeme_id: str
     lexeme_category: str = None
+    number_of_examples_found: int = 0
     senses: List[Sense] = None
+    usage_examples: List[UsageExample]
 
     def __init__(self, json):
         """Parse the form json"""
@@ -48,26 +48,25 @@ class Form:
             pass
         try:
             qid = str(EntityID(json["category"]["value"]))
-            label = read_from_cache(qid=qid)
+            label: Optional[str] = read_from_cache(qid=qid)
             logger.debug(f"got {label} from the cache")
-            if label is None:
+            if label is not None:
+                self.lexeme_category = label
+            else:
                 wbi = WikibaseIntegrator(login=login_instance)
                 item = wbi.item.get(entity_id=qid)
                 # TODO get the language code from somewhere
                 # label = item.labels.get(language=)
                 # English is fallback
-                label = item.labels.get(language="en")
-                logger.debug(f"fetched feature not found in the cache: {label.value}")
-                add_to_cache(qid=qid, label=label.value)
-            if isinstance(label, LanguageValue):
-                self.lexeme_category = label.value
-            else:
-                self.lexeme_category = label
-            #print("debug exit")
-            #exit()
+                wbi_label: LanguageValue = item.labels.get(language="en")
+                logger.debug(f"fetched feature not found in the cache: {wbi_label.value}")
+                add_to_cache(qid=qid, label=wbi_label.value)
+                self.lexeme_category = wbi_label.value
+            # print("debug exit")
+            # exit()
         except ValueError:
             logger.error(f'Could not find lexical category from '
-                             f'{json["category"]["value"]}')
+                         f'{json["category"]["value"]}')
         try:
             self.grammatical_features = []
             logger.debug(json["grammatical_features"])
@@ -94,9 +93,17 @@ class Form:
     def __str__(self):
         return f"{self.id}/{self.lexeme_id}/{self.representation}"
 
+    def presentation(self):
+        return (
+            f"[bold green]{self.representation}[/bold green]\n"
+            f"category: {self.lexeme_category}\n"
+            f"features: {', '.join(self.grammatical_features)}"
+        )
+
     def fetch_senses(self,
                      usage_example: UsageExample = None):
         """Fetch the senses on the lexeme"""
+
         def sparql_query(fallback: bool = False):
             if fallback == True:
                 # Fall back to English as gloss language
@@ -170,8 +177,8 @@ class Form:
                                        f" was found. "
                                        f"Please go to {self.url()} and improve the glosses if you can.")
         else:
-            raise ValueError(_("Error. Got None trying to fetch senses. " +
-                               "Please report this as an issue."))
+            raise ValueError("Error. Got None trying to fetch senses. " +
+                             "Please report this as an issue.")
 
     def url(self):
         return f"{config.wd_prefix}{self.id}"

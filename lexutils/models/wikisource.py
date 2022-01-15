@@ -1,6 +1,7 @@
+from __future__ import annotations
 import logging
 from html import unescape
-from typing import List
+from typing import List, TYPE_CHECKING
 from urllib.parse import quote
 
 import requests
@@ -14,7 +15,9 @@ from lexutils.models.record import Record
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
+
+if TYPE_CHECKING:
+    from lexutils.models.lexemes import Lexemes
 
 
 class WikisourceRecord(Record):
@@ -27,7 +30,7 @@ class WikisourceRecord(Record):
 
     def __init__(self,
                  json=None,
-                 lexemelanguage: LexemeLanguage = None):
+                 lexemes: Lexemes = None):
         try:
             self.document_title = json["title"]["value"]
         except KeyError:
@@ -37,7 +40,7 @@ class WikisourceRecord(Record):
             self.text = unescape(json["snippet"]["value"])
         except KeyError:
             raise KeyError("Could not find snippet")
-        self.language_code = lexemelanguage.language_code
+        self.language_code = lexemes.language_code
         # try:
         #     # self.date = datetime.strptime(json["datum"], "%d%m%Y")
         #     self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")
@@ -92,10 +95,11 @@ class WikisourceRecord(Record):
             # logger.info(sentence.text)
             # This is a very crude test for relevancy, we lower first to improve matching
             cleaned_sentence = sentence.text.lower()
-            punctations = [".", ",", "!", "?", "„", "“"]
+            punctations = [".", ",", "!", "?", "„", "“", "»"]
             for punctation in punctations:
                 if punctation in cleaned_sentence:
                     cleaned_sentence = cleaned_sentence.replace(punctation, " ")
+            cleaned_sentence = cleaned_sentence.strip()
             logger.debug(f"cleaned sentence:{cleaned_sentence}")
             if f" {form.representation.lower()} " in cleaned_sentence:
                 # Add to the set first to avoid duplicates
@@ -107,6 +111,12 @@ class WikisourceRecord(Record):
                     sentence_length > config.min_word_count and
                     sentence_length < config.max_word_count
             ):
+                # Clean the sentence so it looks better
+                punctations = ["„", "“", "»"]
+                for punctation in punctations:
+                    if punctation in sentence:
+                        sentence = sentence.replace(punctation, " ")
+                sentence = sentence.strip()
                 examples.append(UsageExample(sentence=sentence, record=self))
         # print("debug exit")
         # exit(0)
@@ -169,3 +179,6 @@ class WikisourceRecord(Record):
 
     def url(self):
         return f"http://{self.language_code.value}.wikisource.org/wiki/{quote(self.document_title)}"
+
+    def human_readable_url(self):
+        return f"{self.document_title} at {self.url()}"

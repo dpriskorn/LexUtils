@@ -4,15 +4,16 @@ from datetime import datetime
 import re
 from typing import List, TYPE_CHECKING
 
+import langdetect
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
+from lexutils.models.lexemes import Lexemes
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record
 from lexutils.helpers import util
 from lexutils.helpers.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
-from lexutils.models.wikidata.misc import LexemeLanguage
 
 if TYPE_CHECKING:
     from lexutils.models.wikidata.form import Form
@@ -23,16 +24,18 @@ class RiksdagenRecord(Record):
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.RIKSDAGEN
+    swedish_text: bool = None
 
     def __init__(self,
                  json,
-                 lexemelanguage: LexemeLanguage = None):
+                 lexemes: Lexemes = None):
         try:
             self.id = json["id"]
         except KeyError:
             raise KeyError("Could not find id")
         try:
             self.text = json["summary"]
+            self.detect_if_swedish_or_not()
         except KeyError:
             raise KeyError("Could not find summary")
         try:
@@ -40,7 +43,17 @@ class RiksdagenRecord(Record):
             self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")
         except KeyError:
             raise KeyError("Could not find datum")
-        self.language_code = lexemelanguage.language_code
+        self.language_code = lexemes.language_code
+
+    def detect_if_swedish_or_not(self):
+        """Use langdetect to detect if we got a swedish record"""
+        logger = logging.getLogger(__name__)
+        if langdetect.detect(self.text) == "sv":
+            logger.debug("Swedish record detected")
+            self.swedish_text = True
+        else:
+            logger.debug("Non-Swedish record detected")
+            self.swedish_text = False
 
     def find_form_representation_in_the_text(self, word):
         logger = logging.getLogger(__name__)
