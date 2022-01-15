@@ -6,7 +6,7 @@ from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator import wbi_config, wbi_login, WikibaseIntegrator
 from wikibaseintegrator.datatypes import ExternalID, Form as WBIForm, Sense as WBISense, Time, MonolingualText, Item, \
-    URL
+    URL, String
 from wikibaseintegrator.wbi_enums import ActionIfExists
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
@@ -276,8 +276,8 @@ class Lexeme:
                 value=SupportedExampleSources.HISTORICAL_ADS.value
             )
             # TODO wait for https://www.wikidata.org/wiki/Wikidata:Property_proposal/Swedish_Historical_Job_Ads_ID to be approved
-            inventory_number = ExternalID(
-                prop_nr="P217",  #  inventory number
+            record_number = String(
+                prop_nr="P9994",  #  record number
                 value=usage_example.record.id
             )
             reference_url = URL(
@@ -307,7 +307,7 @@ class Lexeme:
             )
             reference = [
                 stated_in,
-                inventory_number,
+                record_number,
                 reference_url,
                 historical_ads_retrieved_date,
                 published_date,
