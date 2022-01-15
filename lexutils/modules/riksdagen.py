@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import asyncio
 import gettext
 import logging
@@ -9,8 +10,8 @@ import httpx
 from httpx import ReadTimeout
 
 from lexutils.config import config
-from lexutils.models.usage_example import UsageExample
 from lexutils.helpers import tui
+from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.form import Form
 
 if TYPE_CHECKING:
@@ -84,16 +85,18 @@ def process_async_responses(
     tui.downloading_from(api_name)
     results = asyncio.run(async_fetch(word))
     records = []
+    from lexutils.models.riksdagen import RiksdagenRecord
     for response in results:
         if response is not None:
             data = response.json()
             # check if dokument is in the list
             if "dokument" in data["dokumentlista"].keys():
                 for entry in data["dokumentlista"]["dokument"]:
-                    records.append(RiksdagenRecord(
-                        entry,
-                        lexemes=lexemes
-                    ))
+                    records.append(
+                        RiksdagenRecord(
+                            entry,
+                            lexemes=lexemes
+                        ))
     length = len(records)
     logger.info(f"Got {length} records")
     # logger.debug(f"records:{records}")
@@ -102,7 +105,7 @@ def process_async_responses(
 
 def filter_matching_records(
         records,
-                            form: Form = None
+        form: Form = None
 ) -> List[RiksdagenRecord]:
     logger = logging.getLogger(__name__)
     if form is None:
