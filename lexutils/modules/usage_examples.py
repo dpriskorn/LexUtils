@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import gettext
 import logging
-# import random
 import time
 from time import sleep
 from typing import Union, Optional
@@ -13,7 +12,6 @@ from lexutils.config.enums import ReturnValues, SupportedFormPickles
 from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
 from lexutils.helpers.handle_pickles import add_to_pickle
-from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
 from lexutils.models.lexemes import Lexemes
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
@@ -63,22 +61,27 @@ def start():
     # begin = introduction()
     begin = True
     if begin:
-        choosen_language: WikimediaLanguageCode = select_language_menu()
+        choosen_language: WikimediaLanguageCode = tui.select_language_menu()
         # TODO store lexuse_introduction_read=True to e.g. settings.pkl
-        with console.status(f"Fetching lexeme forms to work on for {choosen_language.name.title()}"):
+        with console.status(f"Fetching {config.number_of_forms_to_fetch} "
+                            f"lexeme forms to work on for "
+                            f"{choosen_language.name.title()}"):
             lexemes = Lexemes(language_code=choosen_language.value)
             lexemes.fetch_forms_without_an_example()
-        console.print(f"Fetching usage examples to work on")
+        console.print(f"Fetching usage examples to work on. This might take some minutes.")
         start = time.time()
         lexemes.fetch_usage_examples()
         end = time.time()
         total_number_of_examples = sum(
             [form.number_of_examples_found for form in lexemes.forms_with_usage_examples_found]
         )
-        console.print(f"Found {total_number_of_examples} "
-                      f"usage examples for a total of "
-                      f"{len(lexemes.forms_with_usage_examples_found)} "
-                      f"in {round(end - start)} seconds")
+        if total_number_of_examples == 0:
+            console.print("Found no usage examples for any of the forms.")
+        else:
+            console.print(f"Found {total_number_of_examples} "
+                          f"usage examples for a total of "
+                          f"{len(lexemes.forms_with_usage_examples_found)} forms "
+                          f"in {round(end - start)} seconds")
         if len(lexemes.forms_with_usage_examples_found) > 0:
             for form in lexemes.forms_with_usage_examples_found:
                 result = process_usage_examples(form=form)
@@ -122,7 +125,7 @@ def prompt_multiple_senses(form: Form = None) -> Union[ReturnValues, Sense]:
     sense = None
     # TODO check that all senses has a gloss matching the language of
     # the example
-    sense: Union[Sense, None] = choose_sense_menu(form.senses)
+    sense: Union[Sense, None] = tui.choose_sense_menu(form.senses)
     if sense is not None:
         logging.info("a sense was accepted")
         return sense
@@ -238,6 +241,8 @@ def process_usage_examples(
     # Sort the usage examples by word count
     # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
     form.usage_examples.sort(key=lambda x: x.word_count, reverse=False)
+    tui.print_separator()
+    tui.present_form(form)
     # Loop through usage examples
     for example in form.usage_examples:
         tui.present_sentence(
@@ -254,7 +259,6 @@ def process_usage_examples(
         if result == ReturnValues.SKIP_USAGE_EXAMPLE:
             continue
         elif result == ReturnValues.SKIP_FORM or result == ReturnValues.USAGE_EXAMPLE_ADDED:
-            print_separator()
             return result
 
 # def process_result(
