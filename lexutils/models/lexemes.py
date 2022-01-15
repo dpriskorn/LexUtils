@@ -35,7 +35,7 @@ class Lexemes:
         self.language_code = WikimediaLanguageCode(language_code)
         self.language_qid = WikimediaLanguageQID[self.language_code.name]
 
-    def fetch_forms_missing_an_example(self):
+    def fetch_forms_without_an_example(self):
         logger = logging.getLogger(__name__)
         # title:Forms that have no example demonstrating them and that have at least
         # one sense with P5137 (item for this sense)
