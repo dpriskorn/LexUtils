@@ -14,8 +14,9 @@ from lexutils.models.wikidata.form import Form
 
 
 def download_and_load_into_memory():
+    logger = logging.getLogger(__name__)
     download_data.fetch_arbetsformedlingen_historical_job_ads()
-    print("Loading the Historical Ads dataframe into memory")
+    logger.info("Loading the Historical Job Ads dataframe into memory")
     return pd.read_pickle("historical_ads.pkl.gz")
 
 
