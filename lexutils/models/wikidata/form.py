@@ -95,7 +95,7 @@ class Form:
 
     def presentation(self):
         return (
-            f"[green bold]{self.representation}[/bold green]\n"
+            f"[bold green]{self.representation}[/bold green]\n"
             f"category: {self.lexeme_category}\n"
             f"features: {', '.join(self.grammatical_features)}"
         )
