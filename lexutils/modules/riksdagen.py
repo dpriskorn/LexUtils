@@ -96,13 +96,14 @@ def process_async_responses(
             # check if dokument is in the list
             if "dokument" in data["dokumentlista"].keys():
                 for entry in data["dokumentlista"]["dokument"]:
-                    records.append(
-                        RiksdagenRecord(
+                    record = RiksdagenRecord(
                             entry,
                             lexemes=lexemes
-                        ))
+                        )
+                    if record.swedish_text:
+                        records.append(record)
     length = len(records)
-    logger.info(f"Got {length} records")
+    logger.info(f"Got {length} records in Swedish")
     # logger.debug(f"records:{records}")
     return records
 
