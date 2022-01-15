@@ -68,7 +68,8 @@ def start():
                             f"{choosen_language.name.title()}"):
             lexemes = Lexemes(language_code=choosen_language.value)
             lexemes.fetch_forms_without_an_example()
-        console.print(f"Fetching usage examples to work on. This might take some minutes.")
+        console.print(f"Fetching usage examples to work on. "
+                      f"This might take some minutes.")
         start = time.time()
         lexemes.fetch_usage_examples()
         end = time.time()
