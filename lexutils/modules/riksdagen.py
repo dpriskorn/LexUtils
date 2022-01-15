@@ -4,10 +4,10 @@ from __future__ import annotations
 import asyncio
 import gettext
 import logging
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 
 import httpx
-from httpx import ReadTimeout
+from httpx import ReadTimeout, ConnectTimeout
 
 from lexutils.config import config
 from lexutils.helpers import tui
@@ -32,11 +32,14 @@ def get_result_count(word):
     # First find out the number of results
     url = (f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
            "&sort=rel&sortorder=desc&utformat=json&a=s&p=1")
-    r = httpx.get(url)
-    data = r.json()
-    results = int(data["dokumentlista"]["@traffar"])
-    logging.info(f"results:{results}")
-    return results
+    try:
+        r = httpx.get(url)
+        data = r.json()
+        results = int(data["dokumentlista"]["@traffar"])
+        logging.info(f"results:{results}")
+        return results
+    except ConnectTimeout:
+        logger.warning("Got timeout when trying to fetch the count of hits from the Riksdagen API")
 
 
 async def async_fetch(word):
@@ -47,30 +50,31 @@ async def async_fetch(word):
             response = await session.get(url)
             return response
         except ReadTimeout:
-            logger.info("Got read timeout from httpx")
+            logger.warning("Got read timeout from the Riksdagen API")
 
     logger = logging.getLogger(__name__)
     # Get total results count
-    results = get_result_count(word)
-    # Generate the urls
-    if results > config.riksdagen_max_results_size:
-        results = config.riksdagen_max_results_size
-    # generate urls
-    urls = []
-    # divide by 20 to know how many requests to send
-    for i in range(1, int(results / 20)):
-        urls.append(f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
-                    f"&sort=rel&sortorder=desc&utformat=json&a=s&p={i}")
-    logging.debug(f"urls:{urls}")
-    # get urls asynchroniously
-    # inspired by https://trio.readthedocs.io/en/stable/tutorial.html
-    async with httpx.AsyncClient() as session:
-        logger.info("Gathering tasks.")
-        # inspired by https://stackoverflow.com/questions/56161595/
-        # how-to-use-async-for-in-python
-        results = await asyncio.gather(*[get(url, session) for url in urls])
-        logger.info(f"All {len(results)} tasks done")
-        return results
+    results: Optional[int] = get_result_count(word)
+    if results is not None:
+        # Generate the urls
+        if results > config.riksdagen_max_results_size:
+            results = config.riksdagen_max_results_size
+        # generate urls
+        urls = []
+        # divide by 20 to know how many requests to send
+        for i in range(1, int(results / 20)):
+            urls.append(f"http://data.riksdagen.se/dokumentlista/?sok={word}" +
+                        f"&sort=rel&sortorder=desc&utformat=json&a=s&p={i}")
+        logging.debug(f"urls:{urls}")
+        # get urls asynchroniously
+        # inspired by https://trio.readthedocs.io/en/stable/tutorial.html
+        async with httpx.AsyncClient() as session:
+            logger.info("Gathering tasks.")
+            # inspired by https://stackoverflow.com/questions/56161595/
+            # how-to-use-async-for-in-python
+            results = await asyncio.gather(*[get(url, session) for url in urls])
+            logger.info(f"All {len(results)} tasks done")
+            return results
 
 
 def process_async_responses(
