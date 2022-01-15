@@ -62,11 +62,11 @@ class Form:
                 logger.debug(f"fetched feature not found in the cache: {wbi_label.value}")
                 add_to_cache(qid=qid, label=wbi_label.value)
                 self.lexeme_category = wbi_label.value
-            #print("debug exit")
-            #exit()
+            # print("debug exit")
+            # exit()
         except ValueError:
             logger.error(f'Could not find lexical category from '
-                             f'{json["category"]["value"]}')
+                         f'{json["category"]["value"]}')
         try:
             self.grammatical_features = []
             logger.debug(json["grammatical_features"])
@@ -93,9 +93,17 @@ class Form:
     def __str__(self):
         return f"{self.id}/{self.lexeme_id}/{self.representation}"
 
+    def presentation(self):
+        return (
+            f"[green bold]{self.representation}[/bold green]\n"
+            f"category: {self.lexeme_category}\n"
+            f"features: {', '.join(self.grammatical_features)}"
+        )
+
     def fetch_senses(self,
                      usage_example: UsageExample = None):
         """Fetch the senses on the lexeme"""
+
         def sparql_query(fallback: bool = False):
             if fallback == True:
                 # Fall back to English as gloss language
@@ -170,7 +178,7 @@ class Form:
                                        f"Please go to {self.url()} and improve the glosses if you can.")
         else:
             raise ValueError("Error. Got None trying to fetch senses. " +
-                               "Please report this as an issue.")
+                             "Please report this as an issue.")
 
     def url(self):
         return f"{config.wd_prefix}{self.id}"
