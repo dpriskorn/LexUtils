@@ -1,6 +1,7 @@
+from __future__ import annotations
 import logging
 from html import unescape
-from typing import List
+from typing import List, TYPE_CHECKING
 from urllib.parse import quote
 
 import requests
@@ -14,7 +15,9 @@ from lexutils.models.record import Record
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
+
+if TYPE_CHECKING:
+    from lexutils.models.lexemes import Lexemes
 
 
 class WikisourceRecord(Record):
@@ -27,7 +30,7 @@ class WikisourceRecord(Record):
 
     def __init__(self,
                  json=None,
-                 lexemelanguage: LexemeLanguage = None):
+                 lexemes: Lexemes = None):
         try:
             self.document_title = json["title"]["value"]
         except KeyError:
@@ -37,7 +40,7 @@ class WikisourceRecord(Record):
             self.text = unescape(json["snippet"]["value"])
         except KeyError:
             raise KeyError("Could not find snippet")
-        self.language_code = lexemelanguage.language_code
+        self.language_code = lexemes.language_code
         # try:
         #     # self.date = datetime.strptime(json["datum"], "%d%m%Y")
         #     self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")

@@ -8,11 +8,11 @@ from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
+from lexutils.models.lexemes import Lexemes
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.record import Record
 from lexutils.helpers import util
 from lexutils.helpers.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
-from lexutils.models.wikidata.misc import LexemeLanguage
 
 if TYPE_CHECKING:
     from lexutils.models.wikidata.form import Form
@@ -26,7 +26,7 @@ class RiksdagenRecord(Record):
 
     def __init__(self,
                  json,
-                 lexemelanguage: LexemeLanguage = None):
+                 lexemes: Lexemes = None):
         try:
             self.id = json["id"]
         except KeyError:
@@ -40,7 +40,7 @@ class RiksdagenRecord(Record):
             self.date = datetime.strptime(json["datum"][0:10], "%Y-%m-%d")
         except KeyError:
             raise KeyError("Could not find datum")
-        self.language_code = lexemelanguage.language_code
+        self.language_code = lexemes.language_code
 
     def find_form_representation_in_the_text(self, word):
         logger = logging.getLogger(__name__)

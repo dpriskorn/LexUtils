@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 import gettext
-import json
 import logging
-import os.path
 import sys
 
 import httpx
 
-from lexutils.config import config
-
 # from time import sleep
 # import asyncio
-from lexutils.config.enums import Choices
+from lexutils.config.enums import ReturnValues
 
 _ = gettext.gettext
 
@@ -30,7 +26,7 @@ except AssertionError:
 logger = logging.getLogger(__name__)
 
 
-def yes_no_skip_question(message: str) -> Choices:
+def yes_no_skip_question(message: str) -> ReturnValues:
     # https://www.quora.com/
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
@@ -38,15 +34,15 @@ def yes_no_skip_question(message: str) -> Choices:
         answer = input(_("{} [(Y)es/(n)o/(s)kip this form]: ".format(message)))
         if len(answer) == 0 or answer[0].lower() in ('y', 'n', 's'):
             if len(answer) == 0:
-                return Choices.ACCEPT_USAGE_EXAMPLE
+                return ReturnValues.ACCEPT_USAGE_EXAMPLE
             elif answer[0].lower() == 's':
-                return Choices.SKIP_FORM
+                return ReturnValues.SKIP_FORM
             else:
                 # the == operator just returns a boolean,
                 if answer[0].lower() == 'y':
-                    return Choices.ACCEPT_USAGE_EXAMPLE
+                    return ReturnValues.ACCEPT_USAGE_EXAMPLE
                 else:
-                    return Choices.SKIP_USAGE_EXAMPLE
+                    return ReturnValues.SKIP_USAGE_EXAMPLE
 
 
 def yes_no_question(message: str):

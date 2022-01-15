@@ -1,18 +1,21 @@
+from __future__ import annotations
 import logging
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
 from lexutils.models.wikisource import WikisourceRecord
+
+if TYPE_CHECKING:
+    from lexutils.models.lexemes import Lexemes
 
 
 def get_records(
         form: Form = None,
-        lexemelanguage: LexemeLanguage = None
+        lexemes: Lexemes = None
 ) -> List[UsageExample]:
     logger = logging.getLogger(__name__)
     if form is None:
@@ -60,7 +63,7 @@ LIMIT {limit}
 def process_records(
         form: Form = None,
         records: List[WikisourceRecord] = None,
-lexemelanguage: LexemeLanguage = None
+lexemelanguage: Lexemes = None
 ) -> List[UsageExample]:
     logger = logging.getLogger(__name__)
     if records is not None:

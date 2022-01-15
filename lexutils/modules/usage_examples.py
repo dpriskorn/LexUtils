@@ -3,46 +3,40 @@ import gettext
 import logging
 # import random
 from time import sleep
-from typing import Union, List, Optional
+from typing import Union, Optional
 
 from rich import print
 
 from lexutils.config import config
-from lexutils.config.enums import Choices, Result
+from lexutils.config.enums import ReturnValues, SupportedFormPickles
 from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
+from lexutils.helpers.handle_pickles import add_to_pickle
 from lexutils.helpers.tui import choose_sense_menu, print_separator, select_language_menu
-from lexutils.helpers.util import yes_no_question
+from lexutils.models.lexemes import Lexemes
 from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
-# from lexutils.modules import download_data
 # from lexutils.modules import europarl
-# from lexutils.modules import json_cache
 # from lexutils.modules import ksamsok
 from lexutils.models.wikidata.entities import Lexeme
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
 from lexutils.models.wikidata.sense import Sense
-from lexutils.modules import historical_job_ads
-from lexutils.modules import riksdagen
-from lexutils.modules import wikisource
 
 _ = gettext.gettext
 
 
-# Data flow
+# Program flow
 # 
 # entrypoint: start()
-# this fetches lexemes to work on and loop through them in order
-# for each one it calls process_result()
-# this calls get_sentences_from_apis()
-# this goes through the implemented api's and fetch data from them and return
-# usage examples
+# show introduction
+# let the user choose a language
+# instantiate the Lexemes class and fetch examples for all forms while
+# ignoring those we already declined or uploaded examples to earlier
 # then we loop through each usage example and ask the user if it is suitable by
 # calling tui.present_sentence()
-# if the user approves it we call add_usage_example() and add it to WD and the
-# lexeme to the users watchlist.
+# if the user approves it we call add_usage_example() and add it to WD
+# save the results to pickles to avoid working on the same form twice
 
 
 def introduction():
@@ -69,14 +63,25 @@ def start():
     begin = True
     if begin:
         choosen_language: WikimediaLanguageCode = select_language_menu()
-        # TODO store lexuse_introduction_read=1 to settings.json
+        # TODO store lexuse_introduction_read=True to e.g. settings.pkl
         with console.status(f"Fetching lexeme forms to work on for {choosen_language.name.title()}"):
-            lexemelanguage = LexemeLanguage(language_code=choosen_language.value)
-            lexemelanguage.fetch_forms_missing_an_example()
-        process_forms(lexemelanguage)
+            lexemes = Lexemes(language_code=choosen_language.value)
+            lexemes.fetch_forms_missing_an_example()
+            lexemes.fetch_usage_examples()
+        if len(lexemes.forms_with_usage_examples_found) > 0:
+            for form in lexemes.forms_with_usage_examples_found:
+                result = process_usage_examples(form=form)
+                # Save the results to persistent memory
+                if result == ReturnValues.SKIP_FORM:
+                    add_to_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
+                                  form_id=form.id)
+                    continue
+                if result == ReturnValues.USAGE_EXAMPLE_ADDED:
+                    add_to_pickle(pickle=SupportedFormPickles.FINISHED_FORMS,
+                                  form_id=form.id)
 
 
-def prompt_single_sense(form: Form = None) -> Union[Choices, Sense]:
+def prompt_single_sense(form: Form = None) -> Union[ReturnValues, Sense]:
     if form is None:
         raise ValueError("form was None")
     if config.show_sense_urls:
@@ -93,10 +98,10 @@ def prompt_single_sense(form: Form = None) -> Union[Choices, Sense]:
     else:
         tui.cancel_sentence(form.representation)
         sleep(config.sleep_time)
-        return Choices.SKIP_USAGE_EXAMPLE
+        return ReturnValues.SKIP_USAGE_EXAMPLE
 
 
-def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
+def prompt_multiple_senses(form: Form = None) -> Union[ReturnValues, Sense]:
     """Prompt and enable user to choose between multiple senses"""
     if form is None:
         raise ValueError("form was None")
@@ -111,71 +116,13 @@ def prompt_multiple_senses(form: Form = None) -> Union[Choices, Sense]:
         return sense
     else:
         # should this be propagated from prompt_choose_sense() instead?
-        return Choices.SKIP_USAGE_EXAMPLE
-
-
-def get_usage_examples_from_apis(
-        form: Form = None,
-        lexemelanguage: LexemeLanguage = None
-) -> List[UsageExample]:
-    """Find examples and return them as Example objects"""
-    logger = logging.getLogger(__name__)
-    examples = []
-    # Europarl corpus
-    # Download first if not on disk
-    # TODO convert to UsageExample
-    # download_data.fetch()
-    # europarl_records = europarl.get_records(form)
-    # for record in europarl_records:
-    #     records[record] = europarl_records[record]
-    # logger.debug(f"records in total:{len(records)}")
-    # ksamsok
-    # Disabled because it yields very little of value
-    # unfortunately because the data is such low quality overall
-    # ksamsok_records = ksamsok.get_records(form)
-    # for record in ksamsok_records:
-    #     records[record] = ksamsok_records[record]
-    # logger.debug(f"records in total:{len(records)}")
-    if lexemelanguage.language_code == WikimediaLanguageCode.SWEDISH:
-        historical_job_ads_examples: Optional[List[UsageExample]] = \
-            historical_job_ads.find_form_representation_in_the_dataframe(
-                dataframe=lexemelanguage.historical_ads_dataframe,
-                form=form
-            )
-        if historical_job_ads_examples:
-            examples.extend(historical_job_ads_examples)
-        # print("debug exit")
-        # exit()
-        # Riksdagen API is slow, only use it if we don't have a lot of sentences already
-        if len(examples) < 25:
-            riksdagen_examples: List[UsageExample] = riksdagen.get_records(
-                form=form,
-                lexemelanguage=lexemelanguage
-            )
-            examples.extend(riksdagen_examples)
-    # Wikisource
-    if len(examples) < 50:
-        # If we already got 50 examples from a better source,
-        # then don't fetch from Wikisource
-        with console.status(
-                f"Fetching usage examples from the {lexemelanguage.language_code.name.title()} Wikisource..."):
-            examples.extend(wikisource.get_records(
-                form=form,
-                lexemelanguage=lexemelanguage
-            ))
-    # Check for nested list
-    for example in examples:
-        if not isinstance(example, UsageExample):
-            raise ValueError("Nested list error")
-    if len(examples) > 0:
-        logger.debug(f"examples found:{[example.text for example in examples]}")
-    return examples
+        return ReturnValues.SKIP_USAGE_EXAMPLE
 
 
 def choose_sense_handler(
         form: Form = None,
         usage_example: UsageExample = None
-) -> Union[Choices, Result]:
+) -> Union[ReturnValues, ReturnValues]:
     """Helper to choose a suitable sense for
     the example in question"""
     if form is None:
@@ -196,7 +143,7 @@ def choose_sense_handler(
         sense_choice = prompt_multiple_senses(
             form=form
         )
-    # sense_choice: Union[Sense, Choices] = sense_approval_handler(
+    # sense_choice: Union[Sense, ReturnValues] = sense_approval_handler(
     #     usage_example=usage_example,
     #     senses=senses,
     #     form=form
@@ -221,7 +168,7 @@ def choose_sense_handler(
             # logger.info("debug exit")
             # exit(0)
             # json_cache.save_to_exclude_list(usage_example)
-            return Result.USAGE_EXAMPLE_ADDED
+            return ReturnValues.USAGE_EXAMPLE_ADDED
         else:
             # No result from WBI, what does that mean?
             raise Exception("Error. WBI returned None.")
@@ -240,17 +187,17 @@ def handle_usage_example(
         raise ValueError("usage_example was None")
     if form is None:
         raise ValueError("form was None")
-    result: Choices = util.yes_no_skip_question(
+    result: ReturnValues = util.yes_no_skip_question(
         tui.found_sentence(
             form=form,
             usage_example=usage_example
         )
     )
-    if result is Choices.ACCEPT_USAGE_EXAMPLE:
+    if result is ReturnValues.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
         senses = form.fetch_senses(usage_example=usage_example)
         if len(form.senses) == 0:
-            return Choices.SKIP_USAGE_EXAMPLE
+            return ReturnValues.SKIP_USAGE_EXAMPLE
         else:
             for sense in form.senses:
                 logging.info(sense)
@@ -266,117 +213,63 @@ def handle_usage_example(
 
 
 def process_usage_examples(
-        examples: List[UsageExample] = None,
         form: Form = None,
-) -> Optional[Choices]:
+) -> Optional[ReturnValues]:
     """Go through each usage example and present it"""
     if form is None:
         raise ValueError("form was None")
+    if form.usage_examples is None or len(form.usage_examples) == 0:
+        raise ValueError("form had no usage examples")
     logger = logging.getLogger(__name__)
-    if examples is not None:
-        # Sort so that the shortest sentence is first
-        # raise NotImplementedError("presenting the examples is not implemented yet")
-        # TODO How to do this with objects?
-        # sorted_sentences = sorted(
-        #     examples, key=len,
-        # )
-        count = 1
-        # Sort the usage examples by word count
-        # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
-        examples.sort(key=lambda x: x.word_count, reverse=False)
-        # Loop through usage examples
-        for example in examples:
-            tui.present_sentence(
-                count=count,
-                example=example,
-                examples=examples
-            )
-            result = handle_usage_example(
-                form=form,
-                usage_example=example
-            )
-            logger.info(f"process_result: result: {result}")
-            count += 1
-            if result == Choices.SKIP_USAGE_EXAMPLE:
-                continue
-            elif result == Choices.SKIP_FORM or result == Result.USAGE_EXAMPLE_ADDED:
-                print_separator()
-                return result
-    else:
-        raise ValueError("examples was None")
-
-
-def process_result(
-        form: Form = None,
-        lexemelanguage: LexemeLanguage = None
-) -> Optional[Choices]:
-    """This handles confirmation working on a form and gets usage examples
-    It has only side-effects"""
-
-    def fetch_usage_examples():
-        # Fetch sentence data from all APIs
-        examples: List[UsageExample] = get_usage_examples_from_apis(
+    # Sort so that the shortest sentence is first
+    count = 1
+    # Sort the usage examples by word count
+    # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
+    form.usage_examples.sort(key=lambda x: x.word_count, reverse=False)
+    # Loop through usage examples
+    for example in form.usage_examples:
+        tui.present_sentence(
+            count=count,
+            example=example,
             form=form,
-            lexemelanguage=lexemelanguage
         )
-        number_of_examples = len(examples)
-        tui.number_of_found_sentences(number_of_examples, form=form)
-        if number_of_examples == 0:
+        result = handle_usage_example(
+            form=form,
+            usage_example=example
+        )
+        logger.info(f"process_result: result: {result}")
+        count += 1
+        if result == ReturnValues.SKIP_USAGE_EXAMPLE:
+            continue
+        elif result == ReturnValues.SKIP_FORM or result == ReturnValues.USAGE_EXAMPLE_ADDED:
             print_separator()
-        elif number_of_examples > 0:
-            return process_usage_examples(
-                examples=examples,
-                form=form
-            )
-        else:
-            print_separator()
+            return result
 
-    logger = logging.getLogger(__name__)
-    # ask to continue
-    if config.require_form_confirmation:
-        if yes_no_question(tui.work_on(form=form)):
-            return fetch_usage_examples()
-        else:
-            return Choices.SKIP_FORM
-    else:
-        return fetch_usage_examples()
-
-
-def process_forms(lexemelanguage: LexemeLanguage = None):
-    """Process forms into the Form model"""
-    logger = logging.getLogger(__name__)
-    logger.info("Processing forms")
-    # from http://stackoverflow.com/questions/306400/ddg#306417
-    # We do this now because we only want to do it once
-    # and keep it in memory during the looping through all the forms
-    if lexemelanguage.language_code.SWEDISH:
-        lexemelanguage.historical_ads_dataframe = historical_job_ads.download_and_load_into_memory()
-    earlier_choices = []
-    run = True
-    while (run):
-        if len(earlier_choices) == config.number_of_forms_to_fetch:
-            # We have gone checked all results now
-            # TODO offer to fetch more
-            print("No more results. "
-                  "Run the script again to continue")
-            run = False
-        else:
-            # if util.in_exclude_list(data):
-            #     # Skip if found in the exclude_list
-            #     logging.debug(
-            #         f"Skipping result {word} found in exclude_list",
-            #     )
-            #     continue
-            # else:
-            # not in exclude_list
-            for form in lexemelanguage.forms_without_an_example:
-                logging.info(f"processing:{form.representation}")
-                if form.lexeme_id is None:
-                    raise ValueError("lexeme_id on form was None")
-                result = process_result(
-                    form=form,
-                    lexemelanguage=lexemelanguage
-                )
-                earlier_choices.append(form)
-                if result == Choices.SKIP_FORM:
-                    continue
+# def process_result(
+#         form: Form = None,
+#         lexemelanguage: Lexemes = None
+# ) -> Optional[ReturnValues]:
+#     """This handles confirmation working on a form and gets usage examples
+#     It has only side-effects"""
+# 
+#     def fetch_usage_examples():
+#         tui.number_of_found_sentences(number_of_examples, form=form)
+#         if number_of_examples == 0:
+#             print_separator()
+#         elif number_of_examples > 0:
+#             return process_usage_examples(
+#                 examples=examples,
+#                 form=form
+#             )
+#         else:
+#             print_separator()
+# 
+#     logger = logging.getLogger(__name__)
+#     # ask to continue
+#     if config.require_form_confirmation:
+#         if yes_no_question(tui.work_on(form=form)):
+#             return fetch_usage_examples()
+#         else:
+#             return ReturnValues.SKIP_FORM
+#     else:
+#         return fetch_usage_examples()

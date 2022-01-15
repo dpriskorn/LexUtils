@@ -1,4 +1,4 @@
-from lexutils.models.wikidata.misc import LexemeStatistics
+from lexutils.models.lexeme_staitstics import LexemeStatistics
 
 
 def main():

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 import asyncio
 import gettext
 import logging
-# import re
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import httpx
 from httpx import ReadTimeout
 
 from lexutils.config import config
-from lexutils.models.riksdagen import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 from lexutils.helpers import tui
 from lexutils.models.wikidata.form import Form
-from lexutils.models.wikidata.misc import LexemeLanguage
+
+if TYPE_CHECKING:
+    from lexutils.models.lexemes import Lexemes
+    from lexutils.models.riksdagen import RiksdagenRecord
 
 _ = gettext.gettext
 
@@ -72,11 +74,11 @@ async def async_fetch(word):
 
 def process_async_responses(
         word: str = None,
-        lexemelanguage: LexemeLanguage = None
+        lexemes: Lexemes = None
 ) -> List[RiksdagenRecord]:
     logger = logging.getLogger(__name__)
-    if lexemelanguage is None:
-        raise ValueError("lexemelanguage was None")
+    if lexemes is None:
+        raise ValueError("lexemes was None")
     if word is None:
         raise ValueError("word was None")
     tui.downloading_from(api_name)
@@ -90,7 +92,7 @@ def process_async_responses(
                 for entry in data["dokumentlista"]["dokument"]:
                     records.append(RiksdagenRecord(
                         entry,
-                        lexemelanguage=lexemelanguage
+                        lexemes=lexemes
                     ))
     length = len(records)
     logger.info(f"Got {length} records")
@@ -127,15 +129,15 @@ def filter_matching_records(
 
 def get_records(
         form: Form = None,
-        lexemelanguage: LexemeLanguage = None
+        lexemes: Lexemes = None
 ) -> List[UsageExample]:
     # logger = logging.getLogger(__name__)
     if form is None:
         raise ValueError("form was None")
-    if lexemelanguage is None:
-        raise ValueError("lexemelanguage was None")
+    if lexemes is None:
+        raise ValueError("lexemes was None")
     records: List[RiksdagenRecord] = process_async_responses(form.representation,
-                                                             lexemelanguage=lexemelanguage)
+                                                             lexemes=lexemes)
     return process_records(records, form)
 
 
