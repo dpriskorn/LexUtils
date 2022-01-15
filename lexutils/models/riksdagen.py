@@ -167,7 +167,7 @@ class RiksdagenRecord(Record):
                 # Find sentences with a match
                 ####################################################
                 # Add spaces to match better
-                if f" {form.representation} " in sentence and exclude_this_sentence is False:
+                if f" sentence ".find(f" {form.representation} ") != -1 and exclude_this_sentence is False:
                     # restore the abbreviations
                     # TODO does this do anything?
                     for key in substitutions:
