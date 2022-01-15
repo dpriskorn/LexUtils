@@ -66,7 +66,7 @@ def start():
         # TODO store lexuse_introduction_read=True to e.g. settings.pkl
         with console.status(f"Fetching lexeme forms to work on for {choosen_language.name.title()}"):
             lexemes = Lexemes(language_code=choosen_language.value)
-            lexemes.fetch_forms_missing_an_example()
+            lexemes.fetch_forms_without_an_example()
             lexemes.fetch_usage_examples()
         if len(lexemes.forms_with_usage_examples_found) > 0:
             for form in lexemes.forms_with_usage_examples_found:
@@ -79,6 +79,7 @@ def start():
                 if result == ReturnValues.USAGE_EXAMPLE_ADDED:
                     add_to_pickle(pickle=SupportedFormPickles.FINISHED_FORMS,
                                   form_id=form.id)
+            tui.run_again()
 
 
 def prompt_single_sense(form: Form = None) -> Union[ReturnValues, Sense]:

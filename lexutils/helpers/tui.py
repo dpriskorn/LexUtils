@@ -177,5 +177,9 @@ def present_sentence(
 
 
 def run_again():
-    return ("No more results. "
-            "Run the script again to continue")
+    console.print("No more results. "
+                  "Run the script again to continue")
+
+
+def issue_url():
+    return "https://github.com/dpriskorn/LexUtils/issues"

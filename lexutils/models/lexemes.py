@@ -7,7 +7,7 @@ from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedFormPickles
-from lexutils.helpers import wdqs
+from lexutils.helpers import wdqs, tui
 from lexutils.helpers.console import console
 from lexutils.helpers.handle_pickles import read_from_pickle
 from lexutils.models.usage_example import UsageExample
@@ -79,8 +79,14 @@ class Lexemes:
                 self.forms_without_an_example.append(form)
         except KeyError:
             logger.error("Got no results")
-        logger.info(f"Got {len(self.forms_without_an_example)} "
-                    f"forms from WDQS for language {self.language_code.name}")
+        if len(self.forms_without_an_example) == 0:
+            console.print("Got no forms from Wikidata to work on for this language "
+                          "if you think this is a bug, please open an issue here "
+                          f"{tui.issue_url()}")
+            exit()
+        else:
+            logger.info(f"Got {len(self.forms_without_an_example)} "
+                        f"forms from WDQS for language {self.language_code.name.title()}")
 
     # def fetch_lexemes(self):
     #     # TODO port to use the Lexeme class instead of heavy dataframes which we don't need
@@ -280,9 +286,9 @@ class Lexemes:
         self.forms_with_usage_examples_found = []
         for form in self.forms_without_an_example:
             finished = read_from_pickle(pickle=SupportedFormPickles.FINISHED_FORMS,
-                             form_id=form.id)
+                                        form_id=form.id)
             declined = read_from_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
-                             form_id=form.id)
+                                        form_id=form.id)
             if not finished and not declined:
                 logging.info(f"processing:{form.representation}")
                 if form.lexeme_id is None:
