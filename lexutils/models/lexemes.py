@@ -307,15 +307,15 @@ class Lexemes:
             declined = read_from_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
                                         form_id=form.id)
             if not finished and not declined:
-                console.status(f"Processing form {count}/{number_of_forms}")
-                if form.lexeme_id is None:
-                    raise ValueError("lexeme_id on form was None")
-                # fetch usage examples
-                # Fetch sentence data from all APIs
-                form.usage_examples: List[UsageExample] = self.__get_usage_examples_from_apis__(
-                    form=form,
-                )
-                form.number_of_examples_found = len(form.usage_examples)
-                if form.number_of_examples_found > 0:
-                    self.forms_with_usage_examples_found.append(form)
+                with console.status(f"Processing form {count}/{number_of_forms}"):
+                    if form.lexeme_id is None:
+                        raise ValueError("lexeme_id on form was None")
+                    # fetch usage examples
+                    # Fetch sentence data from all APIs
+                    form.usage_examples: List[UsageExample] = self.__get_usage_examples_from_apis__(
+                        form=form,
+                    )
+                    form.number_of_examples_found = len(form.usage_examples)
+                    if form.number_of_examples_found > 0:
+                        self.forms_with_usage_examples_found.append(form)
             count += 1
