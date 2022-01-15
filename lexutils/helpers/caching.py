@@ -22,12 +22,12 @@ def read_from_cache(
     if exists("cache.pkl"):
         df = pd.read_pickle("cache.pkl")
         # This tests whether any row matches
-        match = (df['form_id'] == qid).any()
+        match = (df['qid'] == qid).any()
         logger.debug(f"match:{match}")
         if match:
             # Here we find the row that matches and extract the
             # result column and extract the value using any()
-            result = df.loc[df["form_id"] == qid, "label"][0]
+            result = df.loc[df["qid"] == qid, "label"][0]
             logger.debug(f"result:{result}")
             if result is not None:
                 return result
@@ -44,7 +44,7 @@ def add_to_cache(
     if exists("cache.pkl"):
         df = pd.read_pickle("cache.pkl")
         # This tests whether any row matches
-        match = (df['form_id'] == qid).any()
+        match = (df['qid'] == qid).any()
         logger.debug(f"match:{match}")
         if not match:
             # We only give save the value once for now
