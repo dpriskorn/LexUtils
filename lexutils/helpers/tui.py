@@ -26,9 +26,11 @@ _ = gettext.gettext
 # Functions in here only have side-effects and use .format
 # because gettext does not work with f-strings
 
+logger = logging.getLogger(__name__)
+
 
 def downloading_from(api_name):
-    print(_("Downloading from {}...".format(api_name)))
+    logger.info(_("Downloading from {}...".format(api_name)))
 
 
 def europarl_download():
