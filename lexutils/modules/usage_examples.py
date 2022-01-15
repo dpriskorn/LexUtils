@@ -2,6 +2,7 @@
 import gettext
 import logging
 # import random
+import time
 from time import sleep
 from typing import Union, Optional
 
@@ -67,7 +68,17 @@ def start():
         with console.status(f"Fetching lexeme forms to work on for {choosen_language.name.title()}"):
             lexemes = Lexemes(language_code=choosen_language.value)
             lexemes.fetch_forms_without_an_example()
-            lexemes.fetch_usage_examples()
+        console.print(f"Fetching usage examples to work on")
+        start = time.time()
+        lexemes.fetch_usage_examples()
+        end = time.time()
+        total_number_of_examples = sum(
+            [form.number_of_examples_found for form in lexemes.forms_with_usage_examples_found]
+        )
+        console.print(f"Found {total_number_of_examples} "
+                      f"usage examples for a total of "
+                      f"{len(lexemes.forms_with_usage_examples_found)} "
+                      f"in {round(end - start)} seconds")
         if len(lexemes.forms_with_usage_examples_found) > 0:
             for form in lexemes.forms_with_usage_examples_found:
                 result = process_usage_examples(form=form)

@@ -8,9 +8,9 @@ from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedFormPickles
-from lexutils.helpers import wdqs, tui
+from lexutils.helpers import wdqs, tui, util
 from lexutils.helpers.console import console
-from lexutils.helpers.handle_pickles import read_from_pickle
+from lexutils.helpers.handle_pickles import read_from_pickle, add_to_pickle
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.entities import Lexeme
 from lexutils.models.wikidata.enums import WikimediaLanguageCode, WikimediaLanguageQID
@@ -276,24 +276,38 @@ class Lexemes:
         """Fetch usage examples for all forms"""
         if self.forms_without_an_example is None:
             raise ValueError("self.forms_without_an_example was None")
-        if len(self.forms_without_an_example) == 0:
+        number_of_forms = len(self.forms_without_an_example)
+        if number_of_forms == 0:
             raise ValueError("self.forms_without_an_example was empty")
         logger = logging.getLogger(__name__)
-        console.print(f"Fetching usage examples for {len(self.forms_without_an_example)} forms")
-        console.print(f"Fetching usage examples for all forms")
+        # console.print(f"Fetching usage examples for {len(self.forms_without_an_example)} forms")
+        # console.print(f"Fetching usage examples for all forms")
         # from http://stackoverflow.com/questions/306400/ddg#306417
         # We do this now because we only want to do it once
         # and keep it in memory during the looping through all the forms
         if self.language_code.SWEDISH:
             self.historical_ads_dataframe = historical_job_ads.download_and_load_into_memory()
         self.forms_with_usage_examples_found = []
-        for form in self.forms_without_an_example:
+        count = 1
+        approved_forms = []
+        if config.require_form_confirmation:
+            for form in self.forms_without_an_example:
+                if util.yes_no_question(tui.work_on(form=form)):
+                    approved_forms.append(form)
+                else:
+                    logger.info("Adding form to declined pickle")
+                    add_to_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
+                                  form_id=form.id)
+        else:
+            # Approve all forms
+            approved_forms.extend(self.forms_without_an_example)
+        for form in approved_forms:
             finished = read_from_pickle(pickle=SupportedFormPickles.FINISHED_FORMS,
                                         form_id=form.id)
             declined = read_from_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
                                         form_id=form.id)
             if not finished and not declined:
-                logging.info(f"processing:{form.representation}")
+                console.status(f"Processing form {count}/{number_of_forms}")
                 if form.lexeme_id is None:
                     raise ValueError("lexeme_id on form was None")
                 # fetch usage examples
@@ -304,3 +318,4 @@ class Lexemes:
                 form.number_of_examples_found = len(form.usage_examples)
                 if form.number_of_examples_found > 0:
                     self.forms_with_usage_examples_found.append(form)
+            count += 1
