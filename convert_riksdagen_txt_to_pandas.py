@@ -87,11 +87,17 @@ for zipfile in files:
                             # print(sentence)
                             # print("--")
                 count_file += 1
-                if count_file == 2:
+                if len(df) > 70000:
                     break
             # break
     # break
+print("before removing duplicates")
+df.info()
+print("and after")
+# TODO make sure the sentences are all unique and then save to pickle
+df.drop_duplicates(inplace=True, subset=["sentence"])
 print(df.info(), df.describe(), df.sample(10))
 df.to_pickle(pickle_filename)
+print(f"saved to {pickle_filename}")
 end = time.time()
 print(f"total duration: {round(end - start)}s")
