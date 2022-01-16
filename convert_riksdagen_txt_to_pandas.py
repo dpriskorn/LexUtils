@@ -94,7 +94,6 @@ for zipfile in files:
 print("before removing duplicates")
 df.info()
 print("and after")
-# TODO make sure the sentences are all unique and then save to pickle
 df.drop_duplicates(inplace=True, subset=["sentence"])
 print(df.info(), df.describe(), df.sample(10))
 df.to_pickle(pickle_filename)
