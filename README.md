@@ -46,11 +46,30 @@ so please be careful using it. Currently it does not support
 editgroups so if you need to 
 rollback a change you have to do it manually.
 
+### Supported data sources
+Multiple languages:
+* europarl (data source from the European Parliament) (currently disabled)
+* Wikisource
+
+Swedish:
+* Riksdagen open data via their API
+* Historical Job Ads from the Swedish Public Employment Service
+* Ksamsök (abandoned because of terrible quality leading to a ton 
+  of false positives and incomprehensible sentences)
+
 ### NLP pipelines
 UsageExamples use spaCy NLP pipelines to detect sentence boundaries. 
 The quality of this detection seems to vary between languages.
 As of this writing English and Swedish work pretty well, 
 but Danish, French and German are slow and cuts a lot of sentences.
+
+## See also
+List of other recommended tools to improve the lexemes:
+* *[Hangor](https://hangor.toolforge.org/)*: tool to add senses forms manually
+* *[MachtSinn](https://machtsinn.toolforge.org/)*: tool to match lexemes with QIDs. 
+  **Warning: This tool is neither well maintained nor updated so if be very careful when using it**.
+* *[Orthohin](https://orthohin.toolforge.org/)*: tool to add senses manually to any 
+  lexeme in a certain language
 
 ## What I learned making this tool
 * Rewriting a tool with many parts can be difficult.
