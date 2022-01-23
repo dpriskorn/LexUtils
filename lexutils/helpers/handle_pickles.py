@@ -1,6 +1,5 @@
 import logging
 from os.path import exists
-from typing import Optional
 
 import pandas as pd
 
