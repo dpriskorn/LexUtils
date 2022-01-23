@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-import warnings
 import gettext
 import logging
-from prompt_toolkit import prompt
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-#from prompt_toolkit.completion import Completer, Completion
-#import click
-#from fuzzyfinder import fuzzyfinder
+import warnings
 
 from lexutils.config import config
-from lexutils.modules import usage_examples
-#from lexutils.modules import statistics
+from lexutils.modules import usage_examples_module
+# from prompt_toolkit import prompt
+# from prompt_toolkit.history import FileHistory
+# from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+# from prompt_toolkit.completion import Completer, Completion
+# import click
+# from fuzzyfinder import fuzzyfinder
+
+# from lexutils.modules import statistics
 
 # Settings
 logging.basicConfig(level=config.loglevel)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 _ = gettext.gettext
 Commands = ['examples', 'statistics']
+
 
 # This is the script that keeps the REPL up
 
@@ -29,10 +31,10 @@ Commands = ['examples', 'statistics']
 #         for m in matches:
 #             yield Completion(m, start_position=-len(word_before_cursor))
 
-            
+
 def main():
     # logger = logging.getLogger(__name__)
-    usage_examples.start()
+    usage_examples_module.start()
     # # TODO enable choosing work language
     # print(_('This is the REPL. ' +
     #         'Type one of the names of the tools to begin: ' +
