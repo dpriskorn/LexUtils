@@ -7,7 +7,7 @@ from typing import Any, List, TYPE_CHECKING
 from spacy.lang.sv import Swedish
 
 from lexutils.config import config
-from lexutils.config.enums import LanguageStyle, ReferenceType, SupportedExampleSources
+from lexutils.config.enums import LanguageStyle, ReferenceType, SupportedExampleSources, BaseURLs
 from lexutils.models.record import Record
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class HistoricalJobAd(Record):
-    base_url = "https://data.jobtechdev.se/annonser/historiska/2021_first_6_months.zip"
+    base_url = BaseURLs.ARBETSFORMEDLINGEN_HISTORICAL_ADS.value
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.HISTORICAL_ADS

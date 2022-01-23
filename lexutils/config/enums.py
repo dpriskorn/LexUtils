@@ -1,6 +1,11 @@
 from enum import auto, Enum
 
 
+class BaseURLs(Enum):
+    RIKSDAGEN = "https://data.riksdagen.se/dokument/"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "https://data.jobtechdev.se/annonser/historiska/2021.zip"
+
+
 class SupportedPickles(Enum):
     RIKSDAGEN = "riksdagen.pkl.gz"
     ARBETSFORMEDLINGEN_HISTORICAL_ADS = "historical_ads.pkl.gz"
