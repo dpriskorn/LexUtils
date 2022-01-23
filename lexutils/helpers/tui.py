@@ -4,15 +4,15 @@ from __future__ import annotations
 import gettext
 import logging
 from typing import List, TYPE_CHECKING
-from urllib.parse import quote
 
 from consolemenu import *
 from rich import print
 
+from lexutils.config import constants
 from lexutils.helpers import util
 from lexutils.helpers.console import console
-from lexutils.models.arbetsformedlingen import HistoricalJobAd
-from lexutils.models.riksdagen import RiksdagenRecord
+from lexutils.models.historical_job_ads_record import HistoricalJobAd
+from lexutils.models.riksdagen_record import RiksdagenRecord
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ def work_on(form: Form = None):
                 form.representation, form.lexeme_category,
                 ", ".join(form.grammatical_features)
             ) +
-            f"\n{form.url()}"
+            f"\n{form.hangor_url()}"
     )
 
 
@@ -77,27 +77,21 @@ def found_sentence(form: Form = None,
               "'{}'".format(usage_example.text)))
 
 
-def fetching_senses():
-    print(_("Fetching senses..."))
-
-
-def cancel_sentence(word: str):
-    # We quote the url because it can contain äöå.
-    print(_(
+def cancel_sentence(form: Form = None):
+    if form is None:
+        raise ValueError("form was None")
+    console.print(
         "Cancelled adding sentence as it does not match the " +
-        "only sense currently present. \nLexemes are " +
-        "entirely dependent on good quality QIDs. \n" +
-        "Please add labels " +
-        "and descriptions to relevant QIDs and then use " +
-        "MachtSinn to add " +
-        "more senses to lexemes by matching on QID concepts " +
-        "with similar labels and descriptions in the lexeme " +
-        "language." +
-        "\nSearch for {} in Wikidata: ".format(word) +
-        "https://www.wikidata.org/w/index.php?" +
-        "search={}&title=Special%3ASearch&".format(quote(word)) +
-        "profile=advanced&fulltext=0&" +
-        "advancedSearch-current=%7B%7D&ns0=1"))
+        "sense(s) currently present. \n"
+        "[bold]List of recommended tools to improve the lexemes:[/bold]\n"
+        f"* [bold]Hangor[/bold]: tool to add senses to this "
+        f"form manually {form.hangor_url()}\n"
+        f"* [bold]MachtSinn[/bold]: tool to match lexemes with QIDs "
+        f"{constants.machtsinn} Warning: This tool is neither well "
+        f"maintained nor updated so if be very careful when using it.\n"
+        f"* [bold]Orthohin[/bold]: tool to add senses manually "
+        f"to any lexeme in a certain language {form.orthohin_url()}\n"
+    )
 
 
 def choose_sense_menu(senses: List[Sense] = None):
@@ -189,3 +183,9 @@ def issue_url():
 
 def present_form(form):
     console.print(form.presentation())
+
+
+# def add_more_senses_suggestion(form: Form = None):
+#     if form is None:
+#         raise ValueError("form was None")
+#     console.print(f"You can add more senses using Orthohin {form.orthohin_url()}")
