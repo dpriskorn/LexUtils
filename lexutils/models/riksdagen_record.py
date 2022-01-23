@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
 
-from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType
+from lexutils.config.enums import SupportedExampleSources, LanguageStyle, ReferenceType, BaseURLs
 from lexutils.helpers.wdqs import extract_the_first_wikibase_value_from_a_wdqs_result_set
 from lexutils.models.record import Record
 from lexutils.models.usage_example import UsageExample
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class RiksdagenRecord(Record):
     """This models a record in the Riksdagen dataset"""
     api_name = "Riksdagen API"
-    base_url = "https://data.riksdagen.se/dokument/"
+    base_url = BaseURLs.RIKSDAGEN.value
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
     source = SupportedExampleSources.RIKSDAGEN
