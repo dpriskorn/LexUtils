@@ -72,7 +72,16 @@ List of other recommended tools to improve the lexemes:
   lexeme in a certain language
 
 ## What I learned making this tool
-* Rewriting a tool with many parts can be difficult.
+* Rewriting a tool with many parts can be difficult. 
+  I used abstract base classes for the first time and 
+  the class hierarchy really helped reduce the complexity 
+  and increase readability IMO.
+    
+* I used typing everywhere and it really helps catching errors.
+* I wrote a few tests when the classes did not work as expected 
+  to verify that they were working properly. Tests are very powerful 
+  to ensure the quality remains high after changing parts of the code.
+    
 * Async fetching with httpx is fun
 * Integrating with WikibaseIntegrator is fun and it has 
 useful classes that I can reuse to avoid reinventing the wheel
