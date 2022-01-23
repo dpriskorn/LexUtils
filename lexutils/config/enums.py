@@ -1,6 +1,11 @@
 from enum import auto, Enum
 
 
+class SupportedPickles(Enum):
+    RIKSDAGEN = "riksdagen.pkl.gz"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "historical_ads.pkl.gz"
+
+
 class SupportedExampleSources(Enum):
     WIKISOURCE = "Q15156406"
     RIKSDAGEN = "Q21592569"
