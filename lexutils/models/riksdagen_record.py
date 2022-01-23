@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
     from lexutils.models.wikidata.form import Form
 
 
+@dataclass
 class RiksdagenRecord(Record):
     """This models a record in the Riksdagen dataset"""
     api_name = "Riksdagen API"
