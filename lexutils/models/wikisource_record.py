@@ -77,7 +77,7 @@ class WikisourceRecord(Record):
             logger.info(f"using the {self.language_code.name.title()} spaCy pipeline")
             try:
                 nlp = spacy.load(f'{self.language_code.value}_core_news_sm')
-            except:
+            except OSError:
                 raise ModuleNotFoundError(
                     f"Please install the spacy model for "
                     f"{self.language_code.name.title()} by running: "
@@ -108,8 +108,7 @@ class WikisourceRecord(Record):
         for sentence in sentences:
             sentence_length = len(sentence.split(" "))
             if (
-                    sentence_length > config.min_word_count and
-                    sentence_length < config.max_word_count
+                    config.min_word_count < sentence_length < config.max_word_count
             ):
                 # Clean the sentence so it looks better
                 punctations = ["„", "“", "»"]
@@ -117,7 +116,7 @@ class WikisourceRecord(Record):
                     if punctation in sentence:
                         sentence = sentence.replace(punctation, " ")
                 sentence = sentence.strip()
-                examples.append(UsageExample(sentence=sentence, record=self))
+                examples.append(UsageExample(text=sentence, record=self))
         # print("debug exit")
         # exit(0)
         return examples
@@ -170,7 +169,6 @@ class WikisourceRecord(Record):
                 # print("debug exit")
                 # exit(0)
             else:
-                non_json_result = response.text
                 raise ValueError("Got no JSON result from Wikisource")
         else:
             raise ValueError(f"Got {response.status_code} from the Wikisource API, see {url}")
@@ -182,3 +180,5 @@ class WikisourceRecord(Record):
 
     def human_readable_url(self):
         return f"{self.document_title} at {self.url()}"
+
+
