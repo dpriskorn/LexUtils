@@ -83,8 +83,7 @@ class HistoricalJobAd(Record):
         for sentence in sentences:
             sentence_length = len(sentence.split(" "))
             if (
-                    sentence_length > config.min_word_count and
-                    sentence_length < config.max_word_count
+                    config.min_word_count < sentence_length < config.max_word_count
             ):
                 examples.append(UsageExample(text=sentence, record=self))
             else:

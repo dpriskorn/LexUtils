@@ -5,9 +5,9 @@ from pandas import DataFrame
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedPickles
-from lexutils.models.historical_job_ads import HistoricalJobAd
+from lexutils.models.historical_job_ads_record import HistoricalJobAd
 from lexutils.models.usage_example import UsageExample
-from lexutils.models.usage_examples import DataframeUsageExamples
+from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
 from lexutils.models.wikidata.form import Form
 
 
