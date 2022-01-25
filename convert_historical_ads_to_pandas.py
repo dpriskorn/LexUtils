@@ -40,25 +40,25 @@ def split_into_sentences(text: str = None,
     for sentence in doc.sents:
         sentence = str(sentence).strip()
         if "\n" in sentence:
-            logger.warning("Split sentence with newline(s) from the sentenizer")
+            logger.info("Split sentence with newline(s) from the sentenizer")
             sentences_without_newlines.extend(sentence.splitlines())
         else:
             sentences_without_newlines.append(sentence)
     for sentence in sentences_without_newlines:
         if "* " in sentence:
-            logger.warning("Split sentence with stars(es) from the sentenizer")
+            logger.info("Split sentence with stars(es) from the sentenizer")
             sentences_without_newlines_or_stars.extend(sentence.split(" - "))
         else:
             sentences_without_newlines_or_stars.append(sentence)
     for sentence in sentences_without_newlines_or_stars:
         if " - " in sentence:
-            logger.warning("Split sentence with dash(es) from the sentenizer")
+            logger.info("Split sentence with dash(es) from the sentenizer")
             sentences_without_newlines_or_stars_or_dashes.extend(sentence.split(" - "))
         else:
             sentences_without_newlines_or_stars_or_dashes.append(sentence)
     for sentence in sentences_without_newlines_or_stars_or_dashes:
         if "    " in sentence:
-            logger.warning("Split sentence with 3 spaces from the sentenizer")
+            logger.info("Split sentence with 3 spaces from the sentenizer")
             sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces.extend(
                 sentence.split("    "))
         else:
@@ -66,7 +66,7 @@ def split_into_sentences(text: str = None,
                 sentence)
     for sentence in sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces:
         if "• " in sentence:
-            logger.warning("Split sentence with bullet from the sentenizer")
+            logger.info("Split sentence with bullet from the sentenizer")
             sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets.extend(
                 sentence.split("• "))
         else:
@@ -81,12 +81,14 @@ def clean_swedish_sentence(sentence: str = None) -> str:
     # Strip headings
     headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
                 "ÖVRIGT", "Villkor", "Kvalifikationer",
-                "Beskrivning"]
+                "Beskrivning", "Om oss"]
     for heading in headings:
         # We only check the first word
         words_list = sentence.split(" ")
         if heading in words_list[0]:
+            logger.debug(f"found {heading} in {sentence}")
             sentence = sentence.lstrip(heading).strip()
+            logger.debug(f"stripped {heading} -> {sentence}")
     # Remove chars from the start
     chars = ["•", "-", "."]
     for char in chars:
@@ -175,7 +177,7 @@ for filename in files:
                                                                  nlp_instance=nlp)
                                 for sentence in split_sentences:
                                     sentence = clean_swedish_sentence(sentence=sentence)
-                                    logger.debug(f"nlp sentence: {sentence}")
+                                    # logger.debug(f"nlp sentence: {sentence}")
                                     # Skip all sentences with numbers
                                     # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
                                     if (
