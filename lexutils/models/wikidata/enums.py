@@ -19,6 +19,7 @@ class WikimediaLanguageCode(Enum):
     BENGALI = "bn"
     CZECH = "cs"
     SPANISH = "es"
+    FINNISH = "fi"
 
 
 class WikimediaLanguageQID(Enum):
