@@ -112,6 +112,9 @@ for filename in files:
                                     elif "* " in sentence:
                                         logger.warning("Split sentence with star(s) from the sentenizer")
                                         sentences_without_newlines.extend(sentence.split("* "))
+                                    elif " - " in sentence:
+                                        logger.warning("Split sentence with dash(es) from the sentenizer")
+                                        sentences_without_newlines.extend(sentence.split(" - "))
                                     else:
                                         sentences_without_newlines.append(sentence)
                                 for sentence in sentences_without_newlines:
@@ -135,11 +138,14 @@ for filename in files:
                                     # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
                                     if (
                                             len(sentence.split(" ")) > 4 and
+                                            # We don't want too long sentences as examples in Wikidata
+                                            #len(sentence.split(" ")) < 50 and
                                             # Remove sentences with digits and (, ), [, ], §, /
                                             len(re.findall(r'\d+|\(|\)|§|\[|\]|\/', sentence)) == 0 and
                                             sentence[0:1] != "," and
                                             not sentence[0:1].islower() and
-                                            sentence.find("http") == -1
+                                            sentence.find("http") == -1 and
+                                            sentence.find(".se") == -1
                                     ):
                                         sentences.add(sentence.strip())
                                     else:
@@ -226,7 +232,7 @@ for filename in files:
                                          f"{target_language_code.name.title()} "
                                          f"is not supported (yet)")
                     else:
-                        logger.warning(f"skipping {language_code} language ad")
+                        logger.info(f"skipping {language_code} language ad")
                         continue
                 else:
                     logger.warning("skipping ad with no text")
