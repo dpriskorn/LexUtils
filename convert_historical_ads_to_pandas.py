@@ -107,8 +107,11 @@ for filename in files:
                                 for sentence in doc.sents:
                                     sentence = str(sentence).strip()
                                     if "\n" in sentence:
-                                        logger.warning("Got sentence with newline(s) from the sentenizer")
+                                        logger.warning("Split sentence with newline(s) from the sentenizer")
                                         sentences_without_newlines.extend(sentence.splitlines())
+                                    elif "* " in sentence:
+                                        logger.warning("Split sentence with star(s) from the sentenizer")
+                                        sentences_without_newlines.extend(sentence.split("* "))
                                     else:
                                         sentences_without_newlines.append(sentence)
                                 for sentence in sentences_without_newlines:
