@@ -45,9 +45,9 @@ def split_into_sentences(text: str = None,
         else:
             sentences_without_newlines.append(sentence)
     for sentence in sentences_without_newlines:
-        if "* " in sentence:
+        if "*" in sentence:
             logger.info("Split sentence with stars(es) from the sentenizer")
-            sentences_without_newlines_or_stars.extend(sentence.split(" - "))
+            sentences_without_newlines_or_stars.extend(sentence.split("*"))
         else:
             sentences_without_newlines_or_stars.append(sentence)
     for sentence in sentences_without_newlines_or_stars:
@@ -65,10 +65,10 @@ def split_into_sentences(text: str = None,
             sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces.append(
                 sentence)
     for sentence in sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces:
-        if "• " in sentence:
+        if "•" in sentence:
             logger.info("Split sentence with bullet from the sentenizer")
             sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets.extend(
-                sentence.split("• "))
+                sentence.split("•"))
         else:
             sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets.append(
                 sentence)
@@ -81,19 +81,21 @@ def clean_swedish_sentence(sentence: str = None) -> str:
     # Strip headings
     headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
                 "ÖVRIGT", "Villkor", "Kvalifikationer",
-                "Beskrivning", "Om oss"]
+                "Beskrivning", "Om oss", "Arbetsmiljö",
+                "Vi erbjuder:", ]
     for heading in headings:
-        # We only check the first word
-        words_list = sentence.split(" ")
-        if heading in words_list[0]:
-            logger.debug(f"found {heading} in {sentence}")
+        # Position 0 is the start of the sentence
+        if sentence.find(heading) == 0:
+            logger.debug(f"found {heading} in '{sentence}'")
             sentence = sentence.lstrip(heading).strip()
             logger.debug(f"stripped {heading} -> {sentence}")
     # Remove chars from the start
-    chars = ["•", "-", "."]
+    chars = ["•", "-", ".", "*", "+", "–", "_", "'", ":"]
     for char in chars:
         if sentence[0:1] == char:
+            logger.debug(f"found {char} in start of '{sentence}'")
             sentence = sentence.lstrip(char).strip()
+            logger.debug(f"stripped {char} -> {sentence}")
     return sentence.replace("  ", " ").strip()
 
 
@@ -183,7 +185,7 @@ for filename in files:
                                     if (
                                             len(sentence.split(" ")) > 4 and
                                             # We don't want too long sentences as examples in Wikidata
-                                            # len(sentence.split(" ")) < 50 and
+                                            len(sentence.split(" ")) < 50 and
                                             # Remove sentences with digits and (, ), [, ], §, /
                                             len(re.findall(r'\d+|\(|\)|§|\[|\]|\/', sentence)) == 0 and
                                             sentence[0:1] != "," and
