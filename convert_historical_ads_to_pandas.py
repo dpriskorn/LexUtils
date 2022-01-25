@@ -50,8 +50,7 @@ for filename in files:
                 external_id = data["external_id"]
             else:
                 external_id = None
-
-            date = datetime.strptime(data["publication_date"], "%Y-%m-%dT%H:%M:%S")
+            date = datetime.strptime(data["publication_date"][0:18], "%Y-%m-%dT%H:%M:%S", )
             description = data["description"]
             if "text" in description:
                 text = description["text"]
