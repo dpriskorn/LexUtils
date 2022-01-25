@@ -5,6 +5,7 @@ import os
 import re
 import time
 from datetime import datetime
+from typing import Any, List, Set
 
 import langdetect
 import pandas as pd
@@ -12,7 +13,6 @@ from spacy.lang.en import English
 from spacy.lang.sv import Swedish
 
 from lexutils.config.enums import SupportedPickles
-
 # First download gzipped jsonl files from https://data.jobtechdev.se/expediering/index.html into arbetsformedlingen/
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
@@ -26,6 +26,75 @@ dir = r"arbetsformedlingen/"
 # This is the output after deduplication of sentences
 max_dataframe_rows = 10000
 
+
+def split_into_sentences(text: str = None,
+                         nlp_instance: Any = None) -> Set[str]:
+    if text is None or nlp_instance is None:
+        raise ValueError("we did not get what we need")
+    doc = nlp_instance(text)
+    sentences_without_newlines = []
+    sentences_without_newlines_or_stars = []
+    sentences_without_newlines_or_stars_or_dashes = []
+    sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces = []
+    sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets = []
+    for sentence in doc.sents:
+        sentence = str(sentence).strip()
+        if "\n" in sentence:
+            logger.warning("Split sentence with newline(s) from the sentenizer")
+            sentences_without_newlines.extend(sentence.splitlines())
+        else:
+            sentences_without_newlines.append(sentence)
+    for sentence in sentences_without_newlines:
+        if "* " in sentence:
+            logger.warning("Split sentence with stars(es) from the sentenizer")
+            sentences_without_newlines_or_stars.extend(sentence.split(" - "))
+        else:
+            sentences_without_newlines_or_stars.append(sentence)
+    for sentence in sentences_without_newlines_or_stars:
+        if " - " in sentence:
+            logger.warning("Split sentence with dash(es) from the sentenizer")
+            sentences_without_newlines_or_stars_or_dashes.extend(sentence.split(" - "))
+        else:
+            sentences_without_newlines_or_stars_or_dashes.append(sentence)
+    for sentence in sentences_without_newlines_or_stars_or_dashes:
+        if "    " in sentence:
+            logger.warning("Split sentence with 3 spaces from the sentenizer")
+            sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces.extend(
+                sentence.split("    "))
+        else:
+            sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces.append(
+                sentence)
+    for sentence in sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces:
+        if "• " in sentence:
+            logger.warning("Split sentence with bullet from the sentenizer")
+            sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets.extend(
+                sentence.split("• "))
+        else:
+            sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets.append(
+                sentence)
+    return set(sentences_without_newlines_or_stars_or_dashes_or_multiple_spaces_or_bullets)
+
+
+def clean_swedish_sentence(sentence: str = None) -> str:
+    if sentence is None:
+        raise ValueError("we did not get what we need")
+    # Strip headings
+    headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
+                "ÖVRIGT", "Villkor", "Kvalifikationer",
+                "Beskrivning"]
+    for heading in headings:
+        # We only check the first word
+        words_list = sentence.split(" ")
+        if heading in words_list[0]:
+            sentence = sentence.lstrip(heading).strip()
+    # Remove chars from the start
+    chars = ["•", "-", "."]
+    for char in chars:
+        if sentence[0:1] == char:
+            sentence = sentence.lstrip(char).strip()
+    return sentence.replace("  ", " ").strip()
+
+
 files = os.listdir(dir)
 start = time.time()
 df = pd.DataFrame()
@@ -34,7 +103,7 @@ split_count = 0
 count_file = 1
 for filename in files:
     # we open the gzip as a stream to avoid having to decompress it on disk and taking up a lot of space
-    path = dir+filename
+    path = dir + filename
     with gzip.open(path, 'r') as file:
         logger.info(f"working on {filename}")
         current_line_number = 1
@@ -62,8 +131,8 @@ for filename in files:
                       f"{len(df)}/{max_dataframe_rows} splits: {split_count}")
             data = json.loads(line)
             id = data["id"]
-            #pprint(data)
-            #exit()
+            # pprint(data)
+            # exit()
             if "external_id" in data:
                 external_id = data["external_id"]
             else:
@@ -99,47 +168,20 @@ for filename in files:
                                 logger.info("the text was not over 95000 chars")
                                 text_after_split = [text]
                             # logger.debug(f"text:{text}")
-                            #exit(0)
+                            # exit(0)
                             sentences = set()
                             for text in text_after_split:
-                                doc = nlp(text)
-                                sentences_without_newlines = []
-                                for sentence in doc.sents:
-                                    sentence = str(sentence).strip()
-                                    if "\n" in sentence:
-                                        logger.warning("Split sentence with newline(s) from the sentenizer")
-                                        sentences_without_newlines.extend(sentence.splitlines())
-                                    elif "* " in sentence:
-                                        logger.warning("Split sentence with star(s) from the sentenizer")
-                                        sentences_without_newlines.extend(sentence.split("* "))
-                                    elif " - " in sentence:
-                                        logger.warning("Split sentence with dash(es) from the sentenizer")
-                                        sentences_without_newlines.extend(sentence.split(" - "))
-                                    else:
-                                        sentences_without_newlines.append(sentence)
-                                for sentence in sentences_without_newlines:
-                                    # Strip headings
-                                    headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
-                                                "ÖVRIGT", "Villkor", "Kvalifikationer",
-                                                "Beskrivning"]
-                                    for heading in headings:
-                                        # We only check the first word
-                                        words_list = sentence.split(" ")
-                                        if heading in words_list[0]:
-                                            sentence = sentence.lstrip(heading).strip()
-                                    # Remove chars from the start
-                                    chars = ["•", "-", "."]
-                                    for char in chars:
-                                        if sentence[0:1] == char:
-                                            sentence = sentence.lstrip(char).strip()
-                                    sentence = sentence.replace("  ", " ").strip()
+                                split_sentences = split_into_sentences(text=text,
+                                                                 nlp_instance=nlp)
+                                for sentence in split_sentences:
+                                    sentence = clean_swedish_sentence(sentence=sentence)
                                     logger.debug(f"nlp sentence: {sentence}")
                                     # Skip all sentences with numbers
                                     # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
                                     if (
                                             len(sentence.split(" ")) > 4 and
                                             # We don't want too long sentences as examples in Wikidata
-                                            #len(sentence.split(" ")) < 50 and
+                                            # len(sentence.split(" ")) < 50 and
                                             # Remove sentences with digits and (, ), [, ], §, /
                                             len(re.findall(r'\d+|\(|\)|§|\[|\]|\/', sentence)) == 0 and
                                             sentence[0:1] != "," and
@@ -150,7 +192,7 @@ for filename in files:
                                         sentences.add(sentence.strip())
                                     else:
                                         skipped_count += 1
-                                        #logger.debug(f"skipped: {sentence}")
+                                        # logger.debug(f"skipped: {sentence}")
                             logger.info(f"found {len(sentences)} in this ad")
                             for sentence in sentences:
                                 # print(type(sentence))
