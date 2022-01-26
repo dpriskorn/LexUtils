@@ -91,7 +91,7 @@ def clean_swedish_sentence(sentence: str = None) -> str:
             sentence = sentence.lstrip(heading).strip()
             logger.debug(f"stripped {heading} -> {sentence}")
     # Remove chars from the start
-    chars = ["•", "·", "-", ".", "*", "+", "–", "_", "'", ":"]
+    chars = ["•", "·", "-", ".", "*", "+", "–", "_", "'", ":", "…"]
     for char in chars:
         if sentence[0:1] == char:
             logger.debug(f"found {char} in start of '{sentence}'")
