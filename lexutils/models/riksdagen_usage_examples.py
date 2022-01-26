@@ -11,19 +11,6 @@ from lexutils.models.wikidata.form import Form
 class RiksdagenUsageExamples(DataframeUsageExamples):
     pickle = SupportedPickles.RIKSDAGEN
 
-    def find_form_representation_in_the_dataframe(
-            self,
-            form: Form = None
-    ) -> Optional[List[UsageExample]]:
-        if self.dataframe is None:
-            raise ValueError("dataframe was None")
-        if form is None:
-            raise ValueError("form was None")
-        # logger = logging.getLogger(__name__)
-        target_column = "sentence"
-        self.matches = self.dataframe[self.dataframe[target_column].str.contains(form.representation)]
-        self.number_of_matches = len(self.matches)
-        return self.convert_matches_to_user_examples(form=form)
 
     def convert_matches_to_user_examples(
             self,
