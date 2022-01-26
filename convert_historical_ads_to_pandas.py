@@ -25,7 +25,7 @@ target_language_code = WikimediaLanguageCode.SWEDISH
 pickle_filename = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 dir = r"arbetsformedlingen/"
 # This is the output after deduplication of sentences
-max_dataframe_rows = 50000
+max_dataframe_rows = 200000
 max_words_in_sentence = 50
 
 
@@ -281,7 +281,8 @@ for filename in files:
                                     logger.info(f"found {len(sentences)} in this ad")
                                     for sentence in sentences:
                                         # print(type(sentence))
-                                        dictionary = dict(id=id, date=date, external_id=external_id, sentence=sentence)
+                                        dictionary = dict(id=id, date=date, external_id=external_id,
+                                                          filename=filename, sentence=sentence)
                                         # print(dictionary)
                                         # exit()
                                         df = df.append(pd.DataFrame(data=[dictionary]))
