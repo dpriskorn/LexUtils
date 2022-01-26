@@ -25,7 +25,7 @@ target_language_code = WikimediaLanguageCode.SWEDISH
 pickle_filename = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 dir = r"arbetsformedlingen/"
 # This is the output after deduplication of sentences
-max_dataframe_rows = 30000
+max_dataframe_rows = 50000
 max_words_in_sentence = 50
 
 
@@ -88,7 +88,7 @@ def clean_swedish_sentence(sentence: str = None) -> str:
                 "Placering:", "Lön:", "OM TJÄNSTEN",
                 "OM OSS", "ÖVRIG INFORMATION", "KONTAKT",
                 "VEM ÄR DU", "OM TJÄNSTEN", "Lön:",
-                "Start:"]
+                "Start:", "OM DIG", "OM JOBBET", "Om arbetet"]
     for heading in headings:
         # Position 0 is the start of the sentence
         if sentence.find(heading) == 0:
@@ -202,7 +202,10 @@ for filename in files:
                                                 sentence[0:1] != "," and
                                                 not sentence[0:1].islower() and
                                                 sentence.find("http") == -1 and
-                                                sentence.find(".se") == -1
+                                                sentence.find(".se") == -1 and
+                                                sentence.find(" ") == -1 and
+                                                sentence.find(":") == -1 and
+                                                sentence.find(";") == -1
                                         ):
                                             sentences.add(sentence.strip())
                                         else:
