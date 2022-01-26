@@ -5,7 +5,7 @@ import os
 import re
 import time
 from datetime import datetime
-from typing import Any, List, Set
+from typing import Any, Set
 
 import langdetect
 import pandas as pd
@@ -25,7 +25,7 @@ target_language_code = WikimediaLanguageCode.SWEDISH
 pickle_filename = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 dir = r"arbetsformedlingen/"
 # This is the output after deduplication of sentences
-max_dataframe_rows = 200000
+max_dataframe_rows = 100000
 max_words_in_sentence = 50
 
 
@@ -165,7 +165,8 @@ for filename in files:
                         if language_code == target_language_code.value:
                             # Branch off into the supported languages
                             if language_code == WikimediaLanguageCode.SWEDISH.value:
-                                logger.info(f"Found {target_language_code.name.title()} ad, splitting it up in sentences")
+                                logger.info(
+                                    f"Found {target_language_code.name.title()} ad, splitting it up in sentences")
                                 # print(text)
                                 # exit()
                                 nlp = Swedish()
@@ -187,7 +188,7 @@ for filename in files:
                                 sentences = set()
                                 for text in text_after_split:
                                     split_sentences = split_into_sentences(text=text,
-                                                                     nlp_instance=nlp)
+                                                                           nlp_instance=nlp)
                                     for sentence in split_sentences:
                                         sentence = clean_swedish_sentence(sentence=sentence)
                                         # logger.debug(f"nlp sentence: {sentence}")
@@ -214,80 +215,82 @@ for filename in files:
                                 logger.info(f"found {len(sentences)} in this ad")
                                 for sentence in sentences:
                                     # print(type(sentence))
-                                    dictionary = dict(id=id, date=date, external_id=external_id, sentence=sentence)
+                                    dictionary = dict(id=id, date=date, external_id=external_id,
+                                                      filename=filename, sentence=sentence)
                                     # print(dictionary)
                                     # exit()
                                     df = df.append(pd.DataFrame(data=[dictionary]))
                                     # print(sentence)
                                     # print("--")
-                            elif language_code == WikimediaLanguageCode.ENGLISH.value:
-                                logger.info(f"Found {target_language_code.name.title()} ad, splitting it up in sentences")
-                                current_line_number += 1
-                                # print(text)
-                                # exit()
-                                nlp = English()
-                                nlp.add_pipe('sentencizer')
-                                # 100.000 char is the max for the NLP parser so we split along something we discard anyway
-                                # the effect of this split is unknown, it might result in 2 garbage sentences for every split
-                                text_after_split = ""
-                                if len(text) > 95000:
-                                    logger.info("splitting the text up")
-                                    text_after_split = text.split("1")
-                                    logger.debug(f"len(text_after_split):{len(text_after_split)}")
-                                    split_count += 1
-                                    exit(0)
-                                else:
-                                    logger.info("the text was not over 95000 chars")
-                                    text_after_split = [text]
-                                # logger.debug(f"text:{text}")
-                                # exit(0)
-                                sentences = set()
-                                for text in text_after_split:
-                                    doc = nlp(text)
-                                    sentences_without_newlines = []
-                                    for sentence in doc.sents:
-                                        sentence = str(sentence).strip()
-                                        # Strip headings
-                                        # headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
-                                        #             "ÖVRIGT", "Villkor", "Kvalifikationer",
-                                        #             "Beskrivning"]
-                                        # for heading in headings:
-                                        #     # We only check the first word
-                                        #     words_list = sentence.split(" ")
-                                        #     if heading in words_list[0]:
-                                        #         sentence = sentence.lstrip(heading).strip()
-                                        # Remove chars from the start
-                                        chars = ["•", "-", "."]
-                                        for char in chars:
-                                            if sentence[0:1] == char:
-                                                sentence = sentence.lstrip(char).strip()
-                                        sentence = sentence.replace("  ", " ").strip()
-                                        logger.debug(f"nlp sentence: {sentence}")
-                                        # Skip all sentences with numbers
-                                        # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
-                                        if (
-                                                len(sentence.split(" ")) > 4 and
-                                                # Remove sentences with digits and (, ), [, ], §, /
-                                                len(re.findall(r'\d+|\(|\)|§|\[|\]|\/', sentence)) == 0 and
-                                                sentence[0:1] != "," and
-                                                not sentence[0:1].islower() and
-                                                sentence.find("http") == -1
-                                        ):
-                                            sentences.add(sentence.strip())
-                                        else:
-                                            skipped_count += 1
-                                            # logger.debug(f"skipped: {sentence}")
-                                if logger.getEffectiveLevel() > 10:
-                                    logger.info(f"found {len(sentences)} in this ad")
-                                    for sentence in sentences:
-                                        # print(type(sentence))
-                                        dictionary = dict(id=id, date=date, external_id=external_id,
-                                                          filename=filename, sentence=sentence)
-                                        # print(dictionary)
-                                        # exit()
-                                        df = df.append(pd.DataFrame(data=[dictionary]))
-                                        # print(sentence)
-                                        # print("--")
+                            # elif language_code == WikimediaLanguageCode.ENGLISH.value:
+                            #     logger.info(
+                            #         f"Found {target_language_code.name.title()} ad, splitting it up in sentences")
+                            #     current_line_number += 1
+                            #     # print(text)
+                            #     # exit()
+                            #     nlp = English()
+                            #     nlp.add_pipe('sentencizer')
+                            #     # 100.000 char is the max for the NLP parser so we split along something we discard anyway
+                            #     # the effect of this split is unknown, it might result in 2 garbage sentences for every split
+                            #     text_after_split = ""
+                            #     if len(text) > 95000:
+                            #         logger.info("splitting the text up")
+                            #         text_after_split = text.split("1")
+                            #         logger.debug(f"len(text_after_split):{len(text_after_split)}")
+                            #         split_count += 1
+                            #         exit(0)
+                            #     else:
+                            #         logger.info("the text was not over 95000 chars")
+                            #         text_after_split = [text]
+                            #     # logger.debug(f"text:{text}")
+                            #     # exit(0)
+                            #     sentences = set()
+                            #     for text in text_after_split:
+                            #         doc = nlp(text)
+                            #         sentences_without_newlines = []
+                            #         for sentence in doc.sents:
+                            #             sentence = str(sentence).strip()
+                            #             # Strip headings
+                            #             # headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
+                            #             #             "ÖVRIGT", "Villkor", "Kvalifikationer",
+                            #             #             "Beskrivning"]
+                            #             # for heading in headings:
+                            #             #     # We only check the first word
+                            #             #     words_list = sentence.split(" ")
+                            #             #     if heading in words_list[0]:
+                            #             #         sentence = sentence.lstrip(heading).strip()
+                            #             # Remove chars from the start
+                            #             chars = ["•", "-", "."]
+                            #             for char in chars:
+                            #                 if sentence[0:1] == char:
+                            #                     sentence = sentence.lstrip(char).strip()
+                            #             sentence = sentence.replace("  ", " ").strip()
+                            #             logger.debug(f"nlp sentence: {sentence}")
+                            #             # Skip all sentences with numbers
+                            #             # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
+                            #             if (
+                            #                     len(sentence.split(" ")) > 4 and
+                            #                     # Remove sentences with digits and (, ), [, ], §, /
+                            #                     len(re.findall(r'\d+|\(|\)|§|\[|\]|\/', sentence)) == 0 and
+                            #                     sentence[0:1] != "," and
+                            #                     not sentence[0:1].islower() and
+                            #                     sentence.find("http") == -1
+                            #             ):
+                            #                 sentences.add(sentence.strip())
+                            #             else:
+                            #                 skipped_count += 1
+                            #                 # logger.debug(f"skipped: {sentence}")
+                            #     if logger.getEffectiveLevel() > 10:
+                            #         logger.info(f"found {len(sentences)} in this ad")
+                            #         for sentence in sentences:
+                            #             # print(type(sentence))
+                            #             dictionary = dict(id=id, date=date, external_id=external_id,
+                            #                               filename=filename, sentence=sentence)
+                            #             # print(dictionary)
+                            #             # exit()
+                            #             df = df.append(pd.DataFrame(data=[dictionary]))
+                            #             # print(sentence)
+                            #             # print("--")
                             else:
                                 logger.error(f"The chosen language "
                                              f"{target_language_code.name.title()} "
