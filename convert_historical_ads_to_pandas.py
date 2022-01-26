@@ -83,7 +83,7 @@ def clean_swedish_sentence(sentence: str = None) -> str:
     headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
                 "ÖVRIGT", "Villkor", "Kvalifikationer",
                 "Beskrivning", "Om oss", "Arbetsmiljö",
-                "Vi erbjuder:", ]
+                "Vi erbjuder:", "Övrigt", "Ansökan"]
     for heading in headings:
         # Position 0 is the start of the sentence
         if sentence.find(heading) == 0:
@@ -91,7 +91,7 @@ def clean_swedish_sentence(sentence: str = None) -> str:
             sentence = sentence.lstrip(heading).strip()
             logger.debug(f"stripped {heading} -> {sentence}")
     # Remove chars from the start
-    chars = ["•", "-", ".", "*", "+", "–", "_", "'", ":"]
+    chars = ["•", "·", "-", ".", "*", "+", "–", "_", "'", ":"]
     for char in chars:
         if sentence[0:1] == char:
             logger.debug(f"found {char} in start of '{sentence}'")
@@ -124,10 +124,6 @@ for filename in files:
             if count_file == 1 and len(df) > (max_dataframe_rows / 2):
                 print("Reached half of the wanted rows, breaking out now")
                 break
-            # logger.debug('got line', line)
-            # if current_line_number % 100 == 0:
-            #     logger.info(f"current_line_number: {current_line_number}")
-            # path = dir+filename
             # We only process every 10th line because the ads are in chronological order
             # and we want ads from the whole year, not just the start.
             if current_line_number % 10 == 0:
