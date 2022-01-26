@@ -83,7 +83,8 @@ def clean_swedish_sentence(sentence: str = None) -> str:
     headings = ["ARBETSUPPGIFTER", "KVALIFIKATIONER",
                 "ÖVRIGT", "Villkor", "Kvalifikationer",
                 "Beskrivning", "Om oss", "Arbetsmiljö",
-                "Vi erbjuder:", "Övrigt", "Ansökan"]
+                "Vi erbjuder:", "Övrigt", "Ansökan",
+                "Placering:"]
     for heading in headings:
         # Position 0 is the start of the sentence
         if sentence.find(heading) == 0:
