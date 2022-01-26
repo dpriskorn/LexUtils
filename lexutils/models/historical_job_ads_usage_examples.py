@@ -5,8 +5,6 @@ from pandas import DataFrame
 
 from lexutils.config import config
 from lexutils.config.enums import SupportedPickles
-from lexutils.models.historical_job_ads_record import HistoricalJobAd
-from lexutils.models.usage_example import UsageExample
 from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
 from lexutils.models.wikidata.form import Form
 
@@ -14,38 +12,37 @@ from lexutils.models.wikidata.form import Form
 class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
     pickle = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 
-    def find_form_representation_in_the_dataframe(
+    def convert_matches_to_user_examples(
             self,
             form: Form = None
-    ) -> Optional[List[UsageExample]]:
-        if self.dataframe is None:
-            raise ValueError("dataframe was None")
-        if form is None:
-            raise ValueError("form was None")
+    ):
         logger = logging.getLogger(__name__)
-        result: DataFrame = self.dataframe[self.dataframe["text"].str.contains(form.representation)]
-        number_of_matches = len(result)
-        if number_of_matches > 0:
-            logger.info(f"Found {number_of_matches} number of rows matching "
+        # maximum_result_size_reached = False
+        if self.number_of_matches > 0:
+            logger.info(f"Found {self.number_of_matches} number of rows matching "
                         f"{form.representation} in the {self.pickle.name.title()}")
             examples = []
             count = 1
-            if config.historical_ads_max_results_size > number_of_matches:
-                maximum_result_size_reached = False
-            else:
-                maximum_result_size_reached = True
-            for row in result.itertuples(index=False):
-                if count < config.historical_ads_max_results_size:
-                    if maximum_result_size_reached:
+            for row in self.matches.itertuples(index=False):
+                logger.info(row)
+                if count < config.riksdagen_max_results_size:
+                    if self.number_of_matches > config.riksdagen_max_results_size:
                         logger.info(f"Processing match {count}/{config.historical_ads_max_results_size} "
-                                    f"out of a total of {number_of_matches} matches")
+                                    f"out of a total of {self.number_of_matches} matches")
                     else:
-                        logger.info(f"Processing match {count}/{number_of_matches} matches")
-                    record: HistoricalJobAd = row.object
-                    examples.extend(record.find_usage_examples_from_summary(form=form))
+                        logger.info(f"Processing match {count}/{self.number_of_matches} matches")
+                    from lexutils.models.historical_job_ads_record import HistoricalJobAd
+                    record = HistoricalJobAd(id=row.id, text=row.sentence,
+                                             filename=row.filename, date=row.date)
+                    example = record.extract_usage_example_if_suitable(form=form)
+                    if example is not None:
+                        # logger.info("Looking up the QID for the document")
+                        # example.record.lookup_qid()
+                        examples.append(example)
                     count += 1
                 else:
                     break
+            logger.debug(f"returning {len(examples)} examples")
             return examples
         else:
             logger.info(f"Found no rows matching {form.representation} in the {self.pickle.name.title()}")

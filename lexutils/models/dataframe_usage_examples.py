@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -61,9 +61,23 @@ class DataframeUsageExamples(UsageExamples, ABC):
         # return pd.read_pickle("test.pkl.gz")
         self.dataframe = pd.read_pickle(self.pickle.value)
 
-    @abstractmethod
     def find_form_representation_in_the_dataframe(
             self,
             form: Form = None
-    ) -> None:
+    ) -> Optional[List[UsageExample]]:
+        if self.dataframe is None:
+            raise ValueError("dataframe was None")
+        if form is None:
+            raise ValueError("form was None")
+        # logger = logging.getLogger(__name__)
+        target_column = "sentence"
+        self.matches = self.dataframe[self.dataframe[target_column].str.contains(form.representation)]
+        self.number_of_matches = len(self.matches)
+        return self.convert_matches_to_user_examples(form=form)
+
+    @abstractmethod
+    def convert_matches_to_user_examples(
+            self,
+            form: Form = None
+    ):
         pass
