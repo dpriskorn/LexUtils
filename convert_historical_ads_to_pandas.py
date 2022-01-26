@@ -111,11 +111,12 @@ for filename in files:
     path = dir + filename
     with gzip.open(path, 'r') as file:
         logger.info(f"working on {filename}")
-        current_line_number = 1
+        current_line_number = 0
         # We use a set to avoid duplicates
         cleaned_lines = set()
         total_number_of_lines = "unknown"
         for line in file:
+            current_line_number += 1
             # We stop when max has been reached
             if len(df) > max_dataframe_rows:
                 break
@@ -127,7 +128,7 @@ for filename in files:
             # We only process every 10th line because the ads are in chronological order
             # and we want ads from the whole year, not just the start.
             if current_line_number % 10 == 0:
-                if current_line_number % 100 == 0:
+                if current_line_number % 1000 == 0:
                     # Only deduplicate every 100 lines (it is CPU expensive)
                     df.drop_duplicates(inplace=True, subset=["sentence"])
                     print(f"working on {filename} ({count_file}/{len(files)}) "
@@ -155,7 +156,6 @@ for filename in files:
                             # Branch off into the supported languages
                             if language_code == WikimediaLanguageCode.SWEDISH.value:
                                 logger.info(f"Found {target_language_code.name.title()} ad, splitting it up in sentences")
-                                current_line_number += 1
                                 # print(text)
                                 # exit()
                                 nlp = Swedish()
