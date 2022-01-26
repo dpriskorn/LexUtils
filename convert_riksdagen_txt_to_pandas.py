@@ -10,6 +10,8 @@ from spacy.lang.sv import Swedish
 
 from lexutils.config.enums import SupportedPickles
 
+# First download some zipped textfiles from data.riksdagen.se/dokument and unzip into riksdagen/
+
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 pickle_filename = SupportedPickles.RIKSDAGEN
