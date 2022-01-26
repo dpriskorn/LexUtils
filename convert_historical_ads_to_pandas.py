@@ -9,6 +9,7 @@ from typing import Any, List, Set
 
 import langdetect
 import pandas as pd
+from langdetect import LangDetectException
 from spacy.lang.en import English
 from spacy.lang.sv import Swedish
 
@@ -151,8 +152,13 @@ for filename in files:
                     if text is not None and text != "":
                         # detecting language to avoid e.g. english ads
                         logger.debug("Detecting the language")
-                        language_code = langdetect.detect(text)
-                        logger.debug(f"Detected language: {language_code}")
+                        language_code = None
+                        try:
+                            language_code = langdetect.detect(text)
+                            logger.debug(f"Detected language: {language_code}")
+                        except LangDetectException:
+                            logger.warning(f"Could not detect language for '{text}'")
+                            pass
                         if language_code == target_language_code.value:
                             # Branch off into the supported languages
                             if language_code == WikimediaLanguageCode.SWEDISH.value:
