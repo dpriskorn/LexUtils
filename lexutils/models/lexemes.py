@@ -37,7 +37,6 @@ class Lexemes:
     lexemes: List[Lexeme] = None
     lexemes_count: int = 0
     number_of_forms_without_an_example: int = 0
-    number_of_forms_without_an_example: int = 0
     number_of_senses_with_P5137: int = 0
 
     def __get_usage_examples_from_apis__(
@@ -58,6 +57,7 @@ class Lexemes:
         #     records[record] = europarl_records[record]
         # logger.debug(f"records in total:{len(records)}")
         if self.language_code == WikimediaLanguageCode.SWEDISH:
+            logger.info("Trying to find usage examples in the dataframes")
             historical_ads_examples = self.historical_ads_usage_examples.find_form_representation_in_the_dataframe(
                 form=form)
             if historical_ads_examples is not None:
@@ -78,12 +78,13 @@ class Lexemes:
         if len(examples) < 50:
             # If we already got 50 examples from a better source,
             # then don't fetch from Wikisource
-            wikisource_usage_examples = WikisourceUsageExamples(
+            wikisource = WikisourceUsageExamples(
                 form=form,
                 lexemes=self
             )
-            if wikisource_usage_examples.usage_examples is not None:
-                examples.extend(wikisource_usage_examples.usage_examples)
+            wikisource_usage_examples = wikisource.process_records_into_usage_examples()
+            if wikisource_usage_examples is not None:
+                examples.extend(wikisource_usage_examples)
         # Check for nested list
         for example in examples:
             if not isinstance(example, UsageExample):
@@ -231,6 +232,7 @@ class Lexemes:
         # We do this now because we only want to do it once
         # and keep it in memory during the looping through all the forms
         if self.language_code == WikimediaLanguageCode.SWEDISH:
+            logger.info("Loading Swedish dataframes now")
             from lexutils.models.historical_job_ads_usage_examples import HistoricalJobAdsUsageExamples
             from lexutils.models.riksdagen_usage_examples import RiksdagenUsageExamples
             self.historical_ads_usage_examples = HistoricalJobAdsUsageExamples()
@@ -243,7 +245,7 @@ class Lexemes:
                 if util.yes_no_question(tui.work_on(form=form)):
                     approved_forms.append(form)
                 else:
-                    logger.info("Adding form to declined pickle")
+                    logger.info("Adding form to declined pickle_path")
                     add_to_pickle(pickle=SupportedFormPickles.DECLINED_FORMS,
                                   form_id=form.id)
         else:
@@ -264,6 +266,7 @@ class Lexemes:
                         form=form,
                     )
                     form.number_of_examples_found = len(form.usage_examples)
+                    logger.info(f"Found {form.number_of_examples_found} usage examples for '{form.representation}'")
                     if form.number_of_examples_found > 0:
                         self.forms_with_usage_examples_found.append(form)
             count += 1
