@@ -8,13 +8,13 @@ import langdetect
 import pandas as pd
 from spacy.lang.sv import Swedish
 
-from lexutils.config.enums import SupportedPickles
+from lexutils.config.enums import SupportedPicklePaths
 
 # First download some zipped textfiles from data.riksdagen.se/dokument and unzip into riksdagen/
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
-pickle_filename = SupportedPickles.RIKSDAGEN
+pickle_filename = SupportedPicklePaths.RIKSDAGEN
 dir = r"riksdagen/"
 max_dataframe_rows = 200000
 files = os.listdir(dir)

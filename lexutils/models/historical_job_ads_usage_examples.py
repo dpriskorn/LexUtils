@@ -4,13 +4,13 @@ from typing import List, Optional
 from pandas import DataFrame
 
 from lexutils.config import config
-from lexutils.config.enums import SupportedPickles
+from lexutils.config.enums import SupportedPicklePaths
 from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
 from lexutils.models.wikidata.form import Form
 
 
 class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
-    pickle = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
+    pickle_path = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 
     def convert_matches_to_user_examples(
             self,
@@ -20,7 +20,7 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
         # maximum_result_size_reached = False
         if self.number_of_matches > 0:
             logger.info(f"Found {self.number_of_matches} number of rows matching "
-                        f"{form.representation} in the {self.pickle.name.title()}")
+                        f"{form.representation} in the {self.pickle_path.name.title()}")
             examples = []
             count = 1
             for row in self.matches.itertuples(index=False):
@@ -45,4 +45,4 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
             logger.debug(f"returning {len(examples)} examples")
             return examples
         else:
-            logger.info(f"Found no rows matching {form.representation} in the {self.pickle.name.title()}")
+            logger.info(f"Found no rows matching {form.representation} in the {self.pickle_path.name.title()}")

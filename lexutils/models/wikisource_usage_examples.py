@@ -64,5 +64,5 @@ class WikisourceUsageExamples(APIUsageExamples):
             for record in self.records:
                 # find usage examples and add to our list
                 usage_examples.extend(record.find_usage_examples_from_summary(form=self.form))
-            logger.info(f"Found {len(usage_examples)} suitable usage examples")
+            logger.info(f"Found {len(usage_examples)} suitable usage examples from Wikisource")
             return usage_examples
