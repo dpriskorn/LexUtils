@@ -13,7 +13,7 @@ from langdetect import LangDetectException
 from spacy.lang.en import English
 from spacy.lang.sv import Swedish
 
-from lexutils.config.enums import SupportedPickles
+from lexutils.config.enums import SupportedPicklePaths
 # First download gzipped jsonl files from https://data.jobtechdev.se/expediering/index.html into arbetsformedlingen/
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Settings
 target_language_code = WikimediaLanguageCode.SWEDISH
-pickle_filename = SupportedPickles.ARBETSFORMEDLINGEN_HISTORICAL_ADS
+pickle_filename = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 dir = r"arbetsformedlingen/"
 # This is the output after deduplication of sentences
 max_dataframe_rows = 100000
