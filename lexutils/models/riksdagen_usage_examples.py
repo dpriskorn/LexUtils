@@ -2,14 +2,14 @@ import logging
 from typing import List, Optional
 
 from lexutils.config import config
-from lexutils.config.enums import SupportedPickles
+from lexutils.config.enums import SupportedPicklePaths
 from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.form import Form
 
 
 class RiksdagenUsageExamples(DataframeUsageExamples):
-    pickle = SupportedPickles.RIKSDAGEN
+    pickle_path = SupportedPicklePaths.RIKSDAGEN
 
 
     def convert_matches_to_user_examples(
@@ -20,7 +20,7 @@ class RiksdagenUsageExamples(DataframeUsageExamples):
         # maximum_result_size_reached = False
         if self.number_of_matches > 0:
             logger.info(f"Found {self.number_of_matches} number of rows matching "
-                        f"{form.representation} in the {self.pickle.name.title()}")
+                        f"{form.representation} in the {self.pickle_path.name.title()}")
             examples = []
             count = 1
             for row in self.matches.itertuples(index=False):
@@ -44,4 +44,4 @@ class RiksdagenUsageExamples(DataframeUsageExamples):
             logger.debug(f"returning {len(examples)} examples")
             return examples
         else:
-            logger.info(f"Found no rows matching {form.representation} in the {self.pickle.name.title()}")
+            logger.info(f"Found no rows matching {form.representation} in the {self.pickle_path.name.title()}")

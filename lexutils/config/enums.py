@@ -6,9 +6,9 @@ class BaseURLs(Enum):
     ARBETSFORMEDLINGEN_HISTORICAL_ADS = "https://data.jobtechdev.se/annonser/historiska/2021.zip"
 
 
-class SupportedPickles(Enum):
-    RIKSDAGEN = "riksdagen.pkl.gz"
-    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "historical_ads.pkl.gz"
+class SupportedPicklePaths(Enum):
+    RIKSDAGEN = "data/sv/riksdagen.pkl.gz"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "data/sv/historical_ads.pkl.gz"
 
 
 class SupportedExampleSources(Enum):
