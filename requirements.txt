@@ -7,3 +7,5 @@ pandas~=1.3.1
 requests~=2.26.0
 rich~=10.6.0
 spacy~=3.2.1
+riksdagenapi==0.0.2a1
+#git+git://github.com/dpriskorn/riksdagen-api@0.0.2-alpha1#egg=riksdagenapi

@@ -5,6 +5,9 @@ import time
 from time import sleep
 from typing import Union, Optional
 
+from riksdagenapi.dokument import Dokument
+from riksdagenapi.dokumentlista import Dokumentlista
+from riksdagenapi.riksdagen import Riksdagen
 from rich import print
 
 from lexutils.config import config
@@ -172,7 +175,21 @@ def choose_sense_handler(
             usage_example.record.lookup_qid()
             if usage_example.record.document_qid is None:
                 # TODO lookup publication date via the Riksdagen API
-                raise NotImplementedError("lookup publication date via the Riksdagen API")
+                # lookup using id
+                rd = Riksdagen()
+                dokumentlista: Dokumentlista = rd.lookup_document_metadata_by_id(usage_example.record.id)
+                if dokumentlista:
+                    if len(dokumentlista.dokument) > 0:
+                        # pick first and hope for the best
+                        first: Dokument = dokumentlista.dokument[0]
+                        date = first.date
+                        logger.info(f"Found Riksdagen date: {date}")
+                        usage_example.record.date = date
+                    else:
+                        raise ValueError(f"Found no documents with the id "
+                                         f"'{usage_example.record.id}' in the Riksdagen API")
+                else:
+                    raise ValueError("Could not lookup publication date via the Riksdagen API")
         sense = sense_choice
         lexeme = Lexeme(id=form.lexeme_id)
         if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
