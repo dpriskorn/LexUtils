@@ -8,7 +8,7 @@ username = ""
 password = ""
 
 # Global settings
-version = "0.4-alpha0"  # Don't touch this.
+version = "0.3-alpha1"  # Don't touch this.
 sleep_time = 5
 wd_prefix = "http://www.wikidata.org/entity/"
 user_agent = f"LexUtils/{version}"
