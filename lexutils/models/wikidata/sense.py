@@ -9,12 +9,13 @@ class Sense:
     id: str
     # For now we only support one gloss
     gloss: str
-
     # statements: List[statement]
 
-    def __init__(self,
-                 id: str = None,
-                 gloss: str = None):
+    def __init__(
+            self,
+            id: str = None,
+            gloss: str = None
+    ):
         self.id = str(EntityID(id))
         self.gloss = gloss.strip()
 

@@ -5,15 +5,18 @@ import time
 from time import sleep
 from typing import Union, Optional
 
+from riksdagenapi.dokument import Dokument
+from riksdagenapi.dokumentlista import Dokumentlista
+from riksdagenapi.riksdagen import Riksdagen
 from rich import print
 
 from lexutils.config import config
-from lexutils.config.enums import ReturnValues, SupportedFormPickles
+from lexutils.config.enums import ReturnValues, SupportedFormPickles, SupportedExampleSources
 from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
 from lexutils.helpers.handle_pickles import add_to_pickle
 from lexutils.models.lexemes import Lexemes
-from lexutils.models.riksdagen import RiksdagenRecord
+from lexutils.models.riksdagen_record import RiksdagenRecord
 from lexutils.models.usage_example import UsageExample
 # from lexutils.modules import europarl
 # from lexutils.modules import ksamsok
@@ -85,6 +88,7 @@ def start():
                           f"in {round(end - start)} seconds")
         if len(lexemes.forms_with_usage_examples_found) > 0:
             for form in lexemes.forms_with_usage_examples_found:
+                form.lexemes = lexemes
                 result = process_usage_examples(form=form)
                 # Save the results to persistent memory
                 if result == ReturnValues.SKIP_FORM:
@@ -112,7 +116,7 @@ def prompt_single_sense(form: Form = None) -> Union[ReturnValues, Sense]:
     if util.yes_no_question(question):
         return form.senses[0]
     else:
-        tui.cancel_sentence(form.representation)
+        tui.cancel_sentence(form=form)
         sleep(config.sleep_time)
         return ReturnValues.SKIP_USAGE_EXAMPLE
 
@@ -123,7 +127,6 @@ def prompt_multiple_senses(form: Form = None) -> Union[ReturnValues, Sense]:
         raise ValueError("form was None")
     number_of_senses = len(form.senses)
     print(_("Found {} senses.".format(number_of_senses)))
-    sense = None
     # TODO check that all senses has a gloss matching the language of
     # the example
     sense: Union[Sense, None] = tui.choose_sense_menu(form.senses)
@@ -131,7 +134,8 @@ def prompt_multiple_senses(form: Form = None) -> Union[ReturnValues, Sense]:
         logging.info("a sense was accepted")
         return sense
     else:
-        # should this be propagated from prompt_choose_sense() instead?
+        tui.cancel_sentence(form=form)
+        sleep(config.sleep_time)
         return ReturnValues.SKIP_USAGE_EXAMPLE
 
 
@@ -169,8 +173,28 @@ def choose_sense_handler(
         # Prepare
         if isinstance(usage_example.record, RiksdagenRecord):
             usage_example.record.lookup_qid()
+            if usage_example.record.document_qid is None:
+                # TODO lookup publication date via the Riksdagen API
+                # lookup using id
+                rd = Riksdagen()
+                dokumentlista: Dokumentlista = rd.lookup_document_metadata_by_id(usage_example.record.id)
+                if dokumentlista:
+                    if len(dokumentlista.dokument) > 0:
+                        # pick first and hope for the best
+                        first: Dokument = dokumentlista.dokument[0]
+                        date = first.date
+                        logger.info(f"Found Riksdagen date: {date}")
+                        usage_example.record.date = date
+                    else:
+                        raise ValueError(f"Found no documents with the id "
+                                         f"'{usage_example.record.id}' in the Riksdagen API")
+                else:
+                    raise ValueError("Could not lookup publication date via the Riksdagen API")
         sense = sense_choice
         lexeme = Lexeme(id=form.lexeme_id)
+        if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
+            logger.info("Looking up the QID for the source document")
+            usage_example.record.lookup_qid()
         # Add
         result = lexeme.add_usage_example(
             form=form,
@@ -211,7 +235,7 @@ def handle_usage_example(
     )
     if result is ReturnValues.ACCEPT_USAGE_EXAMPLE:
         # The sentence was accepted
-        senses = form.fetch_senses(usage_example=usage_example)
+        form.fetch_senses(usage_example=usage_example)
         if len(form.senses) == 0:
             return ReturnValues.SKIP_USAGE_EXAMPLE
         else:

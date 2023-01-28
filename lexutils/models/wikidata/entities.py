@@ -278,7 +278,7 @@ class Lexeme:
             # TODO wait for https://www.wikidata.org/wiki/Wikidata:Property_proposal/Swedish_Historical_Job_Ads_ID to be approved
             record_number = String(
                 prop_nr="P9994",  #  record number
-                value=usage_example.record.id
+                value=str(usage_example.record.id)
             )
             reference_url = URL(
                 prop_nr="P854",

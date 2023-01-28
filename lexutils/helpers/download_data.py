@@ -6,7 +6,6 @@ import lzma
 import os.path
 import sys
 import time
-import timeit
 from os.path import exists
 from shutil import move
 from zipfile import ZipFile
@@ -15,6 +14,7 @@ import pandas as pd
 import requests
 
 from lexutils import config
+from lexutils.config.enums import SupportedPicklePaths
 from lexutils.helpers import tui
 from lexutils.models.arbetsformedlingen import HistoricalJobAd
 
@@ -31,7 +31,7 @@ def fetch_arbetsformedlingen_historical_job_ads():
     filename = "data_arbetsformedlingen_historical_job_ads_" + url.split('/')[-1]
     json_filename = filename.replace("zip", "json")
     jsonl_filename = f'{json_filename}l'
-    pickle_filename = "historical_ads.pkl.gz"
+    pickle_filename = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS.value
     if os.path.isfile(pickle_filename):
         logging.info(_("Historical Ads data from the Swedish Public Employment Service has "
                        "already been downloaded and converted."))
