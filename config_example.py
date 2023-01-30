@@ -1,5 +1,4 @@
 import logging
-import os
 
 # Add your botpassword and login here:
 from lexutils.models.wikidata.enums import WikimediaLanguageCode

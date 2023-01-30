@@ -1,8 +1,0 @@
-lexutils/main.py
-lexutils/modules/lexuse.py
-lexutils/modules/util.py
-lexutils/modules/download_data.py
-lexutils/modules/europarl.py
-lexutils/modules/ksamsok.py
-lexutils/modules/loglevel.py
-lexutils/modules/riksdagen.py

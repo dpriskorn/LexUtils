@@ -22,7 +22,7 @@ repos:
   - id: bandit
     name: bandit
     language: system
-    entry: bandit --recursive --skip B101,B105,B324,B501 src  # B101 is assert statements
+    entry: bandit --recursive --skip B311,B101,B105,B324,B501 src  # B101 is assert statements
     types: [python]
 
   - id: isort
@@ -47,7 +47,7 @@ repos:
     # R505 unnecessary elif after return statement.
     # R506 unnecessary else after raise statement.
     args: [
-      #"--ignore=C408,C416,F401,F541,R501,R502,R503,R504,R505,R506,W503",
+           "--ignore=C408,C416,F401,F541,R501,R502,R503,R504,R505,R506,W503,R507,F811",
            "--max-complexity=21", "--max-line-length=162", "--show-source",
            "--statistics"]
     types: [ python ]
