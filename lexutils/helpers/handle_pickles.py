@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 # We define finish as: having 1 usage example added. This is good enough for now.
 
 
-def read_from_pickle(
-        pickle: SupportedFormPickles = None,
-        form_id: str = None,
+def can_read_from_pickle(
+    pickle: SupportedFormPickles = None,
+    form_id: str = None,
 ) -> bool:
     """Returns boolean"""
     if form_id is None or pickle is None:
