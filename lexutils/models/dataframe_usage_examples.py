@@ -66,10 +66,13 @@ class DataframeUsageExamples(UsageExamples):
             raise ValueError("form was None")
         logger.info(f"Searching dataframe with {self.number_of_dataframe_rows} rows")
         target_column = "sentence"
+        # First we create a boolean series to filter the dataframe with
+        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.str.contains.html
         boolean_series = self.dataframe[target_column].str.contains(
             f" {form.localized_representation} ", case=False
         )
-        # This returns a dataframe with the matching rows
+        # This returns a dataframe with the matching rows using the boolean series as filter
+        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.loc.html
         self.matches = self.dataframe.loc[boolean_series]
         print(self.matches.info())
         self.number_of_matches = len(self.matches)

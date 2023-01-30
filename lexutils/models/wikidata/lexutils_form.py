@@ -191,7 +191,7 @@ class LexutilsForm(Form):
             raise MissingInformationError("usage_example was None")
         if not usage_example.record:
             raise MissingInformationError
-        reference = None
+        # reference = None
         logger.info("Adding usage example with WBI")
         # Use WikibaseIntegrator aka wbi to upload the changes in one edit
         link_to_form = FormDT(
@@ -205,17 +205,17 @@ class LexutilsForm(Form):
         type_of_reference_qualifier = Item(
             prop_nr="P3865", value=usage_example.record.type_of_reference.value
         )
-        retrieved_date = Time(
-            prop_nr="P813",  # Fetched today
-            time=datetime.utcnow()
-            .replace(tzinfo=timezone.utc)
-            .replace(
-                hour=0,
-                minute=0,
-                second=0,
-            )
-            .strftime("+%Y-%m-%dT%H:%M:%SZ"),
-        )
+        # retrieved_date = Time(
+        #     prop_nr="P813",  # Fetched today
+        #     time=datetime.utcnow()
+        #     .replace(tzinfo=timezone.utc)
+        #     .replace(
+        #         hour=0,
+        #         minute=0,
+        #         second=0,
+        #     )
+        #     .strftime("+%Y-%m-%dT%H:%M:%SZ"),
+        # )
         # if usage_example.record.source == SupportedExampleSources.RIKSDAGEN:
         #     logger.info("Riksdagen record detected")
         #     if usage_example.record.date is not None:

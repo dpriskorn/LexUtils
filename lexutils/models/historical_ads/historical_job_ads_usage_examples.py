@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
     pickle_path = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 
+    # noinspection PyUnresolvedReferences
     def convert_matches_to_user_examples(self, form: LexutilsForm = None):
         if not form:
             raise MissingInformationError()

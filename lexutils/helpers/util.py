@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-import gettext
 import logging
-import sys
 
-import httpx
-
-# from time import sleep
-# import asyncio
 from lexutils.enums import ReturnValue
 
 logger = logging.getLogger(__name__)
@@ -45,10 +39,10 @@ def yes_no_question(message: str):
                 return answer[0].lower() == "y"
 
 
-async def async_fetch_from_url(url):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        return response
+# async def async_fetch_from_url(url):
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(url)
+#         return response
 
 
 # def add_to_watchlist(lid: str):
