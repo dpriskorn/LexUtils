@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 
-from lexutils.config.enums import LanguageStyle, ReferenceType, SupportedExampleSources, BaseURLs
+from lexutils.enums import (
+    BaseURLs,
+    LanguageStyle,
+    ReferenceType,
+    SupportedExampleSources,
+)
 from lexutils.models.record import Record
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 
@@ -23,5 +28,3 @@ class HistoricalJobAd(Record):
         We don't have a URL formatter for the ids in Historical Ads.
         The url to the dumpfile is the least bad we have"""
         return self.base_url
-
-

@@ -1,9 +1,11 @@
-from enum import auto, Enum
+from enum import Enum, auto
 
 
 class BaseURLs(Enum):
     RIKSDAGEN = "https://data.riksdagen.se/dokument/"
-    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "https://data.jobtechdev.se/annonser/historiska/2021.zip"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = (
+        "https://data.jobtechdev.se/annonser/historiska/2021.zip"
+    )
 
 
 class SupportedPicklePaths(Enum):
@@ -17,9 +19,10 @@ class SupportedExampleSources(Enum):
     HISTORICAL_ADS = "Q110544812"
 
 
-class SupportedFormPickles(Enum):
-    """These enable a persitent memory which help
+class SupportedLexutilsFormPickles(Enum):
+    """These enable a persistent memory which help
     avoid working on the same form twice"""
+
     FINISHED_FORMS = "finished_forms.pkl"
     DECLINED_FORMS = "declined_forms.pkl"
 
@@ -34,7 +37,7 @@ class ReferenceType(Enum):
     ORAL = "Q52946"
 
 
-class ReturnValues(Enum):
+class ReturnValue(Enum):
     ACCEPT_USAGE_EXAMPLE = auto()
     # Todo improve this by using a custom error type instead
     ERROR = auto()
