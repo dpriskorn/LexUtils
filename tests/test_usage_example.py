@@ -17,7 +17,7 @@ class TestUsageExample:
             text="test",
             record=record,
         )
-        assert str(usage_example) == ""
+        assert str(usage_example) == "test (from 1 at Historical_Ads)"
 
     def test_number_of_words(self):
         record = Record(

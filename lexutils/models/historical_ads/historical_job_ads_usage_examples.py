@@ -4,6 +4,7 @@ import config
 from lexutils.enums import SupportedPicklePaths
 from lexutils.exceptions import MissingInformationError
 from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
+from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 logger = logging.getLogger(__name__)
@@ -24,8 +25,8 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
             examples = []
             count = 1
             for row in self.matches.itertuples(index=False):
-                logger.info(row)
-                if count < config.riksdagen_max_results_size:
+                logger.debug(row)
+                if count < config.historical_ads_max_results_size:
                     if self.number_of_matches > config.riksdagen_max_results_size:
                         logger.info(
                             f"Processing match {count}/{config.historical_ads_max_results_size} "
@@ -44,12 +45,14 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
                         text=row.sentence,
                         filename=row.filename,
                         date=row.date,
+                        # TODO add wikidata qid for this filename
                     )
-                    example = record.get_usage_example_if_representation_could_be_found
-                    if example is not None:
-                        # logger.info("Looking up the QID for the document")
-                        # example.record.lookup_qid()
-                        examples.append(example)
+                    example = UsageExample(record=record, text=row.sentence)
+                    # example = record.get_usage_example_if_representation_could_be_found
+                    # if example is not None:
+                    # logger.info("Looking up the QID for the document")
+                    # example.record.lookup_qid()
+                    examples.append(example)
                     count += 1
                 else:
                     break

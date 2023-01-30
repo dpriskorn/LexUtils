@@ -15,7 +15,7 @@ class TestLexemes(TestCase):
         self.test_fetch_forms_without_an_example_1()
 
     def test_fetch_forms_without_an_example_1(self):
-        lex = Lexemes(lang="sv")
+        lex = Lexemes(lang="sv", testing=True)
         lex.__convert_str_to_enums__()
         import config
 

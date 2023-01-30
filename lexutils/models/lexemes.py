@@ -1,6 +1,6 @@
 import logging
 import random
-from typing import Any, List, Optional, Dict
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from wikibaseintegrator.wbi_helpers import execute_sparql_query  # type: ignore
@@ -35,6 +35,7 @@ class Lexemes(BaseModel):
     lexemes: List[LexutilsLexeme] = []
     approved_forms: List[Any] = []
     results: Dict[str, Any] = {}
+    testing: bool = False
 
     class Config:
         arbitrary_types_allowed = True
@@ -75,7 +76,6 @@ class Lexemes(BaseModel):
             if not self.historical_ads_usage_examples:
                 raise MissingInformationError()
             logger.info("Trying to find usage examples in the dataframes")
-            self.historical_ads_usage_examples.check_and_load()
             historical_ads_examples = self.historical_ads_usage_examples.find_form_representation_in_the_dataframe(
                 form=form
             )
@@ -225,7 +225,9 @@ class Lexemes(BaseModel):
 
         # from lexutils.models.disabled.riksdagen_usage_examples import RiksdagenUsageExamples
 
-        self.historical_ads_usage_examples = HistoricalJobAdsUsageExamples()
+        self.historical_ads_usage_examples = HistoricalJobAdsUsageExamples(
+            testing=self.testing
+        )
         # self.riksdagen_usage_examples = RiksdagenUsageExamples()
 
     def __get_approved_forms__(self):

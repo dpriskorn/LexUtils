@@ -31,7 +31,7 @@ class TestRecord(TestCase):
             type_of_reference=ReferenceType.WRITTEN,
             form=self.example_form,
         )
-        assert record.get_usage_example_if_representation_could_be_found() is None
+        assert record.get_usage_example_if_representation_could_be_found is None
 
     def test_get_usage_example_if_representation_could_be_found_too_long(self):
         record = Record(
@@ -44,7 +44,7 @@ class TestRecord(TestCase):
             type_of_reference=ReferenceType.WRITTEN,
             form=self.example_form,
         )
-        assert record.get_usage_example_if_representation_could_be_found() is None
+        assert record.get_usage_example_if_representation_could_be_found is None
 
     def test_get_usage_example_if_representation_could_be_found_valid(self):
         record = Record(
@@ -57,7 +57,7 @@ class TestRecord(TestCase):
             type_of_reference=ReferenceType.WRITTEN,
             form=self.example_form,
         )
-        usage_example = record.get_usage_example_if_representation_could_be_found()
+        usage_example = record.get_usage_example_if_representation_could_be_found
         assert isinstance(usage_example, UsageExample)
         assert usage_example.text == (
             " skrutits skrutits skrutits skrutits skrutits skrutits skrutits skrutits "

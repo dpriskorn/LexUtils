@@ -25,11 +25,12 @@ class DataframeUsageExamples(UsageExamples):
     pickle_url: str = ""
     usage_examples: List[UsageExample] = []
     pickle_path_str: str = ""
+    dataframe_loaded: bool = False
 
     class Config:
         arbitrary_types_allowed = True
 
-    def check_and_load(self):
+    def __check_and_load__(self):
         self.__check_if_the_pickle_exist__()
         self.__load_into_memory__()
 
@@ -50,19 +51,29 @@ class DataframeUsageExamples(UsageExamples):
             f"Loading the {self.pickle_path.name.title()} dataframe into memory"
         )
         self.dataframe = pd.read_pickle(filepath_or_buffer=str(self.pickle_path_str))
+        logger.info(f"Loaded dataframe with {len(self.dataframe)} rows into memory")
+        self.dataframe_loaded = True
 
     def find_form_representation_in_the_dataframe(
         self, form: LexutilsForm = None
     ) -> Optional[List[UsageExample]]:
-        if self.dataframe is None:
-            raise ValueError("dataframe was None")
+        logger.debug("find_form_representation_in_the_dataframe: running")
+        if not self.dataframe_loaded:
+            self.__check_and_load__()
+        if self.dataframe is None or self.number_of_dataframe_rows == 0:
+            raise ValueError("dataframe was None or empty")
         if form is None:
             raise ValueError("form was None")
+        logger.info(f"Searching dataframe with {self.number_of_dataframe_rows} rows")
         target_column = "sentence"
-        self.matches = self.dataframe[
-            self.dataframe[target_column].str.contains(form.localized_representation)
-        ]
+        boolean_series = self.dataframe[target_column].str.contains(
+            f" {form.localized_representation} ", case=False
+        )
+        # This returns a dataframe with the matching rows
+        self.matches = self.dataframe.loc[boolean_series]
+        print(self.matches.info())
         self.number_of_matches = len(self.matches)
+        logger.info(f"Found {self.number_of_matches} matches")
         return self.convert_matches_to_user_examples(form=form)
 
     @abstractmethod
@@ -76,3 +87,7 @@ class DataframeUsageExamples(UsageExamples):
             self.pickle_path_str = "../" + str(self.pickle_path.value)
         else:
             self.pickle_path_str = str(self.pickle_path.value)
+
+    @property
+    def number_of_dataframe_rows(self):
+        return len(self.dataframe)
