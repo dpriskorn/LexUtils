@@ -116,8 +116,8 @@ class LexutilsForm(Form):
         return (
             "Work on {} ({}) with the features: {}".format(
                 self.localized_representation,
-                self.lexeme_category,
-                ", ".join(self.grammatical_features),
+                self.localized_lexeme_category,
+                ", ".join(self.localized_grammatical_features),
             )
             + f"\n{self.hangor_url}"
         )
@@ -139,7 +139,7 @@ class LexutilsForm(Form):
 
     @property
     def hangor_url(self):
-        return f"{constants.hangor}lex/{self.language_code.value}/{self.localized_representation}"
+        return f"{constants.hangor}lex/{self.language_code.value}/{quote(self.localized_representation)}"
 
     @property
     def orthohin_url(self):
