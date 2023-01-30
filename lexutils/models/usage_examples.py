@@ -2,7 +2,7 @@ import logging
 import time
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validate_arguments
 
 import config
 from lexutils.enums import ReturnValue, SupportedExampleSources, SupportedFormPickles
@@ -31,9 +31,20 @@ class UsageExamples(BaseModel):
     # usage_examples: List[UsageExample] = []
     number_of_presented_usage_examples: int = 0
     testing: bool = False
+    choosen_language: Optional[WikimediaLanguageCode]
+    usage_example_fetch_duration: int = 0
 
     class Config:
         arbitrary_types_allowed = True
+
+    @property
+    def total_number_of_examples(self):
+        return sum(
+            [
+                form.number_of_examples_found
+                for form in self.lexemes.forms_with_usage_examples_found
+            ]
+        )
 
     @property
     def number_of_usage_examples(self):
@@ -48,10 +59,11 @@ class UsageExamples(BaseModel):
                 self.number_of_usage_examples,
                 self.form.localized_representation,
                 self.form.id,
-                " ".join(self.form.grammatical_features),
+                " ".join(self.form.localized_grammatical_features),
             )
         )
 
+    @validate_arguments
     def __found_sentence__(self, usage_example: UsageExample):
         # FIXME add grammatical features here
         if not self.form:
@@ -101,55 +113,14 @@ class UsageExamples(BaseModel):
         # begin = introduction()
         begin = True
         if begin:
-            choosen_language: WikimediaLanguageCode = tui.select_language_menu()
+            self.__choose_language__()
             # TODO store lexuse_introduction_read=True to e.g. settings.pkl
-            with console.status(
-                f"Fetching {config.number_of_forms_to_fetch} "
-                f"lexeme forms to work on for "
-                f"{choosen_language.name.title()}"
-            ):
-                self.lexemes = Lexemes(lang=choosen_language.value)
-                self.lexemes.__convert_str_to_enums__()
-                self.lexemes.fetch_forms_without_an_example()
-            console.print(
-                f"Fetching usage examples to work on. " f"This might take some minutes."
-            )
-            start = time.time()
-            self.lexemes.fetch_usage_examples()
-            end = time.time()
-            total_number_of_examples = sum(
-                [
-                    form.number_of_examples_found
-                    for form in self.lexemes.forms_with_usage_examples_found
-                ]
-            )
-            if total_number_of_examples == 0:
-                console.print("Found no usage examples for any of the forms.")
-            else:
-                console.print(
-                    f"Found {total_number_of_examples} "
-                    f"usage examples for a total of "
-                    f"{len(self.lexemes.forms_with_usage_examples_found)} forms "
-                    f"in {round(end - start)} seconds"
-                )
-            if len(self.lexemes.forms_with_usage_examples_found) > 0:
-                for form in self.lexemes.forms_with_usage_examples_found:
-                    form.lexemes = self.lexemes
-                    result = self.__process_usage_examples__()
-                    # Save the results to persistent memory
-                    if result == ReturnValue.SKIP_FORM:
-                        add_to_pickle(
-                            pickle=SupportedFormPickles.DECLINED_FORMS,
-                            form_id=form.id_,
-                        )
-                        continue
-                    if result == ReturnValue.USAGE_EXAMPLE_ADDED:
-                        add_to_pickle(
-                            pickle=SupportedFormPickles.FINISHED_FORMS,
-                            form_id=form.id_,
-                        )
-                tui.print_run_again_text()
+            self.__fetch_forms__()
+            self.__fetch_usage_examples__()
+            self.__inform_user_about_examples_found__()
+            self.__iterate_forms_with_examples_found__()
 
+    @validate_arguments
     def __handle_usage_example__(
         self, usage_example: UsageExample = None
     ) -> Union[ReturnValue, LexutilsSense]:
@@ -179,6 +150,7 @@ class UsageExamples(BaseModel):
             # Return the choice
             return result
 
+    @validate_arguments
     def __choose_sense_handler__(
         self, usage_example: UsageExample = None
     ) -> Union[ReturnValue, ReturnValue]:
@@ -301,6 +273,7 @@ class UsageExamples(BaseModel):
             time.sleep(config.sleep_time)
             return ReturnValue.SKIP_USAGE_EXAMPLE
 
+    @validate_arguments
     def __present_sentence__(self, example: UsageExample = None):
         """We present a sentence and count of how many we have presented until now."""
         if example is None:
@@ -338,3 +311,58 @@ class UsageExamples(BaseModel):
 
     def __sort_usage_examples_(self):
         self.form.usage_examples.sort(key=lambda x: x.word_count, reverse=False)
+
+    def __fetch_forms__(self):
+        if not self.choosen_language:
+            raise MissingInformationError()
+        with console.status(
+            f"Fetching {config.number_of_forms_to_fetch} "
+            f"lexeme forms to work on for "
+            f"{self.choosen_language.name.title()}"
+        ):
+            self.lexemes = Lexemes(lang=self.choosen_language.value)
+            self.lexemes.__convert_str_to_enums__()
+            self.lexemes.fetch_forms_without_an_example()
+
+    def __choose_language__(self):
+        self.choosen_language: WikimediaLanguageCode = tui.select_language_menu()
+
+    def __fetch_usage_examples__(self):
+        console.print(
+            f"Fetching usage examples to work on. " f"This might take some minutes."
+        )
+        start = time.time()
+        self.lexemes.fetch_usage_examples()
+        end = time.time()
+        self.usage_example_fetch_duration = int(end - start)
+
+    def __inform_user_about_examples_found__(self):
+        if self.total_number_of_examples == 0:
+            console.print("Found no usage examples for any of the forms.")
+        else:
+            console.print(
+                f"Found {self.total_number_of_examples} "
+                f"usage examples for a total of "
+                f"{len(self.lexemes.forms_with_usage_examples_found)} forms "
+                f"in {self.usage_example_fetch_duration} seconds"
+            )
+
+    def __iterate_forms_with_examples_found__(self):
+        logger.debug("__iterate_forms_with_examples_found__: running")
+        if len(self.lexemes.forms_with_usage_examples_found) > 0:
+            for form in self.lexemes.forms_with_usage_examples_found:
+                form.lexemes = self.lexemes
+                result = self.__process_usage_examples__()
+                # Save the results to persistent memory
+                if result == ReturnValue.SKIP_FORM:
+                    add_to_pickle(
+                        pickle=SupportedFormPickles.DECLINED_FORMS,
+                        form_id=form.id,
+                    )
+                    continue
+                if result == ReturnValue.USAGE_EXAMPLE_ADDED:
+                    add_to_pickle(
+                        pickle=SupportedFormPickles.FINISHED_FORMS,
+                        form_id=form.id,
+                    )
+            tui.print_run_again_text()
