@@ -10,13 +10,13 @@ class BaseURLs(Enum):
 
 class SupportedPicklePaths(Enum):
     RIKSDAGEN = "data/sv/riksdagen.pkl.gz"
-    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "data/sv/historical_ads.pkl.gz"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "data/sv/record.pkl.gz"
 
 
 class SupportedExampleSources(Enum):
     WIKISOURCE = "Q15156406"
     RIKSDAGEN = "Q21592569"
-    HISTORICAL_ADS = "Q110544812"
+    HISTORICAL_ADS_2020 = "Q116505125"
 
 
 class SupportedFormPickles(Enum):
