@@ -30,6 +30,7 @@ class UsageExamples(BaseModel):
     records: List[Record] = []
     # usage_examples: List[UsageExample] = []
     number_of_presented_usage_examples: int = 0
+    testing: bool = False
 
     class Config:
         arbitrary_types_allowed = True

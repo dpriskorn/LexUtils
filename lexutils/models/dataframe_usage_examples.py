@@ -12,6 +12,8 @@ from lexutils.models.usage_example import UsageExample
 from lexutils.models.usage_examples import UsageExamples
 from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
+logger = logging.getLogger(__name__)
+
 
 class DataframeUsageExamples(UsageExamples):
     """This is an abstract class"""
@@ -22,6 +24,7 @@ class DataframeUsageExamples(UsageExamples):
     pickle_path: Optional[SupportedPicklePaths] = None
     pickle_url: str = ""
     usage_examples: List[UsageExample] = []
+    pickle_path_str: str = ""
 
     class Config:
         arbitrary_types_allowed = True
@@ -34,20 +37,19 @@ class DataframeUsageExamples(UsageExamples):
         # logger = logging.getLogger(__name__)
         # test
         # pickle_filename = "test.pkl.gz"
-        pickle_path = str(self.pickle_path.value)
-        if not exists(pickle_path):
+        self.__setup_pickle_path__()
+        logger.debug(f"searching pickle path: {self.pickle_path_str}")
+        if not exists(self.pickle_path_str):
             raise DataNotFoundException(
                 f"Data from {self.pickle_path.name.title()} "
-                f"was not found in {pickle_path}."
+                f"was not found in {self.pickle_path_str}."
             )
 
     def __load_into_memory__(self):
-        logger = logging.getLogger(__name__)
         logger.info(
             f"Loading the {self.pickle_path.name.title()} dataframe into memory"
         )
-        # return pd.read_pickle("test.pkl.gz")
-        self.dataframe = pd.read_pickle(str(self.pickle_path.value))
+        self.dataframe = pd.read_pickle(filepath_or_buffer=str(self.pickle_path_str))
 
     def find_form_representation_in_the_dataframe(
         self, form: LexutilsForm = None
@@ -56,7 +58,6 @@ class DataframeUsageExamples(UsageExamples):
             raise ValueError("dataframe was None")
         if form is None:
             raise ValueError("form was None")
-        # logger = logging.getLogger(__name__)
         target_column = "sentence"
         self.matches = self.dataframe[
             self.dataframe[target_column].str.contains(form.localized_representation)
@@ -69,3 +70,9 @@ class DataframeUsageExamples(UsageExamples):
         self, form: LexutilsForm = None
     ) -> List[UsageExample]:
         pass
+
+    def __setup_pickle_path__(self):
+        if self.testing:
+            self.pickle_path_str = "../" + str(self.pickle_path.value)
+        else:
+            self.pickle_path_str = str(self.pickle_path.value)
