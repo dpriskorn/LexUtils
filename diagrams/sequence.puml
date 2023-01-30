@@ -1,0 +1,33 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+User -> UsageExamplesSession: start
+UsageExamplesSession -> User: chose language
+User -> UsageExamplesSession: input
+UsageExamplesSession -> Wikidata: fetch forms
+UsageExamplesSession -> UsageExamplesSession: store the data in Lexemes
+
+alt forms found
+    loop iterate forms
+        UsageExamplesSession -> Pickle:find usage examples
+        UsageExamplesSession -> UsageExamplesSession: store on the form
+    end
+
+alt forms with usage examples found
+    loop forms
+        UsageExamplesSession -> UsageExamplesSession: sort examples in\nascending length\non the form
+        loop examples
+            UsageExamplesSession -> User: Present example
+            UsageExamplesSession -> User: ask for validation
+            User -> UsageExamplesSession: response
+            alt user validated
+                UsageExamplesSession -> Wikidata: upload example
+                UsageExamplesSession -> Pickle: Add form\nto finished pickle
+            else
+                UsageExamplesSession -> Pickle: Add usage example\nto decline pickle
+        end
+    end
+UsageExamplesSession -> User: Tell user to run\nthe script again
+@enduml

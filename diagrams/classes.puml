@@ -1,0 +1,32 @@
+@startuml
+'https://plantuml.com/class-diagram
+class UsageExamplesSession{
+lexemes with forms
+chosen language
+}
+class UsageExample{
+has record
+has duplicate of form
+has logic for presenting examples
+and linking them to senses
+}
+class Record{
+record data
+}
+class WBIForm
+class LexutilsForm{
+has data from WBIForm
+has UsageExamples
+has lexeme
+has logic for iterating and
+adding approved examples
+}
+WBIForm <-- LexutilsForm
+class WBISense
+class LexutilsSense
+WBISense <-- LexutilsSense
+
+abstract class DataframeUsageExamplesExtractor
+class HistoricalJobAdsUsageExamplesExtractor
+DataframeUsageExamplesExtractor <-- HistoricalJobAdsUsageExamplesExtractor
+@enduml
