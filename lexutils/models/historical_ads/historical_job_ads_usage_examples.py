@@ -45,7 +45,7 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
                         filename=row.filename,
                         date=row.date,
                     )
-                    example = record.extract_usage_example_if_suitable(form=form)
+                    example = record.get_usage_example_if_representation_could_be_found
                     if example is not None:
                         # logger.info("Looking up the QID for the document")
                         # example.record.lookup_qid()

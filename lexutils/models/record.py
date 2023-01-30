@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 from urllib.parse import quote
 
 from pydantic import BaseModel
@@ -31,8 +31,19 @@ class Record(BaseModel):
     filename: str = ""
     cleaned_sentence: str = ""
     form: Any = None
+    words: List[str] = []
 
-    #    @validate_arguments
+    @property
+    def __found_localized_representation__(self) -> bool:
+        if self.form.localized_representation.lower() in self.words:
+            logger.info(
+                f"The form '{self.form.localized_representation}' was found in the cleaned sentence. :)"
+            )
+            return True
+        else:
+            return False
+
+    @property
     def get_usage_example_if_representation_could_be_found(
         self,
     ) -> Optional[UsageExample]:
@@ -43,7 +54,15 @@ class Record(BaseModel):
         if not isinstance(self.form, LexutilsForm):
             raise ValueError("form not a LexutilsForm")
         self.__clean_sentence__()
-        return self.__find_representation_and_extract_usage_example__()
+        example = self.__find_representation_and_extract_usage_example__()
+        if isinstance(example, UsageExample):
+            return example
+        else:
+            return None
+
+    @property
+    def number_of_words(self):
+        return len(self.words)
 
     # def lookup_qid(self):
     #     pass
@@ -86,16 +105,19 @@ class Record(BaseModel):
 
     def __find_representation_and_extract_usage_example__(
         self,
-    ):
+    ) -> Optional[UsageExample]:
         logger.debug("__find_representation_and_extract_usage_example__: running")
+        self.__extract_words__()
+        return self.__get_usage_example__()
+
+    def __extract_words__(self):
         # split on any whitespace
-        words = self.cleaned_sentence.split()
-        if self.form.localized_representation.lower() in words:
-            logger.info(
-                f"The form '{self.form.localized_representation}' was found in the cleaned sentence. :)"
-            )
-            number_of_words = len(words)
-            if config.min_word_count < number_of_words < config.max_word_count:
+        self.words = self.cleaned_sentence.split()
+
+    def __get_usage_example__(self) -> Optional[UsageExample]:
+        if self.__found_localized_representation__:
+            logger.debug("found localized representation in the sentence")
+            if config.min_word_count < self.number_of_words < config.max_word_count:
                 return UsageExample(text=self.text, record=self)
             else:
                 logger.debug(f"{self.cleaned_sentence} was discarded based on length")

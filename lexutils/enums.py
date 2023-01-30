@@ -19,7 +19,7 @@ class SupportedExampleSources(Enum):
     HISTORICAL_ADS = "Q110544812"
 
 
-class SupportedLexutilsFormPickles(Enum):
+class SupportedFormPickles(Enum):
     """These enable a persistent memory which help
     avoid working on the same form twice"""
 

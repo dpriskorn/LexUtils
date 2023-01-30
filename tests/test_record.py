@@ -1,6 +1,7 @@
+from typing import Optional
 from unittest import TestCase
 
-from lexutils.enums import LanguageStyle, SupportedExampleSources, ReferenceType
+from lexutils.enums import LanguageStyle, ReferenceType, SupportedExampleSources
 from lexutils.models.record import Record
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -8,7 +9,7 @@ from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 
 class TestRecord(TestCase):
-    example_form: LexutilsForm = None
+    example_form: Optional[LexutilsForm] = None
 
     def setUp(self) -> None:
         self.__setup_example_form__()
@@ -56,9 +57,9 @@ class TestRecord(TestCase):
             type_of_reference=ReferenceType.WRITTEN,
             form=self.example_form,
         )
-        ue = record.get_usage_example_if_representation_could_be_found()
-        assert isinstance(ue, UsageExample)
-        assert ue.text == (
+        usage_example = record.get_usage_example_if_representation_could_be_found()
+        assert isinstance(usage_example, UsageExample)
+        assert usage_example.text == (
             " skrutits skrutits skrutits skrutits skrutits skrutits skrutits skrutits "
             "skrutits skrutits skrutits skrutits skrutits "
         )
@@ -92,7 +93,7 @@ class TestRecord(TestCase):
             type_of_reference=ReferenceType.WRITTEN,
             form=self.example_form,
         )
-        assert record.url == 'test1'
+        assert record.url == "test1"
 
     #
     # def test_human_readable_url(self):

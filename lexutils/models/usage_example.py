@@ -1,33 +1,26 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:
-    from lexutils.models.record import Record
+from pydantic import BaseModel
 
 
-class UsageExample:
-    # This contains the example, usually a single text
+class UsageExample(BaseModel):
+    """This models the example, usually a single text
+
+    The text should be cleaned before inserted if necessary"""
+
     text: str
-    record: Record
-    word_count: int = None
-
-    def __init__(self,
-                 text: str = None,
-                 record: Record = None):
-        """This models a usage example.
-
-        Note we pass both the text and the record,
-        because the record.text can contain more text
-        than the text we found in it"""
-        if text is not None:
-            self.text = text
-            self.word_count = len(self.text.split(" "))
-        else:
-            raise Exception("Missing text")
-        if record is not None:
-            self.record = record
-        else:
-            raise Exception("Missing record")
+    record: Any
 
     def __str__(self):
-        return f"{self.text} (from {self.record.id} at {self.record.source.name.title()})"
+        from lexutils.models.record import Record
+
+        if not isinstance(self.record, Record):
+            raise ValueError()
+        return (
+            f"{self.text} (from {self.record.id} at {self.record.source.name.title()})"
+        )
+
+    @property
+    def number_of_words(self):
+        # from https://www.pythonpool.com/python-count-words-in-string/
+        return len(self.text.strip().split())
