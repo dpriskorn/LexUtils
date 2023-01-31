@@ -132,30 +132,6 @@ class Lexemes(BaseModel):
         self.language_code = WikimediaLanguageCode(self.lang)
         self.language_qid = WikimediaLanguageQID[self.language_code.name]
 
-    @property
-    def __build_query__(self):
-        random_offset = random.randint(20, 1000)
-        logger.info(f"random offset:{random_offset}")
-        return f"""
-                select ?form
-                WHERE {{
-                    ?lexeme dct:language wd:{self.language_qid.value};
-                            wikibase:lemma ?lemma;
-                            wikibase:lexicalCategory [];
-                            ontolex:lexicalForm ?form;
-                            ontolex:sense [].
-                    # ?form ontolex:representation ?form_representation;
-                    # wikibase:grammaticalFeature ?feature.
-                    MINUS {{
-                    ?lexeme p:P5831 ?statement.
-                    ?statement ps:P5831 ?example;
-                             pq:P6072 [];
-                             pq:P5830 ?form_with_example.
-                    }}
-                }}
-                offset {random_offset}
-                limit {config.number_of_forms_to_fetch}"""
-
     def fetch_forms_without_an_example(self) -> None:
         """This fetches forms and their lexemes and store them in an attribute"""
         logger.debug("fetch_forms_without_an_example: running")
