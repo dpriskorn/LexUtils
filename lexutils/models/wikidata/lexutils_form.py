@@ -489,7 +489,7 @@ class LexutilsForm(Form):
         )
 
     def __sort_usage_examples_by_length__(self):
-        self.usage_examples.sort(key=lambda x: x.word_count, reverse=False)
+        self.usage_examples.sort(key=lambda x: x.number_of_words, reverse=False)
 
     @validate_arguments
     def __iterate_usage_examples_and_present_senses__(
