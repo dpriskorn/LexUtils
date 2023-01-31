@@ -225,9 +225,6 @@ class Lexemes(BaseModel):
         # and keep it in memory during the looping through all the forms
         if self.language_code == WikimediaLanguageCode.SWEDISH:
             self.__setup_swedish_sources__()
-        from lexutils.models.wikidata.lexutils_form import LexutilsForm
-
-        self.forms_with_possible_matching_usage_examples_found: List[LexutilsForm] = []
         self.__get_approved_forms__()
         self.__iterate_approved_forms_and_fetch_examples__()
 
