@@ -32,6 +32,10 @@ class DataframeUsageExamplesExtractor(BaseModel):
         arbitrary_types_allowed = True
         extra = "forbid"
 
+    @property
+    def number_of_dataframe_rows(self):
+        return len(self.dataframe)
+
     def __check_and_load__(self):
         self.__setup_pickle_path__()
         self.__check_if_the_pickle_exist__()
