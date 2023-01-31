@@ -501,10 +501,11 @@ class LexutilsForm(Form):
         # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
         self.__sort_usage_examples_by_length__()
         tui.print_separator()
-        print(self.presentation)
+        console.print(self.presentation)
         # Loop through usage examples
         for example in self.usage_examples:
-            print(example.__found_sentence_text__)
+            logger.debug("trying to validate example")
+            # print(example.__found_sentence_text__)
             result: ReturnValue = example.__validate_usage_example__()
             logger.info(f"process_result: result: {result}")
             self.number_of_presented_usage_examples += 1
