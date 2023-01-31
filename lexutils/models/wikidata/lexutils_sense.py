@@ -43,3 +43,7 @@ class LexutilsSense(Sense):
             return str(gloss)
         else:
             return ""
+
+    @property
+    def url(self):
+        return f"https://www.wikidata.org/wiki/Lexeme:{self.id}"
