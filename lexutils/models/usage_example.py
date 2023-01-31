@@ -51,7 +51,8 @@ class UsageExample(BaseModel):
     def __validate_usage_example__(self) -> Union[ReturnValue, LexutilsSense]:
         """This function presents the usage example sentence and
         ask the user to choose a sense that fits if any"""
-        result: ReturnValue = util.yes_no_skip_question(self.__found_sentence_text__())
+        logger.debug("__validate_usage_example__: running")
+        result: ReturnValue = util.yes_no_skip_question(self.__found_sentence_text__)
         if result is ReturnValue.ACCEPT_USAGE_EXAMPLE:
             # The sentence was accepted
             # form.fetch_senses(usage_example=usage_example)
