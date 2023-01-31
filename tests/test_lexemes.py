@@ -1,10 +1,11 @@
+from typing import Optional
 from unittest import TestCase
 
 from lexutils.models.lexemes import Lexemes
 
 
 class TestLexemes(TestCase):
-    example_lexemes = Lexemes
+    example_lexemes: Optional[Lexemes]
     # def test_fetch_forms_without_an_example_20(self):
     #     lex = Lexemes(lang="sv")
     #     lex.__convert_str_to_enums__()

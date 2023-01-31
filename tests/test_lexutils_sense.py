@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from unittest import TestCase
 
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class TestLexutilsSense(TestCase):
-    example_sense: LexutilsSense = None
+    example_sense: Optional[LexutilsSense] = None
 
     def setUp(self) -> None:
         logger.debug("setUp: running")

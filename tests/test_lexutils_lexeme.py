@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest import TestCase
 
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -7,7 +8,7 @@ from lexutils.models.wikidata.lexutils_sense import LexutilsSense
 
 
 class TestLexutilsLexeme(TestCase):
-    example_lexeme: LexutilsLexeme = None
+    example_lexeme: Optional[LexutilsLexeme] = None
 
     def setUp(self) -> None:
         self.__setup_example_lexeme__()

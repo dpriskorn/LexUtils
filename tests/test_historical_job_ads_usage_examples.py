@@ -11,10 +11,6 @@ from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 
 class TestHistoricalJobAdsUsageExamples(TestCase):
-    # object: HistoricalJobAdsUsageExamples = HistoricalJobAdsUsageExamples(
-    #     form=None, lexemes=None, testing=True
-    # )
-    # object.dataframe = pd.DataFrame(data=[dict(id="testid", sentence="test")])
     example_form: Optional[LexutilsForm] = None
 
     def setUp(self) -> None:

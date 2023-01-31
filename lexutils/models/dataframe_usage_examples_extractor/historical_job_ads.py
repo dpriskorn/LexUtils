@@ -30,7 +30,7 @@ class HistoricalJobAdsUsageExamplesExtractor(DataframeUsageExamplesExtractor):
             for row in self.matches.itertuples(index=False):
                 logger.debug(row)
                 if count < config.historical_ads_max_results_size:
-                    if self.number_of_matches > config.riksdagen_max_results_size:
+                    if self.number_of_matches > config.historical_ads_max_results_size:
                         logger.info(
                             f"Processing match {count}/{config.historical_ads_max_results_size} "
                             f"out of a total of {self.number_of_matches} matches"
