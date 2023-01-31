@@ -456,10 +456,9 @@ class LexutilsForm(Form):
                 # Authenticate with WikibaseIntegrator
                 with console.status("Logging in with WikibaseIntegrator..."):
                     config.login_instance = wbi_login.Login(
-                        auth_method="login",
+                        # auth_method="login",
                         user=config.username,
                         password=config.password,
-                        debug=False,
                     )
                     # Set User-Agent
                     wbi_config.config["USER_AGENT_DEFAULT"] = config.user_agent
