@@ -49,7 +49,7 @@ class TestLexutilsForm(TestCase):
     def test_presentation(self):
         assert self.example_form.presentation == (
             "[bold green]skrutits[/bold green]\n"
-            "category: Q24905\n"
+            "category: verb\n"
             "features: passivum, supinum"
         )
 

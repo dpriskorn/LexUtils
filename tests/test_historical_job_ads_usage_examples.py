@@ -26,11 +26,9 @@ class TestHistoricalJobAdsUsageExamples(TestCase):
         hjaue = HistoricalJobAdsUsageExamplesExtractor(testing=True)
         hjaue.__check_and_load__()
 
-    def test_find_form_representation_in_the_dataframe(self):
+    def test_get_usage_examples(self):
         hjaue = HistoricalJobAdsUsageExamplesExtractor(testing=True)
-        usage_examples = hjaue.find_form_representation_in_the_dataframe(
-            form=self.example_form
-        )
+        usage_examples = hjaue.get_usage_examples(form=self.example_form)
         assert len(hjaue.matches) > 5000
         print(hjaue.matches.info())
         assert len(usage_examples) == 59
