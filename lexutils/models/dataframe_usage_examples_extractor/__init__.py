@@ -42,9 +42,6 @@ class DataframeUsageExamplesExtractor(BaseModel):
         self.__load_into_memory__()
 
     def __check_if_the_pickle_exist__(self):
-        # logger = logging.getLogger(__name__)
-        # test
-        # pickle_filename = "test.pkl.gz"
         logger.debug(f"searching pickle path: {self.pickle_path_str}")
         if not exists(self.pickle_path_str):
             raise DataNotFoundException(
