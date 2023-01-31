@@ -264,10 +264,12 @@ class Lexemes(BaseModel):
                     )
         else:
             # Approve all forms
+            logger.info("Approving all forms automatically")
             self.approved_forms.extend(self.forms_without_an_example_in_wikidata)
 
     def __iterate_approved_forms_and_fetch_examples__(self):
         logger.debug("__iterate_approved_forms_and_fetch_examples__: running")
+        logger.info(f"Iterating {self.number_of_approved_forms} approved forms")
         count = 1
         for form in self.approved_forms:
             if self.__is_not_finished_or_declined__(form=form):
