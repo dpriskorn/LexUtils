@@ -73,6 +73,10 @@ class UsageExamplesSession:
         logger.debug("__iterate_forms_with_examples_found__: running")
         if len(self.lexemes.forms_with_possible_matching_usage_examples_found) > 0:
             for form in self.lexemes.forms_with_possible_matching_usage_examples_found:
+                if form.__is_finished_or_declined__:
+                    logger.debug(
+                        f"'{form.localized_representation}' was finished or declined already"
+                    )
                 form.lexemes = self.lexemes
                 result = form.__iterate_usage_examples_and_present_senses__()
                 # If we get none we simply continue the loop
@@ -85,11 +89,12 @@ class UsageExamplesSession:
                         form_id=form.id,
                     )
                     continue
-                if result == ReturnValue.USAGE_EXAMPLE_ADDED:
+                elif result == ReturnValue.USAGE_EXAMPLE_ADDED:
                     add_to_pickle(
                         pickle=SupportedFormPickles.FINISHED_FORMS,
                         form_id=form.id,
                     )
+                    continue
         tui.print_run_again_text()
 
     def fetch_and_present_usage_examples(self):

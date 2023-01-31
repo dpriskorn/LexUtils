@@ -16,10 +16,11 @@ from wikibaseintegrator.wbi_enums import ActionIfExists  # type: ignore
 
 import config
 from lexutils import constants
-from lexutils.enums import ReturnValue, SupportedExampleSources
+from lexutils.enums import ReturnValue, SupportedExampleSources, SupportedFormPickles
 from lexutils.exceptions import MissingInformationError
 from lexutils.helpers import tui
 from lexutils.helpers.console import console
+from lexutils.helpers.handle_pickles import can_read_from_pickle
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.lexutils_lexeme import LexutilsLexeme
 from lexutils.models.wikidata.lexutils_sense import LexutilsSense
@@ -159,6 +160,19 @@ class LexutilsForm(Form):
             + "profile=advanced&fulltext=0&"
             + "advancedSearch-current=%7B%7D&ns0=1"
         )
+
+    @property
+    def __is_finished_or_declined__(self):
+        finished = can_read_from_pickle(
+            pickle=SupportedFormPickles.FINISHED_FORMS, form_id=self.id
+        )
+        declined = can_read_from_pickle(
+            pickle=SupportedFormPickles.DECLINED_FORMS, form_id=self.id
+        )
+        if not finished and not declined:
+            return False
+        else:
+            return True
 
     def print_cancel_sentence_text(self):
         console.print(
@@ -515,6 +529,6 @@ class LexutilsForm(Form):
                 result == ReturnValue.SKIP_FORM
                 or result == ReturnValue.USAGE_EXAMPLE_ADDED
             ):
-                # please mypy
+                logger.debug("Form was skipped or usage example added.")
                 return result
         return None

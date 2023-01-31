@@ -40,19 +40,6 @@ class Lexemes(BaseModel):
         arbitrary_types_allowed = True
         extra = "forbid"
 
-    @validate_arguments
-    def __is_finished_or_declined__(self, form: Any):
-        finished = can_read_from_pickle(
-            pickle=SupportedFormPickles.FINISHED_FORMS, form_id=form.id
-        )
-        declined = can_read_from_pickle(
-            pickle=SupportedFormPickles.DECLINED_FORMS, form_id=form.id
-        )
-        if not finished and not declined:
-            return False
-        else:
-            return True
-
     @property
     def number_of_forms_without_an_example(self) -> int:
         return len(self.forms_without_an_example_in_wikidata)
@@ -272,7 +259,7 @@ class Lexemes(BaseModel):
         logger.info(f"Iterating {self.number_of_approved_forms} approved forms")
         count = 1
         for form in self.approved_forms:
-            if self.__is_finished_or_declined__(form=form):
+            if form.__is_finished_or_declined__:
                 logger.info(
                     f"'{form.localized_representation}' was finished or declined already"
                 )
