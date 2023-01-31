@@ -272,7 +272,11 @@ class Lexemes(BaseModel):
         logger.info(f"Iterating {self.number_of_approved_forms} approved forms")
         count = 1
         for form in self.approved_forms:
-            if self.__is_not_finished_or_declined__(form=form):
+            if self.__is_finished_or_declined__(form=form):
+                logger.info(
+                    f"'{form.localized_representation}' was finished or declined already"
+                )
+            else:
                 with console.status(
                     f"Processing form {count}/"
                     f"{self.number_of_forms_without_an_example}"
