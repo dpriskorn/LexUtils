@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import pandas as pd  # type: ignore
 from pandas import DataFrame  # type: ignore
-from pydantic import BaseModel
+from pydantic import BaseModel, validate_arguments
 
 from lexutils.enums import SupportedPicklePaths
 from lexutils.exceptions import DataNotFoundException
@@ -57,16 +57,20 @@ class DataframeUsageExamplesExtractor(BaseModel):
         logger.info(f"Loaded dataframe with {len(self.dataframe)} rows into memory")
         self.dataframe_loaded = True
 
-    def find_form_representation_in_the_dataframe(
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def get_usage_examples(
         self, form: LexutilsForm = None
     ) -> Optional[List[UsageExample]]:
-        logger.debug("find_form_representation_in_the_dataframe: running")
         if not self.dataframe_loaded:
             self.__check_and_load__()
         if self.dataframe is None or self.number_of_dataframe_rows == 0:
             raise ValueError("dataframe was None or empty")
-        if form is None:
-            raise ValueError("form was None")
+        self.__find_form_representation_in_the_dataframe__(form=form)
+        return self.__convert_matches_to_user_examples__(form=form)
+
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def __find_form_representation_in_the_dataframe__(self, form: LexutilsForm) -> None:
+        logger.debug("find_form_representation_in_the_dataframe: running")
         logger.info(f"Searching dataframe with {self.number_of_dataframe_rows} rows")
         target_column = "sentence"
         # First we create a boolean series to filter the dataframe with
@@ -80,10 +84,9 @@ class DataframeUsageExamplesExtractor(BaseModel):
         print(self.matches.info())
         self.number_of_matches = len(self.matches)
         logger.info(f"Found {self.number_of_matches} matches")
-        return self.convert_matches_to_user_examples(form=form)
 
     @abstractmethod
-    def convert_matches_to_user_examples(
+    def __convert_matches_to_user_examples__(
         self, form: LexutilsForm = None
     ) -> List[UsageExample]:
         pass
@@ -93,7 +96,3 @@ class DataframeUsageExamplesExtractor(BaseModel):
             self.pickle_path_str = "../" + str(self.pickle_path.value)
         else:
             self.pickle_path_str = str(self.pickle_path.value)
-
-    @property
-    def number_of_dataframe_rows(self):
-        return len(self.dataframe)
