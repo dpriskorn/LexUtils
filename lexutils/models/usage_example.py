@@ -44,7 +44,7 @@ class UsageExample(BaseModel):
         return (
             f"Found the following sentence with {self.number_of_words} "
             + "words. Is it suitable as a usage example "
-            + f"for the {self.form.lexeme_category} form '{self.form.localized_representation}'? \n"
+            + f"for the {self.form.localized_lexeme_category} form '{self.form.localized_representation}'? \n"
             + f"'{self.record.text}'"
         )
 
