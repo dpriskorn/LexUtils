@@ -153,7 +153,7 @@ class Lexemes(BaseModel):
             if not isinstance(example, UsageExample):
                 raise ValueError("Nested list error")
         if len(examples) > 0:
-            logger.debug(f"examples found:{[example.text for example in examples]}")
+            logger.debug(f"examples found:{len(examples)}")
         return examples
 
     def __convert_str_to_enums__(self):
