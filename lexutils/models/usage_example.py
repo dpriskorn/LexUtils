@@ -39,6 +39,7 @@ class UsageExample(BaseModel):
         # from https://www.pythonpool.com/python-count-words-in-string/
         return self.record.number_of_words
 
+    @property
     def __found_sentence_text__(self):
         # FIXME add grammatical features here
         return (
