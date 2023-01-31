@@ -320,7 +320,6 @@ class LexutilsForm(Form):
             record_number = String(
                 prop_nr="P9994", value=str(usage_example.record.id)  # record number
             )
-            reference_url = URL(prop_nr="P854", value=usage_example.record.url())
             published_date = Time(
                 prop_nr="P577",
                 time=usage_example.record.date.strftime("+%Y-%m-%dT00:00:00Z"),
@@ -334,7 +333,7 @@ class LexutilsForm(Form):
             )
             historical_ads_retrieved_date = Time(
                 prop_nr="P813",  # Fetched 2021-01-13
-                time=datetime.strptime("2021-01-13", "%Y-%m-%d")
+                time=datetime.strptime("2023-01-31", "%Y-%m-%d")
                 .replace(tzinfo=timezone.utc)
                 .replace(
                     hour=0,
@@ -346,7 +345,6 @@ class LexutilsForm(Form):
             reference = [
                 stated_in,
                 record_number,
-                reference_url,
                 historical_ads_retrieved_date,
                 published_date,
                 type_of_reference_qualifier,
