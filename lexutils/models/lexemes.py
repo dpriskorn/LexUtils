@@ -63,6 +63,34 @@ class Lexemes(BaseModel):
             raise MissingInformationError()
         return f"{constants.orthohin}add/{self.language_code.value}"
 
+    @property
+    def number_of_approved_forms(self):
+        return len(self.approved_forms)
+
+    @property
+    def __build_query__(self):
+        random_offset = random.randint(20, 1000)
+        logger.info(f"random offset:{random_offset}")
+        return f"""
+                select ?form
+                WHERE {{
+                    ?lexeme dct:language wd:{self.language_qid.value};
+                            wikibase:lemma ?lemma;
+                            wikibase:lexicalCategory [];
+                            ontolex:lexicalForm ?form;
+                            ontolex:sense [].
+                    # ?form ontolex:representation ?form_representation;
+                    # wikibase:grammaticalFeature ?feature.
+                    MINUS {{
+                    ?lexeme p:P5831 ?statement.
+                    ?statement ps:P5831 ?example;
+                             pq:P6072 [];
+                             pq:P5830 ?form_with_example.
+                    }}
+                }}
+                offset {random_offset}
+                limit {config.number_of_forms_to_fetch}"""
+
     def __get_usage_examples_from_supported_sources__(
         self,
         form: Any = None,
