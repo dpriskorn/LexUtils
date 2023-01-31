@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Optional
 from urllib.parse import quote
 
 from pydantic import BaseModel
