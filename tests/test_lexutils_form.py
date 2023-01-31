@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest import TestCase
 
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
@@ -5,7 +6,7 @@ from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 
 class TestLexutilsForm(TestCase):
-    example_form: LexutilsForm = None
+    example_form: Optional[LexutilsForm] = None
 
     def setUp(self) -> None:
         self.__setup_example_form__()
@@ -18,7 +19,7 @@ class TestLexutilsForm(TestCase):
 
     def test_number_of_examples_found(self):
         self.example_form.usage_examples = []
-        assert self.example_form.number_of_examples_found == 0
+        assert self.example_form.number_of_usage_examples_found == 0
 
     def test_number_of_senses(self):
         print(self.example_form.senses)

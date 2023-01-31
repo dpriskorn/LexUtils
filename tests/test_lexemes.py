@@ -22,15 +22,15 @@ class TestLexemes(TestCase):
         config.number_of_forms_to_fetch = 1
         config.require_form_confirmation = False
         lex.fetch_forms_without_an_example()
-        assert len(lex.forms_without_an_example) == 1
+        assert len(lex.forms_without_an_example_in_wikidata) == 1
         self.example_lexemes = lex
 
     def test_fetch_usage_examples(self):
-        assert len(self.example_lexemes.forms_without_an_example) == 1
+        assert len(self.example_lexemes.forms_without_an_example_in_wikidata) == 1
         self.example_lexemes.fetch_usage_examples()
         # lex.forms_without_an_example: List[LexutilsForm]
-        form = self.example_lexemes.forms_without_an_example[0]
-        assert form.number_of_examples_found == 0
+        form = self.example_lexemes.forms_without_an_example_in_wikidata[0]
+        assert form.number_of_usage_examples_found == 0
 
     def test___get_results_from_sparql__(self):
         lex = Lexemes(lang="sv")
@@ -39,7 +39,7 @@ class TestLexemes(TestCase):
 
         config.number_of_forms_to_fetch = 1
         lex.__get_results_from_sparql__()
-        assert len(lex.results) == 2
+        assert len(lex.sparql_results) == 2
 
     # def test_orthohin_url(self):
     #     assert False

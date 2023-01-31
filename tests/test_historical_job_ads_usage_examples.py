@@ -3,8 +3,8 @@ from unittest import TestCase
 
 import pandas as pd  # type: ignore
 
-from lexutils.models.historical_ads.historical_job_ads_usage_examples import (
-    HistoricalJobAdsUsageExamples,
+from lexutils.models.dataframe_usage_examples_extractor.historical_job_ads import (
+    HistoricalJobAdsUsageExamplesExtractor,
 )
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.lexutils_form import LexutilsForm
@@ -27,11 +27,11 @@ class TestHistoricalJobAdsUsageExamples(TestCase):
         self.example_form = form
 
     def test_check_and_load(self):
-        hjaue = HistoricalJobAdsUsageExamples(testing=True)
+        hjaue = HistoricalJobAdsUsageExamplesExtractor(testing=True)
         hjaue.__check_and_load__()
 
     def test_find_form_representation_in_the_dataframe(self):
-        hjaue = HistoricalJobAdsUsageExamples(testing=True)
+        hjaue = HistoricalJobAdsUsageExamplesExtractor(testing=True)
         usage_examples = hjaue.find_form_representation_in_the_dataframe(
             form=self.example_form
         )

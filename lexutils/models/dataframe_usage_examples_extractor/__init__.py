@@ -22,7 +22,7 @@ class DataframeUsageExamplesExtractor(BaseModel):
     dataframe: DataFrame = None
     matches: DataFrame = None
     number_of_matches: int = 0
-    pickle_path: Optional[SupportedPicklePaths] = None
+    pickle_path: SupportedPicklePaths  # mandatory
     pickle_url: str = ""
     pickle_path_str: str = ""
     dataframe_loaded: bool = False

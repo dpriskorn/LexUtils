@@ -5,7 +5,7 @@ import os
 import re
 import time
 from datetime import datetime
-from typing import Any, Set, List
+from typing import Any, List, Set
 
 import langdetect  # type: ignore
 import pandas as pd  # type: ignore
@@ -32,7 +32,7 @@ class ConvertHistoricalAds(BaseModel):
     max_dataframe_rows = 150000
     max_words_in_sentence = 50
     cleaned_lines: Set[str] = set()
-    text_after_split = []
+    text_after_split: List[str] = []
     total_number_of_lines: int = 0
     count_file: int = 0
     files: List[str] = []
@@ -43,6 +43,7 @@ class ConvertHistoricalAds(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = "forbid"
 
     @property
     def total_number_of_files(self):
@@ -203,7 +204,7 @@ class ConvertHistoricalAds(BaseModel):
                             f"skipped: {self.skipped_sentence_count} dataframe rows: "
                             f"{self.dataframe_length}/{self.max_dataframe_rows} splits: {self.split_count}"
                         )
-                    self.__parse_line__(filename=filename, line=line)
+                    self.__parse_line__(filename=filename, line=str(line))
             # We stop when max has been reached
             if self.dataframe_length > self.max_dataframe_rows:
                 logger.info(

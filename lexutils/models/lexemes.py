@@ -2,7 +2,7 @@ import logging
 import random
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validate_arguments
 from wikibaseintegrator.wbi_helpers import execute_sparql_query  # type: ignore
 
 import config
@@ -12,7 +12,6 @@ from lexutils.exceptions import MissingInformationError
 from lexutils.helpers import tui, util
 from lexutils.helpers.console import console
 from lexutils.helpers.handle_pickles import add_to_pickle, can_read_from_pickle
-from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode, WikimediaLanguageQID
 from lexutils.models.wikidata.lexutils_lexeme import LexutilsLexeme
 
@@ -22,27 +21,41 @@ logger = logging.getLogger(__name__)
 class Lexemes(BaseModel):
     """This class holds all lexemes and forms we currently work on
 
-    We store the dataframes into the attributes to avoid loading
-    them more than once"""
+    We store the dataframes in the attributes to avoid loading
+    it more than once because it causes a little delay"""
 
-    riksdagen_usage_examples: Optional[Any] = None
-    forms_without_an_example: List[Any] = []
-    forms_with_usage_examples_found: List[Any] = []
+    # riksdagen_usage_examples: Optional[Any] = None
+    forms_without_an_example_in_wikidata: List[Any] = []
+    forms_with_possible_matching_usage_examples_found: List[Any] = []
     historical_ads_usage_examples: Optional[Any] = []
     lang: str  # this is mandatory
     language_code: Optional[WikimediaLanguageCode] = None
     language_qid: Optional[WikimediaLanguageQID] = None
     lexemes: List[LexutilsLexeme] = []
     approved_forms: List[Any] = []
-    results: Dict[str, Any] = {}
+    sparql_results: Dict[str, Any] = {}
     testing: bool = False
 
     class Config:
         arbitrary_types_allowed = True
+        extra = "forbid"
+
+    @validate_arguments
+    def __is_not_finished_or_declined__(self, form: Any):
+        finished = can_read_from_pickle(
+            pickle=SupportedFormPickles.FINISHED_FORMS, form_id=form.id
+        )
+        declined = can_read_from_pickle(
+            pickle=SupportedFormPickles.DECLINED_FORMS, form_id=form.id
+        )
+        if not finished and not declined:
+            return False
+        else:
+            return True
 
     @property
     def number_of_forms_without_an_example(self) -> int:
-        return len(self.forms_without_an_example)
+        return len(self.forms_without_an_example_in_wikidata)
 
     @property
     def orthohin_url(self):
@@ -53,7 +66,7 @@ class Lexemes(BaseModel):
     def __get_usage_examples_from_supported_sources__(
         self,
         form: Any = None,
-    ) -> List[UsageExample]:
+    ) -> List[Any]:
         """Find examples and return them as UsageExample objects"""
         logger.debug("__get_usage_examples_from_supported_sources__: running")
         if not self.language_code:
@@ -107,6 +120,8 @@ class Lexemes(BaseModel):
         #         examples.extend(wikisource_usage_examples)
         # Check for nested list
         for example in examples:
+            from lexutils.models.usage_example import UsageExample
+
             if not isinstance(example, UsageExample):
                 raise ValueError("Nested list error")
         if len(examples) > 0:
@@ -152,7 +167,7 @@ class Lexemes(BaseModel):
             raise MissingInformationError()
         self.__get_results_from_sparql__()
         self.__parse_results_into_lexutils_forms__()
-        if len(self.forms_without_an_example) == 0:
+        if len(self.forms_without_an_example_in_wikidata) == 0:
             console.print(
                 "Got no forms from Wikidata to work on for this language "
                 "if you think this is a bug, please open an issue here "
@@ -161,7 +176,7 @@ class Lexemes(BaseModel):
             exit()
         else:
             logger.info(
-                f"Got {len(self.forms_without_an_example)} "
+                f"Got {len(self.forms_without_an_example_in_wikidata)} "
                 f"forms from WDQS for language {self.language_code.name.title()}"
             )
 
@@ -170,10 +185,10 @@ class Lexemes(BaseModel):
 
         # self.forms_without_an_example: List[LexutilsForm] = []
         # pprint(results)
-        if "results" in self.results:
-            if "bindings" in self.results["results"]:
+        if "results" in self.sparql_results:
+            if "bindings" in self.sparql_results["results"]:
                 # logger.debug(f"data:{results['results']['bindings']}")
-                forms = self.results["results"]["bindings"]
+                forms = self.sparql_results["results"]["bindings"]
                 logger.info(f"Got {len(forms)} forms")
                 for entry in forms:
                     # logger.info(f"data:{entry.keys()}")
@@ -191,7 +206,7 @@ class Lexemes(BaseModel):
                     )
                     # logger.info("debug exit")
                     # exit(0)
-                    self.forms_without_an_example.append(form)
+                    self.forms_without_an_example_in_wikidata.append(form)
             else:
                 raise ValueError("Got no bindings dict from WD")
 
@@ -208,9 +223,9 @@ class Lexemes(BaseModel):
             self.__setup_swedish_sources__()
         from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
-        self.forms_with_usage_examples_found: List[LexutilsForm] = []
+        self.forms_with_possible_matching_usage_examples_found: List[LexutilsForm] = []
         self.__get_approved_forms__()
-        self.__iterate_approved_forms__()
+        self.__iterate_approved_forms_and_fetch_examples__()
 
     @staticmethod
     def clean_id(form_id):
@@ -219,13 +234,13 @@ class Lexemes(BaseModel):
 
     def __setup_swedish_sources__(self):
         logger.info("Loading Swedish dataframes now")
-        from lexutils.models.historical_ads.historical_job_ads_usage_examples import (
-            HistoricalJobAdsUsageExamples,
+        from lexutils.models.dataframe_usage_examples_extractor.historical_job_ads import (
+            HistoricalJobAdsUsageExamplesExtractor,
         )
 
         # from lexutils.models.disabled.riksdagen_usage_examples import RiksdagenUsageExamples
 
-        self.historical_ads_usage_examples = HistoricalJobAdsUsageExamples(
+        self.historical_ads_usage_examples = HistoricalJobAdsUsageExamplesExtractor(
             testing=self.testing
         )
         # self.riksdagen_usage_examples = RiksdagenUsageExamples()
@@ -236,7 +251,7 @@ class Lexemes(BaseModel):
 
         self.approved_forms: List[LexutilsForm] = []
         if config.require_form_confirmation:
-            for form in self.forms_without_an_example:
+            for form in self.forms_without_an_example_in_wikidata:
                 console.print(form)
                 if util.yes_no_question(form.work_on_text):
                     self.approved_forms.append(form)
@@ -248,19 +263,13 @@ class Lexemes(BaseModel):
                     )
         else:
             # Approve all forms
-            self.approved_forms.extend(self.forms_without_an_example)
+            self.approved_forms.extend(self.forms_without_an_example_in_wikidata)
 
-    def __iterate_approved_forms__(self):
-        logger.debug("__iterate_approved_forms__: running")
+    def __iterate_approved_forms_and_fetch_examples__(self):
+        logger.debug("__iterate_approved_forms_and_fetch_examples__: running")
         count = 1
         for form in self.approved_forms:
-            finished = can_read_from_pickle(
-                pickle=SupportedFormPickles.FINISHED_FORMS, form_id=form.id
-            )
-            declined = can_read_from_pickle(
-                pickle=SupportedFormPickles.DECLINED_FORMS, form_id=form.id
-            )
-            if not finished and not declined:
+            if self.__is_not_finished_or_declined__(form=form):
                 with console.status(
                     f"Processing form {count}/"
                     f"{self.number_of_forms_without_an_example}"
@@ -275,13 +284,15 @@ class Lexemes(BaseModel):
                         )
                     )
                     logger.info(
-                        f"Found {form.number_of_examples_found} usage examples for '{form.localized_representation}'"
+                        f"Found {form.number_of_usage_examples_found} usage examples for '{form.localized_representation}'"
                     )
-                    if form.number_of_examples_found > 0:
-                        self.forms_with_usage_examples_found.append(form)
+                    if form.number_of_usage_examples_found > 0:
+                        self.forms_with_possible_matching_usage_examples_found.append(
+                            form
+                        )
             count += 1
 
     def __get_results_from_sparql__(self):
-        self.results = execute_sparql_query(self.__build_query__)
-        if not self.results:
+        self.sparql_results = execute_sparql_query(self.__build_query__)
+        if not self.sparql_results:
             raise MissingInformationError("Got no results dict from WD")

@@ -3,8 +3,10 @@ import gettext
 import logging
 import warnings
 
+from wikibaseintegrator.wbi_config import config as wbiconfig  # type: ignore
+
 import config
-from lexutils.models.usage_examples import UsageExamples
+from lexutils.usage_example_session import UsageExamplesSession
 
 # from prompt_toolkit import prompt
 # from prompt_toolkit.history import FileHistory
@@ -34,8 +36,9 @@ Commands = ["examples", "statistics"]
 
 
 def main():
-    usage_examples = UsageExamples()
-    usage_examples.fetch_and_present_usage_examples()
+    wbiconfig["USER_AGENT"] = config.user_agent
+    session = UsageExamplesSession()
+    session.fetch_and_present_usage_examples()
     # # TODO enable choosing work language
     # print(_('This is the REPL. ' +
     #         'Type one of the names of the tools to begin: ' +
@@ -48,7 +51,7 @@ def main():
     #                         )
     #     if user_input.lower() == "examples":
     #         # raise Exception("Rewrite to use OOP not finished yet")
-    #         usage_examples.start()
+    #         dataframe_usage_examples_extractor.start()
     #     if user_input.lower() == "statistics":
     #         statistics.main()
     #     # if user_input.lower() == "lexcombine":

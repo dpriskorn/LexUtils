@@ -16,6 +16,8 @@ user_agent = f"LexUtils/{version}"
 loglevel = logging.INFO
 
 # Settings for UsageExamples
+sense_gloss_fallback_language_one = "nb"
+sense_gloss_fallback_language_two = "en"
 require_form_confirmation = True
 fast_nlp_languages = [WikimediaLanguageCode.SWEDISH, WikimediaLanguageCode.ENGLISH]
 number_of_forms_to_fetch = 20

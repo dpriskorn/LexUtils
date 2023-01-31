@@ -60,13 +60,13 @@
 #         if self.records is not None:
 #             logging.info("Looping through records from Wikisource")
 #             # records = filter_matching_records(records, form)
-#             usage_examples = []
+#             dataframe_usage_examples_extractor = []
 #             for record in self.records:
 #                 # find usage examples and add to our list
-#                 usage_examples.extend(
+#                 dataframe_usage_examples_extractor.extend(
 #                     record.find_usage_examples_from_summary(form=self.form)
 #                 )
 #             logger.info(
-#                 f"Found {len(usage_examples)} suitable usage examples from Wikisource"
+#                 f"Found {len(dataframe_usage_examples_extractor)} suitable usage examples from Wikisource"
 #             )
-#             return usage_examples
+#             return dataframe_usage_examples_extractor

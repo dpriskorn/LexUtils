@@ -3,7 +3,7 @@ import logging
 import config
 from lexutils.enums import SupportedPicklePaths
 from lexutils.exceptions import MissingInformationError
-from lexutils.models.dataframe_usage_examples_extractor.__init__ import (
+from lexutils.models.dataframe_usage_examples_extractor import (  # type: ignore
     DataframeUsageExamplesExtractor,
 )
 from lexutils.models.usage_example import UsageExample

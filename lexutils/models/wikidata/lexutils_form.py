@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 from urllib.parse import quote
 
+from pydantic import validate_arguments
 from wikibaseintegrator import WikibaseIntegrator, wbi_config, wbi_login  # type: ignore
 from wikibaseintegrator.datatypes import URL, ExternalID  # type: ignore
 from wikibaseintegrator.datatypes import Form as FormDT  # type: ignore
@@ -15,10 +16,10 @@ from wikibaseintegrator.wbi_enums import ActionIfExists  # type: ignore
 
 import config
 from lexutils import constants
-from lexutils.enums import SupportedExampleSources
+from lexutils.enums import ReturnValue, SupportedExampleSources
 from lexutils.exceptions import MissingInformationError
+from lexutils.helpers import tui
 from lexutils.helpers.console import console
-from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.enums import WikimediaLanguageCode
 from lexutils.models.wikidata.lexutils_lexeme import LexutilsLexeme
 from lexutils.models.wikidata.lexutils_sense import LexutilsSense
@@ -28,22 +29,26 @@ logger = logging.getLogger(__name__)
 
 class LexutilsForm(Form):
     """
-    Model for a Wikibase form
+    Model for a Wikibase form extended for our purposes
+
+    It now also stores usage examples (where the form is duplicated in an attribute) and
+    the lexeme to which it belongs.
     """
 
     language_code: WikimediaLanguageCode
     # We store these on the form because they are needed
     # to determine if an example fits or not
-    usage_examples: List[UsageExample] = []
+    usage_examples: List[Any] = []
     # The lexeme has the data about senses
     lexeme: Optional[LexutilsLexeme] = None
+    number_of_presented_usage_examples: int = 0
 
     @property
     def clean_id(self) -> str:
         return str(self.id).replace("http://www.wikidata.org/entity/", "")
 
     @property
-    def number_of_examples_found(self):
+    def number_of_usage_examples_found(self):
         return len(self.usage_examples)
 
     @property
@@ -181,7 +186,7 @@ class LexutilsForm(Form):
         self.lexeme.get_lexutils_senses()
 
     def add_usage_example(
-        self, sense: LexutilsSense = None, usage_example: UsageExample = None
+        self, sense: LexutilsSense = None, usage_example: Any = None
     ) -> LexemeEntity:
         """This adds a usage example to the current lexeme
         This only has side effects"""
@@ -190,7 +195,7 @@ class LexutilsForm(Form):
         if not usage_example:
             raise MissingInformationError("usage_example was None")
         if not usage_example.record:
-            raise MissingInformationError
+            raise MissingInformationError()
         # reference = None
         logger.info("Adding usage example with WBI")
         # Use WikibaseIntegrator aka wbi to upload the changes in one edit
@@ -305,12 +310,12 @@ class LexutilsForm(Form):
         #             retrieved_date,
         #             type_of_reference_qualifier,
         #         ]
-        if usage_example.record.source == SupportedExampleSources.HISTORICAL_ADS:
+        if usage_example.record.source == SupportedExampleSources.HISTORICAL_ADS_2020:
             logger.info("Historical Ad record detected")
             if not usage_example.record.date:
                 raise MissingInformationError()
             stated_in = Item(
-                prop_nr="P248", value=SupportedExampleSources.HISTORICAL_ADS.value
+                prop_nr="P248", value=SupportedExampleSources.HISTORICAL_ADS_2020.value
             )
             record_number = String(
                 prop_nr="P9994", value=str(usage_example.record.id)  # record number
@@ -435,7 +440,7 @@ class LexutilsForm(Form):
         else:
             # This is the usage example statement
             usage_example_claim = MonolingualText(
-                text=usage_example.text,
+                text=usage_example.record.text,
                 prop_nr="P5831",
                 language=usage_example.record.language_code.value,
                 # Add qualifiers
@@ -474,3 +479,44 @@ class LexutilsForm(Form):
             # logging.debug(f"result from WBI:{result}")
             # TODO add handling of result from WBI and return True == Success or False
             return result
+
+    def print_number_of_usage_examples_found(self):
+        print(
+            "Found {} suitable sentences for {} with id "
+            "{} and the grammatical features: {}".format(
+                self.number_of_usage_examples_found,
+                self.localized_representation,
+                self.id,
+                " ".join(self.localized_grammatical_features),
+            )
+        )
+
+    def __sort_usage_examples_by_length__(self):
+        self.usage_examples.sort(key=lambda x: x.word_count, reverse=False)
+
+    @validate_arguments
+    def __iterate_usage_examples_and_present_senses__(
+        self,
+    ) -> Optional[ReturnValue]:
+        """Go through each usage example and present it"""
+        # Sort so that the shortest sentence is first
+        # Sort the usage examples by word count
+        # https://stackoverflow.com/questions/403421/how-to-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
+        self.__sort_usage_examples_by_length__()
+        tui.print_separator()
+        print(self.presentation)
+        # Loop through usage examples
+        for example in self.usage_examples:
+            print(example.__found_sentence_text__)
+            result: ReturnValue = example.__validate_usage_example__()
+            logger.info(f"process_result: result: {result}")
+            self.number_of_presented_usage_examples += 1
+            if result == ReturnValue.SKIP_USAGE_EXAMPLE:
+                continue
+            elif (
+                result == ReturnValue.SKIP_FORM
+                or result == ReturnValue.USAGE_EXAMPLE_ADDED
+            ):
+                # please mypy
+                return result
+        return None

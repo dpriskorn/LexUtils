@@ -33,9 +33,9 @@
 #             representation="test", language_code=WikimediaLanguageCode.SWEDISH
 #         )
 #         self.object.find_form_representation_in_the_dataframe(form=form)
-#         # pprint(self.object.usage_examples)
-#         if len(self.object.usage_examples) == 0:
+#         # pprint(self.object.dataframe_usage_examples_extractor)
+#         if len(self.object.dataframe_usage_examples_extractor) == 0:
 #             self.fail()
 #         else:
-#             for example in self.object.usage_examples:
+#             for example in self.object.dataframe_usage_examples_extractor:
 #                 print(example)
