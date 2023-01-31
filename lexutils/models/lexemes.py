@@ -41,7 +41,7 @@ class Lexemes(BaseModel):
         extra = "forbid"
 
     @validate_arguments
-    def __is_not_finished_or_declined__(self, form: Any):
+    def __is_finished_or_declined__(self, form: Any):
         finished = can_read_from_pickle(
             pickle=SupportedFormPickles.FINISHED_FORMS, form_id=form.id
         )
