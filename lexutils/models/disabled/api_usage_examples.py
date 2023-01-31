@@ -4,7 +4,7 @@
 # from typing import TYPE_CHECKING
 #
 # from lexutils.exceptions import MissingInformationError
-# from lexutils.models.usage_examples import UsageExamples
+# from lexutils.models.dataframe_usage_examples_extractor import UsageExamples
 #
 # if TYPE_CHECKING:
 #     from lexutils.models.lexemes import Lexemes
