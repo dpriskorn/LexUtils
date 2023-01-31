@@ -10,7 +10,7 @@ class BaseURLs(Enum):
 
 class SupportedPicklePaths(Enum):
     RIKSDAGEN = "data/sv/riksdagen.pkl.gz"
-    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "data/sv/record.pkl.gz"
+    ARBETSFORMEDLINGEN_HISTORICAL_ADS = "data/sv/historical_ads.pkl.gz"
 
 
 class SupportedExampleSources(Enum):
