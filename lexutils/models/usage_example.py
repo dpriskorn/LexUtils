@@ -130,7 +130,7 @@ class UsageExample(BaseModel):
                 logger.info(f"wbi:{sense_choice}")
                 print(
                     "Successfully added usage example "
-                    + f"{self.form.lexeme.usage_example_url()}"
+                    + f"{self.form.lexeme.usage_example_url}"
                 )
                 # logger.info("debug exit")
                 # exit(0)
@@ -151,7 +151,7 @@ class UsageExample(BaseModel):
             question = (
                 "Found only one sense. "
                 + "Does this example fit the following "
-                + f"gloss?\n{self.form.senses[0].url()}\n'{self.form.senses[0].localized_gloss}'"
+                + f"gloss?\n{self.form.senses[0].url}\n'{self.form.senses[0].localized_gloss}'"
             )
         else:
             question = (
