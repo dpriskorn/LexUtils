@@ -79,7 +79,7 @@ class DataframeUsageExamplesExtractor(BaseModel):
         # This returns a dataframe with the matching rows using the boolean series as filter
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.loc.html
         self.matches = self.dataframe.loc[boolean_series]
-        print(self.matches.info())
+        # print(self.matches.info())
         self.number_of_matches = len(self.matches)
         logger.info(f"Found {self.number_of_matches} matches")
 
