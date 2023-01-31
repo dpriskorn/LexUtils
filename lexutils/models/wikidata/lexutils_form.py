@@ -131,7 +131,7 @@ class LexutilsForm(Form):
     def presentation(self):
         return (
             f"[bold green]{self.localized_representation}[/bold green]\n"
-            f"category: {self.lexeme_category}\n"
+            f"category: {self.localized_lexeme_category}\n"
             f"features: {', '.join(self.localized_grammatical_features)}"
         )
 
