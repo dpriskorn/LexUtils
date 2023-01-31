@@ -16,7 +16,7 @@ class HistoricalJobAdsUsageExamplesExtractor(DataframeUsageExamplesExtractor):
     pickle_path = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 
     # noinspection PyUnresolvedReferences
-    def convert_matches_to_user_examples(self, form: LexutilsForm = None):
+    def __convert_matches_to_user_examples__(self, form: LexutilsForm = None):
         if not form:
             raise MissingInformationError()
         # maximum_result_size_reached = False
