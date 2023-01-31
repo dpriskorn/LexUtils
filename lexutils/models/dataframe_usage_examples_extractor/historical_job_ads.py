@@ -3,14 +3,16 @@ import logging
 import config
 from lexutils.enums import SupportedPicklePaths
 from lexutils.exceptions import MissingInformationError
-from lexutils.models.dataframe_usage_examples import DataframeUsageExamples
+from lexutils.models.dataframe_usage_examples_extractor.__init__ import (
+    DataframeUsageExamplesExtractor,
+)
 from lexutils.models.usage_example import UsageExample
 from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 logger = logging.getLogger(__name__)
 
 
-class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
+class HistoricalJobAdsUsageExamplesExtractor(DataframeUsageExamplesExtractor):
     pickle_path = SupportedPicklePaths.ARBETSFORMEDLINGEN_HISTORICAL_ADS
 
     # noinspection PyUnresolvedReferences
@@ -37,7 +39,7 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
                         logger.info(
                             f"Processing match {count}/{self.number_of_matches} matches"
                         )
-                    from lexutils.models.historical_ads.historical_job_ads_record import (
+                    from lexutils.models.record.historical_job_ads import (
                         HistoricalJobAd,
                     )
 
@@ -48,7 +50,7 @@ class HistoricalJobAdsUsageExamples(DataframeUsageExamples):
                         date=row.date,
                         # TODO add wikidata qid for this filename
                     )
-                    example = UsageExample(record=record, text=row.sentence)
+                    example = UsageExample(record=record, form=form)
                     # example = record.get_usage_example_if_representation_could_be_found
                     # if example is not None:
                     # logger.info("Looking up the QID for the document")

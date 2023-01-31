@@ -5,32 +5,35 @@ from typing import List, Optional
 
 import pandas as pd  # type: ignore
 from pandas import DataFrame  # type: ignore
+from pydantic import BaseModel
 
 from lexutils.enums import SupportedPicklePaths
 from lexutils.exceptions import DataNotFoundException
 from lexutils.models.usage_example import UsageExample
-from lexutils.models.usage_examples import UsageExamples
 from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 logger = logging.getLogger(__name__)
 
 
-class DataframeUsageExamples(UsageExamples):
-    """This is an abstract class"""
+class DataframeUsageExamplesExtractor(BaseModel):
+    """This is an abstract class that contains code
+    to help extract from any dataframe"""
 
     dataframe: DataFrame = None
     matches: DataFrame = None
     number_of_matches: int = 0
     pickle_path: Optional[SupportedPicklePaths] = None
     pickle_url: str = ""
-    usage_examples: List[UsageExample] = []
     pickle_path_str: str = ""
     dataframe_loaded: bool = False
+    testing: bool = False
 
     class Config:
         arbitrary_types_allowed = True
+        extra = "forbid"
 
     def __check_and_load__(self):
+        self.__setup_pickle_path__()
         self.__check_if_the_pickle_exist__()
         self.__load_into_memory__()
 
@@ -38,7 +41,6 @@ class DataframeUsageExamples(UsageExamples):
         # logger = logging.getLogger(__name__)
         # test
         # pickle_filename = "test.pkl.gz"
-        self.__setup_pickle_path__()
         logger.debug(f"searching pickle path: {self.pickle_path_str}")
         if not exists(self.pickle_path_str):
             raise DataNotFoundException(

@@ -16,7 +16,7 @@ class HistoricalJobAd(Record):
     base_url = BaseURLs.ARBETSFORMEDLINGEN_HISTORICAL_ADS.value
     language_style = LanguageStyle.FORMAL
     type_of_reference = ReferenceType.WRITTEN
-    source = SupportedExampleSources.HISTORICAL_ADS
+    source = SupportedExampleSources.HISTORICAL_ADS_2020
     # TODO is not present in the dataset unfortunately but we check during preprocessing
     # so the number of english sentences should be very few
     language_code = WikimediaLanguageCode.SWEDISH
