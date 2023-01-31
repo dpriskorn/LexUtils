@@ -117,8 +117,8 @@ class Lexemes(BaseModel):
             if not self.historical_ads_usage_examples:
                 raise MissingInformationError()
             logger.info("Trying to find usage examples in the dataframes")
-            historical_ads_examples = self.historical_ads_usage_examples.get_usage_examples(
-                form=form
+            historical_ads_examples = (
+                self.historical_ads_usage_examples.get_usage_examples(form=form)
             )
             if historical_ads_examples is not None:
                 examples.extend(historical_ads_examples)

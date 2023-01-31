@@ -58,9 +58,7 @@ class DataframeUsageExamplesExtractor(BaseModel):
         self.dataframe_loaded = True
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def get_usage_examples(
-        self, form: LexutilsForm = None
-    ) -> Optional[List[UsageExample]]:
+    def get_usage_examples(self, form: LexutilsForm) -> Optional[List[UsageExample]]:
         if not self.dataframe_loaded:
             self.__check_and_load__()
         if self.dataframe is None or self.number_of_dataframe_rows == 0:

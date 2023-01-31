@@ -10,10 +10,9 @@ When LexUtils start you can choose on of the following tools currently available
 * ...your tool idea here... [see So9qs ideas](https://www.wikidata.org/wiki/User:So9q/Tool_ideas) 
 
 ## Requirements
-* Python >= 3.7 (datetime fromisoformat needed)
-* see requirements.txt file for libraries needed
+* Python >= 3.10
 
-Install using pip:
+Install using poetry:
 `$ sudo pip install -r requirements.txt`
 
 If pip fails with errors related to python 2.7 you need to upgrade your OS. E.g. if you are using an old version of Ubuntu like 18.04.

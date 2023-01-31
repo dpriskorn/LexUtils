@@ -7,7 +7,7 @@ from lexutils.models.wikidata.lexutils_form import LexutilsForm
 
 
 class TestLexemes(TestCase):
-    example_lexemes: Optional[Lexemes] = []
+    example_lexemes: Optional[Lexemes] = None
     example_form: Optional[LexutilsForm] = None
 
     # def test_fetch_forms_without_an_example_20(self):
@@ -21,7 +21,7 @@ class TestLexemes(TestCase):
         self.__setup_example_lexemes__()
 
     def __setup_example_form__(self):
-        form = LexutilsForm(form_id="L45469-F1") # arbeta
+        form = LexutilsForm(form_id="L45469-F1")  # arbeta
         form.language_code = WikimediaLanguageCode.SWEDISH
         form.setup_lexeme()
         self.example_form = form
