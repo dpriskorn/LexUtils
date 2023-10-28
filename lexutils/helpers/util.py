@@ -1,48 +1,28 @@
 #!/usr/bin/env python3
-import gettext
 import logging
-import sys
 
-import httpx
+from lexutils.enums import ReturnValue
 
-# from time import sleep
-# import asyncio
-from lexutils.config.enums import ReturnValues
-
-_ = gettext.gettext
-
-# Check version
-try:
-    assert sys.version_info >= (3, 7)
-except AssertionError:
-    print(_("Error! This script requires Python 3.7 minimum. " +
-          "Your version of python: {} ".format(sys.version[0:5]) +
-          "is very old and not " +
-          "supported by this script. Please upgrade python. " +
-          "If you are on Ubuntu 18.04 we encourage you to upgrade Ubuntu."))
-    exit(0)
-
-# Logging
 logger = logging.getLogger(__name__)
 
 
-def yes_no_skip_question(message: str) -> ReturnValues:
+def yes_no_skip_question(message: str) -> ReturnValue:
     # https://www.quora.com/
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
     while True:
-        answer = input(_("{} [(Y)es/(n)o/(s)kip this form]: ".format(message)))
-        if len(answer) == 0 or answer[0].lower() in ('y', 'n', 's'):
+        answer = input(f"{message} [(Y)es/(n)o/(s)kip this form]: ")
+        if len(answer) == 0 or answer[0].lower() in ("y", "n", "s"):
             if len(answer) == 0:
-                return ReturnValues.ACCEPT_USAGE_EXAMPLE
-            elif answer[0].lower() == 's':
-                return ReturnValues.SKIP_FORM
+                return ReturnValue.ACCEPT_USAGE_EXAMPLE
+            elif answer[0].lower() == "s":
+                return ReturnValue.SKIP_FORM
             else:
                 # the == operator just returns a boolean,
-                if answer[0].lower() == 'y':
-                    return ReturnValues.ACCEPT_USAGE_EXAMPLE
+                if answer[0].lower() == "y":
+                    return ReturnValue.ACCEPT_USAGE_EXAMPLE
                 else:
-                    return ReturnValues.SKIP_USAGE_EXAMPLE
+                    return ReturnValue.SKIP_USAGE_EXAMPLE
 
 
 def yes_no_question(message: str):
@@ -50,24 +30,19 @@ def yes_no_question(message: str):
     # I%E2%80%99m-new-to-Python-how-can-I-write-a-yes-no-question
     # this will loop forever
     while True:
-        answer = input(_("{} [Y/n]: ".format(message)))
-        if len(answer) == 0 or answer[0].lower() in ('y', 'n'):
+        answer = input(f"{message} [Y/n]: ")
+        if len(answer) == 0 or answer[0].lower() in ("y", "n"):
             if len(answer) == 0:
                 return True
             else:
                 # the == operator just returns a boolean,
-                return answer[0].lower() == 'y'
+                return answer[0].lower() == "y"
 
 
-async def async_fetch_from_url(url):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        return response
-
-
-def count_words(string):
-    # from https://www.pythonpool.com/python-count-words-in-string/
-    return(len(string.strip().split(" ")))
+# async def async_fetch_from_url(url):
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(url)
+#         return response
 
 
 # def add_to_watchlist(lid: str):
@@ -77,7 +52,7 @@ def count_words(string):
 #     # usage example with WBI.
 #     session = config.login_instance.get_session()
 #     if session is None:
-#         logging.error(_("Error. Failed to add lexeme {lid} ".format(lid)+
+#         logging.error(("Error. Failed to add lexeme {lid} ".format(lid)+
 #                         "to your watchlist. Please report an issue"))
 #     # adapted from https://www.mediawiki.org/wiki/API:Watch
 #     url = "https://www.wikidata.org/w/api.php"
@@ -101,7 +76,7 @@ def count_words(string):
 #         url, data=params_watch
 #     )
 #     #logging.debug(result.text)
-#     print(_("Added {} to your watchlist".format(lid)))
+#     print(("Added {} to your watchlist".format(lid)))
 
 
 # def in_exclude_list(data: dict):

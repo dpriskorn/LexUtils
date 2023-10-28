@@ -2,19 +2,17 @@
 ![bild](https://user-images.githubusercontent.com/68460690/147775837-e89d752c-143e-426d-884b-cf1f510ca5f6.png)
 *UsageExamples in action with Swedish examples from Wikisource and Riksdagen* 
 
-This is a collection of tools that can be run from a read–eval–print loop (REPL) to improve Wikidata.
+This is the beginning of a collection of tools that can be 
+run from a read–eval–print loop (REPL) to improve Wikidata.
 
-When LexUtils start you can choose on of the following tools currently available:
-* Usage Examples (Beta)
-* Lexeme Statistics (Beta)
-* ...your tool idea here... [see So9qs ideas](https://www.wikidata.org/wiki/User:So9q/Tool_ideas) 
+Currently there is only one tool: UsageExamples so the REPL has been disabled.
 
 ## Requirements
-* Python >= 3.7 (datetime fromisoformat needed)
-* see requirements.txt file for libraries needed
+* Python >= 3.10
 
-Install using pip:
-`$ sudo pip install -r requirements.txt`
+Install using poetry:
+`$ pip install poetry`
+`$ poetry install`
 
 If pip fails with errors related to python 2.7 you need to upgrade your OS. E.g. if you are using an old version of Ubuntu like 18.04.
 
@@ -47,15 +45,17 @@ editgroups so if you need to
 rollback a change you have to do it manually.
 
 ### Supported data sources
+Swedish:
+* Historical Job Ads from the Swedish Public Employment Service
+
+#### Disabled sources
+* Riksdagen open data via their API
+* Ksamsök (abandoned because of terrible quality leading to a ton 
+  of false positives and incomprehensible sentences)
+
 Multiple languages:
 * europarl (data source from the European Parliament) (currently disabled)
 * Wikisource
-
-Swedish:
-* Riksdagen open data via their API
-* Historical Job Ads from the Swedish Public Employment Service
-* Ksamsök (abandoned because of terrible quality leading to a ton 
-  of false positives and incomprehensible sentences)
 
 ### NLP pipelines
 UsageExamples use spaCy NLP pipelines to detect sentence boundaries. 
@@ -72,6 +72,8 @@ List of other recommended tools to improve the lexemes:
   lexeme in a certain language
 
 ## What I learned making this tool
+* I really had help from pre-commit and all the developer 
+  helper tools in the second rewrite
 * Rewriting a tool with many parts can be difficult. 
   I used abstract base classes for the first time and 
   the class hierarchy really helped reduce the complexity 

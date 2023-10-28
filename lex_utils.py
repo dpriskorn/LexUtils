@@ -1,0 +1,3 @@
+import lexutils
+
+lexutils.main()

@@ -5,7 +5,7 @@ class WikimediaLanguageCode(Enum):
     # TODO this does not scale. Implement lookup and cache
     DANISH = "da"
     SWEDISH = "sv"
-    BOKMÅL = "nb"
+    BOKMAL = "nb"
     NORWEGIAN = "no"
     ENGLISH = "en"
     FRENCH = "fr"
@@ -25,7 +25,7 @@ class WikimediaLanguageCode(Enum):
 class WikimediaLanguageQID(Enum):
     DANISH = "Q9035"
     SWEDISH = "Q9027"
-    BOKMÅL = "Q25167"
+    BOKMAL = "Q25167"
     ENGLISH = "Q1860"
     FRENCH = "Q150"
     RUSSIAN = "Q7737"

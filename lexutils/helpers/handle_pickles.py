@@ -1,10 +1,11 @@
 import logging
 from os.path import exists
 
-import pandas as pd
+import pandas as pd  # type: ignore
 
 # This code is adapted from https://github.com/dpriskorn/WikidataMLSuggester
-from lexutils.config.enums import SupportedFormPickles
+from lexutils.enums import SupportedFormPickles
+from lexutils.exceptions import MissingInformationError
 
 logger = logging.getLogger(__name__)
 
@@ -19,25 +20,24 @@ logger = logging.getLogger(__name__)
 # We define finish as: having 1 usage example added. This is good enough for now.
 
 
-def read_from_pickle(
-        pickle: SupportedFormPickles = None,
-        form_id: str = None,
+def can_read_from_pickle(
+    pickle: SupportedFormPickles = None,
+    form_id: str = None,
 ) -> bool:
     """Returns boolean"""
     if form_id is None or pickle is None:
-        raise ValueError("did not get all we need")
+        raise MissingInformationError("did not get all we need")
     pickle_filename = pickle.value
     logger.debug(f"Reading from {pickle.name.title()}")
     if exists(pickle_filename):
         df = pd.read_pickle(pickle_filename)
         # This tests whether any row matches
-        return (df['form_id'] == form_id).any()
+        return bool((df["form_id"] == form_id).any())
+    else:
+        return False
 
 
-def add_to_pickle(
-        pickle: SupportedFormPickles = None,
-        form_id: str = None
-) -> None:
+def add_to_pickle(pickle: SupportedFormPickles = None, form_id: str = None) -> None:
     if form_id is None or pickle is None:
         raise ValueError("did not get all we need")
     pickle_filename = pickle.value
@@ -46,7 +46,7 @@ def add_to_pickle(
     if exists(pickle_filename):
         df = pd.read_pickle(pickle_filename)
         # This tests whether any row matches
-        match = (df['form_id'] == form_id).any()
+        match = (df["form_id"] == form_id).any()
         logger.debug(f"match:{match}")
         if not match:
             # We only give save the value once for now
