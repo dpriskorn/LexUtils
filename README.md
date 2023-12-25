@@ -1,4 +1,6 @@
 # LexUtils
+***Note: This tool is deprecated in favor of [Luthor](https://luthor.toolforge.org/)***
+
 ![bild](https://user-images.githubusercontent.com/68460690/147775837-e89d752c-143e-426d-884b-cf1f510ca5f6.png)
 *UsageExamples in action with Swedish examples from Wikisource and Riksdagen* 
 
